@@ -6,7 +6,7 @@
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>4.0.3</version>
-		<relativePath/> <!-- lookup parent from repository -->
+		<relativePath/>
 	</parent>
 	<groupId>com.source</groupId>
 	<artifactId>bundleboard</artifactId>
@@ -96,6 +96,8 @@
 			<artifactId>spring-boot-starter-webflux-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+        <!-- TestContainers -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-testcontainers</artifactId>
@@ -116,6 +118,15 @@
 			<artifactId>testcontainers-r2dbc</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+        <!-- Spring GraphQL -->
+        <dependency>
+            <groupId>org.springframework.graphql</groupId>
+            <artifactId>spring-graphql</artifactId>
+            <version>2.0.2</version>
+            <scope>compile</scope>
+        </dependency>
+
 	</dependencies>
 
 	<build>
