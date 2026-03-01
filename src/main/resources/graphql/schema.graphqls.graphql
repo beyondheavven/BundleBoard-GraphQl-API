@@ -12,3 +12,5 @@ type User{
     avatar_url: String
     status: UserStatus!
 }
+
+
