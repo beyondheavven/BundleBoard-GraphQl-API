@@ -1,7 +1,27 @@
 -- Created by Redgate Data Modeler (https://datamodeler.redgate-platform.com)
 -- Last modification date: 2026-02-27 11:12:55.821
 
+CREATE TYPE user_role AS ENUM ('admin', 'client', 'author');
+CREATE TYPE user_status AS ENUM ('active', 'inactive', 'banned');
+CREATE TYPE token_status AS ENUM ('active', 'revoked');
+CREATE TYPE purchase_status AS ENUM ('pending', 'succeeded', 'failed', 'refunded');
+CREATE TYPE media_provider AS ENUM ('local', 'google_drive');
+CREATE TYPE media_mime_type AS ENUM ('image/jpeg', 'image/png', 'video/mp4', 'application/zip', 'application/rar', 'application/pdf');
+CREATE TYPE media_file_type AS ENUM ('video', 'image', 'archive', 'document');
+
 -- tables
+-- Table: users
+CREATE TABLE users (
+                       id bigserial  NOT NULL,
+                       username varchar(64)  UNIQUE NOT NULL,
+                       email varchar(255)  UNIQUE NOT NULL,
+                       role user_role  NOT NULL,
+                       password_hash text  NOT NULL,
+                       avatar_url text  NOT NULL,
+                       status user_status  NOT NULL,
+                       CONSTRAINT users_pk PRIMARY KEY (id)
+);
+
 -- Table: authors
 CREATE TABLE authors (
                          users_id int8  NOT NULL,
@@ -55,7 +75,7 @@ CREATE TABLE images (
                         id bigserial  NOT NULL,
                         file_name text  NOT NULL,
                         file_path text  NOT NULL,
-                        mime_type varchar(50)  NOT NULL,
+                        mime_type media_mime_type  NOT NULL,
                         width int  NOT NULL,
                         height int  NOT NULL,
                         file_size bigint  NOT NULL,
@@ -67,9 +87,9 @@ CREATE TABLE media_resources (
                                  id bigserial  NOT NULL,
                                  file_name text  NOT NULL,
                                  file_path text  NOT NULL,
-                                 file_type varchar(20)  NOT NULL,
-                                 mime_type varchar(20)  NOT NULL,
-                                 provider text  NOT NULL,
+                                 file_type media_file_type NOT NULL,
+                                 mime_type media_mime_type  NOT NULL,
+                                 provider media_provider  NOT NULL,
                                  file_size bigint  NOT NULL,
                                  CONSTRAINT media_resources_pk PRIMARY KEY (id)
 );
@@ -82,7 +102,7 @@ CREATE TABLE purchases (
                            stripe_payment_intent_id text UNIQUE  NOT NULL,
                            amount decimal(10,2)  NOT NULL,
                            currency varchar(5)  NOT NULL,
-                           status varchar(20)  NOT NULL,
+                           status purchase_status  NOT NULL,
                            snapshot_price decimal(10,2)  NOT NULL,
                            created_at timestamp WITH TIME ZONE NOT NULL,
                            updated_at timestamp WITH TIME ZONE NOT NULL,
@@ -94,7 +114,7 @@ CREATE TABLE refresh_token (
                                id bigserial  NOT NULL,
                                users_id int8  NOT NULL,
                                token text  NOT NULL,
-                               status varchar(20)  NOT NULL,
+                               status token_status  NOT NULL,
                                CONSTRAINT refresh_token_pk PRIMARY KEY (id)
 );
 
@@ -105,17 +125,6 @@ CREATE TABLE tags (
                       CONSTRAINT tags_pk PRIMARY KEY (id)
 );
 
--- Table: users
-CREATE TABLE users (
-                       id bigserial  NOT NULL,
-                       username varchar(64)  UNIQUE NOT NULL,
-                       email varchar(255)  UNIQUE NOT NULL,
-                       role varchar(20)  NOT NULL,
-                       password_hash text  NOT NULL,
-                       avatar_url text  NOT NULL,
-                       status varchar(10)  NOT NULL,
-                       CONSTRAINT users_pk PRIMARY KEY (id)
-);
 
 -- foreign keys
 -- Reference: Authors_Users (table: authors)
