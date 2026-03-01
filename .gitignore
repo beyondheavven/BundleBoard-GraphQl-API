@@ -1,3 +1,5 @@
+.env
+.gitattributes
 HELP.md
 target/
 .mvn/wrapper/maven-wrapper.jar
