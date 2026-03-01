@@ -1,0 +1,14 @@
+schema {
+    query:Query,
+    mutation: Mutation
+}
+
+type User{
+    id: ID!
+    username: String!
+    email: String!
+    role: UserRole!
+    password_hash: String!
+    avatar_url: String
+    status: UserStatus!
+}
