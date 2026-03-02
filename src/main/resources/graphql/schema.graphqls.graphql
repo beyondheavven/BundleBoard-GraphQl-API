@@ -1,6 +1,6 @@
-schema {
-    query:Query,
-    mutation: Mutation
+type Query {
+    getUserById(id:ID!): User
+    getAllUsers: [User]
 }
 
 type User{
@@ -11,6 +11,14 @@ type User{
     password_hash: String!
     avatar_url: String
     status: UserStatus!
+}
+
+enum UserRole {
+    ADMIN, AUTHOR, CLIENT
+}
+
+enum UserStatus {
+    ACTIVE, INACTIVE, BANNED
 }
 
 
