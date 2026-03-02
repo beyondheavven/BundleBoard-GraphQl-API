@@ -1,47 +1,22 @@
 package com.source.bundleboard.user.model;
 
-import jakarta.persistence.Id;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Column;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import lombok.NoArgsConstructor;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
 
-@Entity
-@Table(name = "users")
-@NoArgsConstructor
-public class User {
+@Table("users")
+public record User(
+        @Id Long id,
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+        String username,
 
-    @Column(name = "username", nullable = false, unique = true)
-    private String username;
+        String email,
 
-    @Column(name = "email", nullable = false, unique = true, length = 255)
-    private String email;
+        String passwordHash,
 
-    @Column(name = "password_hash", nullable = false)
-    private String passwordHash;
+        String avatarUrl,
 
-    @Column(name = "avatar_url")
-    private String avatarUrl;
+        UserRole role,
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false)
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    private UserRole role;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    private UserStatus status;
-
-
+        UserStatus status
+) {
 }
