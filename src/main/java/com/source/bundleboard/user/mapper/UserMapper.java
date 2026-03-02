@@ -8,7 +8,6 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface UserMapper {
 
-    @Mapping(target = "avatarUrl" , source = "avatarUrl")
     UserResponseDto toDto(User user);
 
 }

@@ -1,8 +1,18 @@
 spring:
   application:
     name: bundleboard
-
+  r2dbc:
+    url: r2dbc:postgresql://postgres:${POSTGRES_PORT}/${POSTGRES_DB}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
   graphql:
+    graphiql:
+      enabled: true
+    schema:
+      inspection:
+        enabled: true
+      printer:
+        enabled: true
     cors:
       allowed-origins: "*"
       allowed-methods: "*"
