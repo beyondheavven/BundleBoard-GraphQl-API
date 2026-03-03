@@ -1,4 +1,6 @@
 spring:
+  webflux:
+    base-path: /api
   application:
     name: bundleboard
   jwt:
