@@ -3,6 +3,9 @@ package com.source.bundleboard.user.model;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
+import java.time.Instant;
+import java.util.Set;
+
 @Table("users")
 public record User(
         @Id Long id,
@@ -15,8 +18,12 @@ public record User(
 
         String avatarUrl,
 
-        UserRole role,
+        Set<UserRole> roles,
 
-        UserStatus status
+        UserStatus status,
+
+        Instant lastLoginAt,
+
+        Instant createdAt
 ) {
 }
