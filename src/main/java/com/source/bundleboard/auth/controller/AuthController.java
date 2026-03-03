@@ -36,8 +36,8 @@ public class AuthController {
     }
 
     @MutationMapping
-    public Mono<Void> logout(@Argument RefreshTokenRequest refreshToken){
-        return authService.logout(refreshToken).onErrorResume(e -> Mono.error(new RuntimeException(e.getMessage())));
+    public Mono<Boolean> logout(@Argument RefreshTokenRequest refreshToken){
+        return authService.logout(refreshToken).thenReturn(true).onErrorReturn(false);
     }
 
 }
