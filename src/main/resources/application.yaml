@@ -1,13 +1,18 @@
 spring:
   application:
     name: bundleboard
+  jwt:
+    secret: ${JWT_SECRET}
+    access-token-expiration-ms: 900000
+    refresh-token-expiration-ms: 2592000000
   r2dbc:
-    url: r2dbc:postgresql://postgres:${POSTGRES_PORT}/${POSTGRES_DB}
+    url: r2dbc:postgresql://postgres:${POSTGRES_PORT:5432}/${POSTGRES_DB}
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
   graphql:
     graphiql:
       enabled: true
+      show-exceptions: true
     schema:
       inspection:
         enabled: true
@@ -16,3 +21,6 @@ spring:
     cors:
       allowed-origins: "*"
       allowed-methods: "*"
+logging:
+  level:
+    org.springframework.graphql: DEBUG
