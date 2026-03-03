@@ -1,6 +1,6 @@
 type Query {
-    getUserById(id:ID!): User!
-    getAllUsers: [User!]
+    getUserById(id:ID!): User
+    getAllUsers: [User!]!
 }
 
 type User{
@@ -8,17 +8,16 @@ type User{
     username: String!
     email: String!
     role: UserRole!
-    passwordHash: String!
     avatarUrl: String
     status: UserStatus!
 }
 
 enum UserRole {
-    ADMIN, AUTHOR, CLIENT
+    admin, author, client
 }
 
 enum UserStatus {
-    ACTIVE, INACTIVE, BANNED
+    active, inactive, banned
 }
 
 
