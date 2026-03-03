@@ -2,8 +2,12 @@ package com.source.bundleboard.auth.service;
 
 import com.source.bundleboard.auth.dto.AuthRequest;
 import com.source.bundleboard.auth.dto.AuthResponse;
+import com.source.bundleboard.auth.dto.RefreshTokenRequest;
 import com.source.bundleboard.auth.dto.RegisterRequest;
+import com.source.bundleboard.auth.jwt.JwtProperties;
 import com.source.bundleboard.auth.jwt.service.JwtService;
+import com.source.bundleboard.refreshtoken.model.RefreshToken;
+import com.source.bundleboard.refreshtoken.repository.RefreshTokenRepository;
 import com.source.bundleboard.user.model.User;
 import com.source.bundleboard.user.model.UserRole;
 import com.source.bundleboard.user.model.UserStatus;
@@ -22,9 +26,13 @@ public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
 
+    private final RefreshTokenRepository refreshTokenRepository;
+
     private final JwtService jwtService;
 
     private final PasswordEncoder passwordEncoder;
+
+    private final JwtProperties jwtProperties;
 
 
     @Override
@@ -52,14 +60,7 @@ public class AuthServiceImpl implements AuthService {
                     );
 
                     return userRepository.save(updatedUser)
-                            .map(savedUser -> {
-                                String access = jwtService.generateAccessToken(
-                                        savedUser.username(),
-                                        UserRole.toAuthorities(savedUser.roles())
-                                );
-                                String refresh = jwtService.generateRefreshToken(savedUser.username());
-                                return new AuthResponse(access, refresh, null);
-                            });
+                            .flatMap(this::generateAuthResponse);
                 });
     }
 
@@ -83,43 +84,53 @@ public class AuthServiceImpl implements AuthService {
                     );
                     return userRepository.save(user);
                 })
-                .map(user -> {
-                    String access = jwtService.generateAccessToken(
-                            user.username(),
-                            UserRole.toAuthorities(user.roles())
-                    );
-                    String refresh = jwtService.generateRefreshToken(user.username());
-                    return new AuthResponse(access, refresh, null);
-                });
+                .flatMap(this::generateAuthResponse);
     }
 
     @Override
-    public Mono<AuthResponse> refreshToken(String refreshToken) {
+    public Mono<AuthResponse> refreshToken(RefreshTokenRequest refreshTokenRequest) {
+        String refreshToken = refreshTokenRequest.refreshToken();
         return jwtService.isRefreshToken(refreshToken)
                 .flatMap(isRefresh -> {
                     if (!isRefresh){
                         return Mono.error(new RuntimeException("Invalid refresh token."));
                     }
+                    return refreshTokenRepository.existsByTokenAndExpirationTimeAfter(refreshToken, Instant.now());
+                })
+                .flatMap(exists -> {
+                    if (!exists) return Mono.error(new RuntimeException("Token expired or revoked."));
                     return jwtService.extractUsername(refreshToken);
                 })
                 .flatMap(userRepository::findByUsername)
                 .switchIfEmpty(Mono.error(new RuntimeException("User not found.")))
                 .flatMap(user -> {
-                    if (user.status() == UserStatus.banned) {
-                        return Mono.error(new RuntimeException("User is banned."));
+                    if (user.status() == UserStatus.banned || user.status() == UserStatus.inactive) {
+                        return Mono.error(new RuntimeException("User is banned or inactive."));
                     }
 
-                    if (user.status() == UserStatus.inactive) {
-                        return Mono.error(new RuntimeException("User is inactive."));
-                    }
-
-                    String newAccessToken = jwtService.generateAccessToken(
-                            user.username(),
-                            UserRole.toAuthorities(user.roles())
-                    );
-
-                    String newRefreshToken = jwtService.generateRefreshToken(user.username());
-                    return Mono.just(new AuthResponse(newAccessToken, newRefreshToken, null));
+                    return refreshTokenRepository.deleteByToken(refreshToken)
+                            .then(generateAuthResponse(user));
                 });
+    }
+
+    @Override
+    public Mono<Void> logout(RefreshTokenRequest refreshTokenRequest) {
+        String refreshToken = refreshTokenRequest.refreshToken();
+        return refreshTokenRepository.deleteByToken(refreshToken).then();
+    }
+
+    private Mono<AuthResponse> generateAuthResponse(User user) {
+        String accessToken = jwtService.generateAccessToken(user.username(), UserRole.toAuthorities(user.roles()));
+        String refreshToken = jwtService.generateRefreshToken(user.username());
+        RefreshToken refreshTokenEntity = new RefreshToken(
+                null,
+                user.id(),
+                refreshToken,
+                Instant.now(),
+                Instant.now().plusMillis(jwtProperties.getRefreshTokenExpirationMs())
+        );
+
+        return refreshTokenRepository.save(refreshTokenEntity)
+                .map(savedRefreshToken -> new AuthResponse(accessToken, savedRefreshToken.token(), null));
     }
 }

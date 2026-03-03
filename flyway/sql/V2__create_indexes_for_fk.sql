@@ -12,3 +12,4 @@ CREATE INDEX idx_refresh_token_token ON refresh_token (token);
 CREATE INDEX idx_refresh_token_users_id ON refresh_token (users_id);
 CREATE INDEX idx_collections_project_file ON collections (project_file_id);
 CREATE INDEX idx_collections_preview_image ON collections (preview_image_id);
+CREATE INDEX idx_refresh_token_expires ON refresh_token(expires_at);
