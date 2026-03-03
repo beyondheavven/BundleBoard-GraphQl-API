@@ -1,3 +1,32 @@
+
+type Mutation {
+    login(request: AuthRequest!): AuthResponse!
+    register(request: RegisterRequest!): AuthResponse!
+    refreshToken(refreshToken: RefreshTokenRequest!): AuthResponse!
+    logout(refreshToken: RefreshTokenRequest!): Boolean
+}
+
+input AuthRequest {
+    username: String!
+    password: String!
+}
+
+input RegisterRequest {
+    username: String!
+    email: String!
+    password: String!
+}
+
+input RefreshTokenRequest {
+    refreshToken: String!
+}
+
+type AuthResponse {
+    accessToken: String!
+    refreshToken: String!
+    error: String!
+}
+
 type Query {
     getUserById(id:ID!): User
     getAllUsers: [User!]!

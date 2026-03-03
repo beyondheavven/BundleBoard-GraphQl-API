@@ -1,9 +1,7 @@
--- Created by Redgate Data Modeler (https://datamodeler.redgate-platform.com)
 -- Last modification date: 2026-02-27 11:12:55.821
 
 CREATE TYPE user_role AS ENUM ('admin', 'client', 'author');
 CREATE TYPE user_status AS ENUM ('active', 'inactive', 'banned');
-CREATE TYPE token_status AS ENUM ('active', 'revoked');
 CREATE TYPE purchase_status AS ENUM ('pending', 'succeeded', 'failed', 'refunded');
 CREATE TYPE media_provider AS ENUM ('local', 'google_drive');
 CREATE TYPE media_mime_type AS ENUM ('image/jpeg', 'image/png', 'video/mp4', 'application/zip', 'application/rar', 'application/pdf');
@@ -15,10 +13,12 @@ CREATE TABLE users (
                        id bigserial  NOT NULL,
                        username varchar(64)  UNIQUE NOT NULL,
                        email varchar(255)  UNIQUE NOT NULL,
-                       role user_role  NOT NULL,
+                       role user_role[]  NOT NULL,
                        password_hash text  NOT NULL,
                        avatar_url text  NOT NULL,
                        status user_status  NOT NULL,
+                       last_login_at TIMESTAMP WITH TIME ZONE NOT NULL,
+                       created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
                        CONSTRAINT users_pk PRIMARY KEY (id)
 );
 
@@ -114,7 +114,8 @@ CREATE TABLE refresh_token (
                                id bigserial  NOT NULL,
                                users_id int8  NOT NULL,
                                token text  NOT NULL,
-                               status token_status  NOT NULL,
+                               issued_at timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                               expiration_time TIMESTAMP WITH TIME ZONE NOT NULL,
                                CONSTRAINT refresh_token_pk PRIMARY KEY (id)
 );
 
