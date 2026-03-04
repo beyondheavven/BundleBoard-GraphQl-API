@@ -1,4 +1,4 @@
--- 0. Очистка (необязательно, если база пустая)
+-- 0.
 TRUNCATE users, authors, clients, tags, images, media_resources, collections, collection_tags, carts, purchases, refresh_token CASCADE;
 
 -- 1. USERS
@@ -53,7 +53,7 @@ INSERT INTO purchases (collections_id, clients_id, stripe_payment_intent_id, amo
                                                                                                                                                    (2, 4, 'pi_3O1abc123', 25.00, 'USD', 'succeeded', 25.00, '2026-02-28 10:00:00+03', '2026-02-28 10:05:00+03'),
                                                                                                                                                    (1, 5, 'pi_3O1xyz789', 49.99, 'USD', 'pending', 49.99, NOW(), NOW());
 
--- 11. REFRESH_TOKEN (обновлено: добавлены issued_at и expires_at)
-INSERT INTO refresh_token (users_id, token, issued_at, expires_at) VALUES
+-- 11. REFRESH_TOKEN (issued_at & expiration_time)
+INSERT INTO refresh_token (users_id, token, issued_at, expiration_time) VALUES
                                                                        (1, 'long-random-jwt-token-string-for-admin', NOW(), NOW() + INTERVAL '30 days'),
                                                                        (4, 'long-random-jwt-token-string-for-ivan', NOW(), NOW() + INTERVAL '30 days');
