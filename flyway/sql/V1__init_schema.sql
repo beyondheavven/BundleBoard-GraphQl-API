@@ -13,11 +13,11 @@ CREATE TABLE users (
                        id bigserial  NOT NULL,
                        username varchar(64)  UNIQUE NOT NULL,
                        email varchar(255)  UNIQUE NOT NULL,
-                       role user_role[]  NOT NULL,
+                       roles user_role[]  NOT NULL,
                        password_hash text  NOT NULL,
                        avatar_url text  NOT NULL,
                        status user_status  NOT NULL,
-                       last_login_at TIMESTAMP WITH TIME ZONE NOT NULL,
+                       last_login_at TIMESTAMP WITH TIME ZONE,
                        created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
                        CONSTRAINT users_pk PRIMARY KEY (id)
 );

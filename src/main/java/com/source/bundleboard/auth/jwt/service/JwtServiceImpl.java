@@ -1,7 +1,6 @@
 package com.source.bundleboard.auth.jwt.service;
 
 import com.source.bundleboard.auth.jwt.JwtProperties;
-import com.source.bundleboard.user.model.UserRole;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -28,7 +27,7 @@ public class JwtServiceImpl implements JwtService {
 
     public JwtServiceImpl(JwtProperties jwtProperties) {
         this.jwtProperties = jwtProperties;
-        this.signingKey = Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8));
+        this.signingKey = Jwts.SIG.HS256.key().build();
     }
 
     // Generate access token with user details and roles embedded as claims
