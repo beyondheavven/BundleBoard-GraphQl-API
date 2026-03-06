@@ -3,7 +3,7 @@ package com.source.bundleboard.auth.jwt;
 import com.source.bundleboard.auth.jwt.service.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.server.ServerHttpRequest;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -23,7 +23,7 @@ public class JwtAuthenticationFilter implements WebFilter {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        String token = extractToken((ServerHttpRequest) exchange.getRequest());
+        String token = extractToken(exchange.getRequest());
 
         if (token == null) {
             return chain.filter(exchange);
