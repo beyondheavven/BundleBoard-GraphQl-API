@@ -54,8 +54,8 @@ public class SecurityConfig {
                 )
                 .authorizeExchange(exchangeSpec -> exchangeSpec
                         // Public endpoints that don't require authentication
-                        .pathMatchers("/api/graphql", "/api/graphiql/**").permitAll()
                         .pathMatchers("/api/auth/**").permitAll()
+                        .pathMatchers("/api/graphql", "/api/graphiql/**").permitAll()
                         .pathMatchers("/actuator/health").permitAll()
                         .pathMatchers(HttpMethod.OPTIONS).permitAll()
 
