@@ -1,6 +1,7 @@
 package com.source.bundleboard.user.model;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.Instant;
@@ -14,8 +15,10 @@ public record User(
 
         String email,
 
+        @Column("password_hash")
         String passwordHash,
 
+        @Column("avatar_url")
         String avatarUrl,
 
         Set<UserRole> roles,
