@@ -11,8 +11,10 @@ import java.util.Set;
 public record User(
         @Id Long id,
 
+        @Column("username")
         String username,
 
+        @Column("email")
         String email,
 
         @Column("password_hash")
@@ -21,12 +23,16 @@ public record User(
         @Column("avatar_url")
         String avatarUrl,
 
+        @Column("roles")
         Set<UserRole> roles,
 
+        @Column("status")
         UserStatus status,
 
+        @Column("last_login_at")
         Instant lastLoginAt,
 
+        @Column("created_at")
         Instant createdAt
 ) {
 }
