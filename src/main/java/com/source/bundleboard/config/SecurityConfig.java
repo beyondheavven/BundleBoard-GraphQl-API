@@ -29,8 +29,6 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    private final ReactiveUserDetailsServiceImpl userDetailsService;
-
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(12);
@@ -54,16 +52,16 @@ public class SecurityConfig {
                 )
                 .authorizeExchange(exchangeSpec -> exchangeSpec
                         // Public endpoints that don't require authentication
-                        .pathMatchers("/api/auth/**").permitAll()
-                        .pathMatchers("/api/graphql", "/api/graphiql/**").permitAll()
+                        .pathMatchers("/auth/**").permitAll()
+                        .pathMatchers("/graphql", "/graphiql/**").permitAll()
                         .pathMatchers("/actuator/health").permitAll()
                         .pathMatchers(HttpMethod.OPTIONS).permitAll()
 
                         // Admin-only endpoints
-                        .pathMatchers("/api/admin/**").hasRole("ADMIN")
+                        .pathMatchers("/admin/**").hasRole("ADMIN")
 
                         // User endpoints require authentication
-                        .pathMatchers("/api/users/**").hasAnyRole("CLIENT", "AUTHOR", "ADMIN")
+                        .pathMatchers("/users/**").hasAnyRole("CLIENT", "AUTHOR", "ADMIN")
                         .anyExchange().authenticated()
                 )
                 // Add JWT filter before the authentication filter

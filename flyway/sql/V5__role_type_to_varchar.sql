@@ -1,0 +1,5 @@
+ALTER TABLE users
+ALTER COLUMN roles TYPE VARCHAR(32)[]
+    USING roles::text[]::VARCHAR(32)[];
+
+DROP TYPE user_role CASCADE;
