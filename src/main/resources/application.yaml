@@ -1,6 +1,4 @@
 spring:
-  webflux:
-    base-path: /api
   application:
     name: bundleboard
   r2dbc:

@@ -15,6 +15,7 @@ import com.source.bundleboard.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
@@ -35,6 +36,7 @@ public class AuthServiceImpl implements AuthService {
     private final JwtProperties jwtProperties;
 
 
+    @Transactional
     @Override
     public Mono<AuthResponse> authenticate(AuthRequest request) {
         return userRepository.findByUsername(request.username())
@@ -64,6 +66,7 @@ public class AuthServiceImpl implements AuthService {
                 });
     }
 
+    @Transactional
     @Override
     public Mono<AuthResponse> register(RegisterRequest request) {
         return userRepository.existsByUsername(request.username())
