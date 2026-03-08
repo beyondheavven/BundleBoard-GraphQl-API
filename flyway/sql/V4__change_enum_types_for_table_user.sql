@@ -8,7 +8,7 @@ ALTER TABLE users
 ALTER COLUMN status TYPE VARCHAR(32)
     USING status::text::VARCHAR(32);
 
-ALTER TABLE users ADD CONSTRAINT user_status_check CHECK (status IN ('ACTIVE', 'INACTIVE', 'BANNED'));
+ALTER TABLE users ADD CONSTRAINT user_status_check CHECK (status IN ('active', 'inactive', 'banned'));
 
 DROP TYPE user_role CASCADE;
 DROP TYPE user_status CASCADE;
