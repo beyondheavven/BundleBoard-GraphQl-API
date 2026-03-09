@@ -17,7 +17,6 @@ type Collection {
     author: Author!
     tags: [Tag]
     previewImage: Image
-    createdAt: String
 }
 
 input CollectionInput {
