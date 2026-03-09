@@ -1,0 +1,31 @@
+extend type Query {
+    getUserById(id: ID!): User
+    getAllUsers: [User!]!
+    me: User
+}
+
+type User {
+    id: ID!
+    username: String!
+    email: String!
+    role: UserRole!
+    avatarUrl: String
+    status: UserStatus!
+}
+
+type Author {
+    id: ID!
+    user: User!
+    bio: String
+    rating: Float
+    totalSales: Int
+    socialLinks: String
+}
+
+enum UserRole {
+    admin, author, client
+}
+
+enum UserStatus {
+    active, inactive, banned
+}
