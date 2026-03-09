@@ -23,26 +23,23 @@ public class AuthController {
 
     @PostMapping(AuthApiPaths.LOGIN_PATH)
     public Mono<AuthResponse> login(@Valid @RequestBody AuthRequest request) {
-        return authService.authenticate(request)
-                .onErrorResume(e -> Mono.error(new RuntimeException(e.getMessage())));
+        return authService.authenticate(request);
     }
 
 
     @PostMapping(AuthApiPaths.REGISTER_PATH)
     public Mono<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-        return authService.register(request)
-                .onErrorResume(e -> Mono.error(new RuntimeException(e.getMessage())));
+        return authService.register(request);
     }
 
     @PostMapping(AuthApiPaths.REFRESH_TOKEN)
     public Mono<AuthResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest refreshToken) {
-        return authService.refreshToken(refreshToken)
-                .onErrorResume(e -> Mono.error(new RuntimeException(e.getMessage())));
+        return authService.refreshToken(refreshToken);
     }
 
     @PostMapping(AuthApiPaths.LOGOUT_PATH)
     public Mono<Boolean> logout(@RequestBody RefreshTokenRequest refreshToken){
-        return authService.logout(refreshToken).thenReturn(true).onErrorReturn(false);
+        return authService.logout(refreshToken);
     }
 
 }

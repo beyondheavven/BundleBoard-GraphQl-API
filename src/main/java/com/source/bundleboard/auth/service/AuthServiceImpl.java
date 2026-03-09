@@ -1,5 +1,6 @@
 package com.source.bundleboard.auth.service;
 
+import com.source.bundleboard.api.exception.*;
 import com.source.bundleboard.auth.dto.AuthRequest;
 import com.source.bundleboard.auth.dto.AuthResponse;
 import com.source.bundleboard.auth.dto.RefreshTokenRequest;
@@ -40,19 +41,19 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public Mono<AuthResponse> authenticate(AuthRequest request) {
         return userRepository.findByUsername(request.username())
-                .switchIfEmpty(Mono.error(new RuntimeException("User not found.")))
+                .switchIfEmpty(Mono.error(new UserNotFoundException("User not found.")))
                 .flatMap(user -> {
 
                     if (!passwordEncoder.matches(request.password(), user.passwordHash())) {
-                        return Mono.error(new RuntimeException("Incorrect password."));
+                        return Mono.error(new IncorrectPasswordException("Incorrect password."));
                     }
 
                     if (user.status() == UserStatus.banned) {
-                        return Mono.error(new RuntimeException("User is banned."));
+                        return Mono.error(new UserStatusException("User is banned."));
                     }
 
                     if (user.status() == UserStatus.inactive) {
-                        return Mono.error(new RuntimeException("User is inactive."));
+                        return Mono.error(new UserStatusException("User is inactive."));
                     }
 
                     User updatedUser = new User(
@@ -72,7 +73,7 @@ public class AuthServiceImpl implements AuthService {
         return userRepository.existsByUsername(request.username())
                 .flatMap(exists -> {
                     if (exists){
-                        return Mono.error(new RuntimeException("Username already exists."));
+                        return Mono.error(new UserAlreadyExistsException("Username already exists."));
                     }
                     User user = new User(
                             null,
@@ -96,19 +97,19 @@ public class AuthServiceImpl implements AuthService {
         return jwtService.isRefreshToken(refreshToken)
                 .flatMap(isRefresh -> {
                     if (!isRefresh){
-                        return Mono.error(new RuntimeException("Invalid refresh token."));
+                        return Mono.error(new InvalidTokenException("Invalid refresh token."));
                     }
                     return refreshTokenRepository.existsByTokenAndExpirationTimeAfter(refreshToken, Instant.now());
                 })
                 .flatMap(exists -> {
-                    if (!exists) return Mono.error(new RuntimeException("Token expired or revoked."));
+                    if (!exists) return Mono.error(new InvalidTokenException("Token expired or revoked."));
                     return jwtService.extractUsername(refreshToken);
                 })
                 .flatMap(userRepository::findByUsername)
-                .switchIfEmpty(Mono.error(new RuntimeException("User not found.")))
+                .switchIfEmpty(Mono.error(new UserNotFoundException("User not found.")))
                 .flatMap(user -> {
                     if (user.status() == UserStatus.banned || user.status() == UserStatus.inactive) {
-                        return Mono.error(new RuntimeException("User is banned or inactive."));
+                        return Mono.error(new UserStatusException("User is banned or inactive."));
                     }
 
                     return refreshTokenRepository.deleteByToken(refreshToken)

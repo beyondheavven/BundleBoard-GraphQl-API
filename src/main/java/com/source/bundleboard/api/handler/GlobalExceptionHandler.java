@@ -1,0 +1,61 @@
+package com.source.bundleboard.api.handler;
+
+import com.source.bundleboard.api.exception.*;
+import com.source.bundleboard.api.dto.ErrorResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import reactor.core.publisher.Mono;
+
+@Slf4j
+@RestControllerAdvice
+public class GlobalExceptionHandler{
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public Mono<ResponseEntity<ErrorResponse>> handleNotFound(UserNotFoundException e){
+        return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse("User not found.", e.getMessage())));
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public Mono<ResponseEntity<ErrorResponse>> handleBadCredentials(BadCredentialsException e){
+        return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ErrorResponse("Bad credentials.", e.getMessage())));
+    }
+
+    @ExceptionHandler(IncorrectPasswordException.class)
+    public Mono<ResponseEntity<ErrorResponse>> handleIncorrectPassword(IncorrectPasswordException e){
+        return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ErrorResponse("Incorrect password.", e.getMessage())));
+    }
+
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    public Mono<ResponseEntity<ErrorResponse>> handleUserAlreadyExists(UserAlreadyExistsException e){
+        return Mono.just(ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse("User already exists.", e.getMessage())));
+    }
+
+    @ExceptionHandler(UserStatusException.class)
+    public Mono<ResponseEntity<ErrorResponse>> handleUserStatus(UserStatusException e){
+        return Mono.just(ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new ErrorResponse("User status is not allowed.", e.getMessage())));
+    }
+
+    @ExceptionHandler(InvalidTokenException.class)
+    public Mono<ResponseEntity<ErrorResponse>> handleInvalidToken(InvalidTokenException e){
+        return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ErrorResponse("Invalid token.", e.getMessage())));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public Mono<ResponseEntity<ErrorResponse>> handleException(Exception e){
+        log.error("Unexpected error: ", e);
+        return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse("Internal server error.", e.getMessage())));
+    }
+
+
+}
