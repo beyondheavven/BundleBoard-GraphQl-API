@@ -1,0 +1,38 @@
+extend type Query {
+    getAllCollections: [Collection!]!
+    getCollectionById(id: ID!): Collection
+}
+
+extend type Mutation {
+    createCollection(input: CollectionInput!): Collection!
+    updateCollection(id: ID!, input: UpdateCollectionInput!): Collection!
+    deleteCollection(id: ID!): Boolean!
+}
+
+type Collection {
+    id: ID!
+    name: String!
+    description: String!
+    price: Float!
+    author: Author!
+    tags: [Tag]
+    previewImage: Image
+}
+
+input CollectionInput {
+    name: String!
+    description: String!
+    price: Float!
+    authorId: ID!
+    previewImageId: ID
+    projectFileId: ID!
+    videoTutorialUrl: String
+}
+
+input UpdateCollectionInput {
+    name: String
+    description: String
+    price: Float
+    videoTutorialUrl: String
+    previewImageId: ID
+}

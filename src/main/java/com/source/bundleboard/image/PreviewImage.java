@@ -1,0 +1,33 @@
+package com.source.bundleboard.image;
+
+import com.source.bundleboard.mediaresource.MimeType;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
+
+@Table("images")
+public record PreviewImage(
+
+        @Id
+        @Column("id")
+        Long Id,
+
+        @Column("file_name")
+        String fileName,
+
+        @Column("file_path")
+        String filePath,
+
+        @Column("media_mime_type")
+        MimeType mimeType,
+
+        @Column("width")
+        Integer width,
+
+        @Column("height")
+        Integer height,
+
+        @Column("file_size")
+        Long fileSize
+) {
+}
