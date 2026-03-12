@@ -18,7 +18,7 @@ public interface CollectionService {
 
     Mono<CollectionResponseDto> updateCollection(Long id, UpdateCollectionDto collection);
 
-    Mono<Void> deleteCollection(Long id);
+    Mono<Boolean> deleteCollection(Long id);
 
 
 }
