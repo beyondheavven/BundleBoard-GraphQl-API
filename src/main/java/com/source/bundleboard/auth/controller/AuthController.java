@@ -38,7 +38,7 @@ public class AuthController {
     }
 
     @PostMapping(AuthApiPaths.LOGOUT_PATH)
-    public Mono<Boolean> logout(@RequestBody RefreshTokenRequest refreshToken){
+    public Mono<Void> logout(@RequestBody RefreshTokenRequest refreshToken){
         return authService.logout(refreshToken);
     }
 
