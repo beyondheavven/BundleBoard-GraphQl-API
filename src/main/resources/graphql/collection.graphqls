@@ -1,5 +1,5 @@
 extend type Query {
-    getAllCollections: [Collection!]!
+    getAllCollections: [Collection]!
     getCollectionById(id: ID!): Collection
 }
 

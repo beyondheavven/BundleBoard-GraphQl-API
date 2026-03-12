@@ -50,6 +50,18 @@ public class GlobalExceptionHandler{
                 .body(new ErrorResponse("Invalid token.", e.getMessage())));
     }
 
+    @ExceptionHandler(CollectionNotFoundException.class)
+    public Mono<ResponseEntity<ErrorResponse>> handleCollectionNotFound(CollectionNotFoundException e){
+        return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse("Collection not found.", e.getMessage())));
+    }
+
+    @ExceptionHandler(AuthorNotFoundException.class)
+    public Mono<ResponseEntity<ErrorResponse>> handleAuthorNotFound(AuthorNotFoundException e){
+        return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse("Author not found.", e.getMessage())));
+    }
+
     @ExceptionHandler(Exception.class)
     public Mono<ResponseEntity<ErrorResponse>> handleException(Exception e){
         log.error("Unexpected error: ", e);
