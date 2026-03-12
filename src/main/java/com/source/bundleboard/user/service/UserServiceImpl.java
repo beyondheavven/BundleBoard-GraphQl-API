@@ -1,5 +1,6 @@
 package com.source.bundleboard.user.service;
 
+import com.source.bundleboard.api.exception.UserNotFoundException;
 import com.source.bundleboard.user.dto.UserResponseDto;
 import com.source.bundleboard.user.mapper.UserMapper;
 import com.source.bundleboard.user.repository.UserRepository;
@@ -18,13 +19,18 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
 
     @Override
-    public Mono<UserResponseDto> getUserById(Long id) {
-        return userRepository.findById(id).map(userMapper::toDto);
+    public Mono<UserResponseDto> findUserByUsername(String username) {
+        return null;
     }
 
     @Override
-    public Flux<UserResponseDto> getAllUsers() {
-        return userRepository.findAll().map(userMapper::toDto);
+    public Mono<UserResponseDto> findUserById(Long id) {
+        return userRepository.findById(id).map(userMapper::toDto).switchIfEmpty(Mono.error(new UserNotFoundException("User not found.")));
+    }
+
+    @Override
+    public Flux<UserResponseDto> findAllUsers() {
+        return userRepository.findAll().map(userMapper::toDto).switchIfEmpty(Flux.error(new UserNotFoundException("No users found.")));
     }
 
 

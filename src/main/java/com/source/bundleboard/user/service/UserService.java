@@ -7,9 +7,11 @@ import reactor.core.publisher.Mono;
 
 public interface UserService {
 
-    Mono<UserResponseDto> getUserById(Long id);
+    Mono<UserResponseDto> findUserByUsername(String username);
 
-    Flux<UserResponseDto> getAllUsers();
+    Mono<UserResponseDto> findUserById(Long id);
+
+    Flux<UserResponseDto> findAllUsers();
 
 
 }
