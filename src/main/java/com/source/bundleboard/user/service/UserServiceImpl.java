@@ -20,7 +20,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Mono<UserResponseDto> findUserByUsername(String username) {
-        return null;
+        return userRepository.findByUsername(username).map(userMapper::toDto).switchIfEmpty(Mono.error(new UserNotFoundException("User not found.")));
     }
 
     @Override
