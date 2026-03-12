@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 
 public record CollectionResponseDto(
 
+        Long id,
+
         String name,
 
         String description,

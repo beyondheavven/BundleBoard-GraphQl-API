@@ -11,7 +11,7 @@ public record Collection(
 
         @Id
         @Column("id")
-        Long Id,
+        Long id,
 
         @Column("name")
         String name,

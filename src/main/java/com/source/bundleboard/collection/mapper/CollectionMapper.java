@@ -11,18 +11,18 @@ import org.mapstruct.MappingTarget;
 @Mapper(componentModel = "spring")
 public interface CollectionMapper {
 
-    @Mapping(target = "authorId", source = "authorsId")
+    @Mapping(target = "authorId", source = "authorId")
     @Mapping(target = "previewImageId", source = "previewImageId")
     CollectionResponseDto toDto(Collection collection);
 
-    @Mapping(target = "authorsId", source = "authorId")
-    @Mapping(target = "projectFileId", source = "archiveId")
+    @Mapping(target = "authorId", source = "authorId")
+    @Mapping(target = "mediaResourceId", source = "mediaResourceId")
     @Mapping(target = "previewImageId", source = "previewImageId")
-    @Mapping(target = "id", ignore = true) // ID генерируется базой (bigserial)
+    @Mapping(target = "id", ignore = true)
     Collection toEntity(CreateNewCollectionDto dto);
 
-    @Mapping(target = "authorsId", ignore = true)
-    @Mapping(target = "projectFileId", ignore = true)
+    @Mapping(target = "authorId", ignore = true)
+    @Mapping(target = "mediaResourceId", ignore = true)
     @Mapping(target = "id", ignore = true)
     void updateEntityFromDto(UpdateCollectionDto dto, @MappingTarget Collection entity);
 }
