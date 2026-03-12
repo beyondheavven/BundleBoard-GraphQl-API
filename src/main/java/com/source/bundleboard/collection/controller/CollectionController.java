@@ -44,7 +44,7 @@ public class CollectionController {
     @PreAuthorize("hasAnyRole('ADMIN', 'AUTHOR')")
     @MutationMapping
     public Mono<Boolean> deleteCollection(@Argument Long id) {
-        return collectionService.deleteCollection(id).thenReturn(true).defaultIfEmpty(false);
+        return collectionService.deleteCollection(id);
     }
 
 
