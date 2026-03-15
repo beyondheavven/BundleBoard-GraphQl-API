@@ -62,6 +62,11 @@ public class GlobalExceptionHandler{
                 .body(new ErrorResponse("Author not found.", e.getMessage())));
     }
 
+    public Mono<ResponseEntity<ErrorResponse>> handleImageNotFound(ImageNotFoundException e){
+        return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse("Image not found.", e.getMessage())));
+    }
+
     @ExceptionHandler(Exception.class)
     public Mono<ResponseEntity<ErrorResponse>> handleException(Exception e){
         log.error("Unexpected error: ", e);

@@ -16,10 +16,11 @@ type User {
 type Author {
     id: ID!
     user: User!
-    bio: String
-    rating: Float
-    totalSales: Int
-    socialLinks: String
+    bio: String!
+    rating: Float!
+    totalSales: Int!
+    socialLinks: String!
+    stripeAccountId: String!
 }
 
 enum UserRole {
