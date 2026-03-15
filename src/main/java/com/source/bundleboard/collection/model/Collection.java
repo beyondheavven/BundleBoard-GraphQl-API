@@ -25,7 +25,7 @@ public record Collection(
         @Column("video_tutorial_url")
         String videoTutorialUrl,
 
-        @Column("author_id")
+        @Column("authors_id")
         Long authorId,
 
         @Column("project_file_id")

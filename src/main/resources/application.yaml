@@ -5,7 +5,6 @@ spring:
     url: r2dbc:postgresql://postgres:${POSTGRES_PORT:5432}/${POSTGRES_DB}
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
-    host:
   graphql:
     graphiql:
       enabled: true
@@ -20,7 +19,7 @@ spring:
       allowed-methods: "*"
 logging:
   level:
-    org.springframework.graphql: DEBUG
+    org.springframework.r2dbc: DEBUG
 
 app:
   jwt:

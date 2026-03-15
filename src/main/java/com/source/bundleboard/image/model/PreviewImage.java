@@ -18,7 +18,7 @@ public record PreviewImage(
         @Column("file_path")
         String filePath,
 
-        @Column("media_mime_type")
+        @Column("mime_type")
         MimeType mimeType,
 
         @Column("width")
