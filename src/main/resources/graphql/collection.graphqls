@@ -16,7 +16,7 @@ type Collection {
     price: Float!
     author: Author!
     tags: [Tag]
-    previewImage: Image
+    previewImage: Image!
 }
 
 input CollectionInput {
