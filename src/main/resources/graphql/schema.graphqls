@@ -29,3 +29,8 @@ enum MimeType {
     rar
     pdf
 }
+
+enum Provider {
+    local
+    google_drive
+}

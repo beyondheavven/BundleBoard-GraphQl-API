@@ -14,7 +14,5 @@ public interface MediaResourceMapper {
     @Mapping(target = "mimeType", source = "mimeType")
     @Mapping(target = "provider", source = "provider")
     @Mapping(target = "fileSize", source = "fileSize")
-    @Mapping(target = "width", source = "width")
-    @Mapping(target = "height", source = "height")
     MediaResourceResponseDto toDto(MediaResource mediaResource);
 }

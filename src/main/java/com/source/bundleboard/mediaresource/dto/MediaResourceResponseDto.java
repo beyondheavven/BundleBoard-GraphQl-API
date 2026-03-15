@@ -15,10 +15,6 @@ public record MediaResourceResponseDto(
 
         Provider provider,
 
-        Integer width,
-
-        Integer height,
-
         Long fileSize
 ) {
 }
