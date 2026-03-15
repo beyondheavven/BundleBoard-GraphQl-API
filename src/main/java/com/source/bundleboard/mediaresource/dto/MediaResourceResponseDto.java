@@ -1,8 +1,9 @@
-package com.source.bundleboard.image.dto;
+package com.source.bundleboard.mediaresource.dto;
 
 import com.source.bundleboard.mediaresource.model.MimeType;
+import com.source.bundleboard.mediaresource.model.Provider;
 
-public record PreviewImageResponseDto(
+public record MediaResourceResponseDto(
 
         Long id,
 
@@ -12,11 +13,8 @@ public record PreviewImageResponseDto(
 
         MimeType mimeType,
 
-        Integer width,
-
-        Integer height,
+        Provider provider,
 
         Long fileSize
-
 ) {
 }

@@ -49,7 +49,7 @@ public class CollectionServiceImpl implements CollectionService {
         return Mono.just(collection)
                 .filter(d -> d.price() >= 5.0)
                 .switchIfEmpty(Mono.error(new MinimalPriceException("Validation failed: Minimal price is 5 USD")))
-                .filter(c -> c.description().length() >= 200 && c.description().length() <= 1000)
+                .filter(c -> c.description().length() >= 5 && c.description().length() <= 1000)
                 .switchIfEmpty(Mono.error(new DescriptionException("Validation failed: Description 200-1000 chars")))
                 .flatMap(dto -> authorService.findById(dto.authorId()).thenReturn(dto))
                 .map(collectionMapper::toEntity)

@@ -14,6 +14,10 @@ public record CollectionResponseDto(
 
         BigDecimal price,
 
-        Long previewImageId
+        String videoTutorialUrl,
+
+        Long previewImageId,
+
+        Long mediaResourceId
 ) {
 }
