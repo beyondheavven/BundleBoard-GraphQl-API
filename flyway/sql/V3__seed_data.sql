@@ -3,11 +3,11 @@ TRUNCATE users, authors, clients, tags, images, media_resources, collections, co
 
 -- 1. USERS
 INSERT INTO users (username, email, roles, password_hash, avatar_url, status, last_login_at, created_at) VALUES
-                                                                                                             ('admin_max', 'admin@platform.com', '{admin}', 'd74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1', 'https://cdn.com/avatars/1.jpg', 'active', NOW(), NOW()),
-                                                                                                             ('sergey_vfx', 'sergey@vfx.com', '{author}', 'd74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1', 'https://cdn.com/avatars/2.jpg', 'active', NOW(), NOW()),
-                                                                                                             ('elena_design', 'elena@design.com', '{author}', 'd74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1', 'https://cdn.com/avatars/3.jpg', 'active', NOW(), NOW()),
-                                                                                                             ('ivan_buyer', 'ivan@mail.com', '{client}', 'd74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1', 'https://cdn.com/avatars/4.jpg', 'active', NOW(), NOW()),
-                                                                                                             ('olga_creative', 'olga@mail.com', '{client}', 'd74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1', 'https://cdn.com/avatars/5.jpg', 'inactive', NULL, NOW());
+                                                                                                             ('admin_max', 'admin@platform.com', '{admin}', '3700adf1f25fab8202c1343c4b0b4e3fec706d57cad574086467b8b3ddf273ec', 'https://cdn.com/avatars/1.jpg', 'active', NOW(), NOW()),
+                                                                                                             ('sergey_vfx', 'sergey@vfx.com', '{author}', '3700adf1f25fab8202c1343c4b0b4e3fec706d57cad574086467b8b3ddf273ec', 'https://cdn.com/avatars/2.jpg', 'active', NOW(), NOW()),
+                                                                                                             ('elena_design', 'elena@design.com', '{author}', '3700adf1f25fab8202c1343c4b0b4e3fec706d57cad574086467b8b3ddf273ec', 'https://cdn.com/avatars/3.jpg', 'active', NOW(), NOW()),
+                                                                                                             ('ivan_buyer', 'ivan@mail.com', '{client}', '3700adf1f25fab8202c1343c4b0b4e3fec706d57cad574086467b8b3ddf273ec', 'https://cdn.com/avatars/4.jpg', 'active', NOW(), NOW()),
+                                                                                                             ('olga_creative', 'olga@mail.com', '{client}', '3700adf1f25fab8202c1343c4b0b4e3fec706d57cad574086467b8b3ddf273ec', 'https://cdn.com/avatars/5.jpg', 'inactive', NULL, NOW());
 
 -- 2. AUTHORS
 INSERT INTO authors (users_id, bio, social_links, rating, total_sales, stripe_account_id) VALUES
