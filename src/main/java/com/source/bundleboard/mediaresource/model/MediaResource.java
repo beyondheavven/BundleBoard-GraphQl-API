@@ -1,4 +1,4 @@
-package com.source.bundleboard.mediaresource;
+package com.source.bundleboard.mediaresource.model;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;

@@ -8,6 +8,8 @@ import com.source.bundleboard.collection.dto.UpdateCollectionDto;
 import com.source.bundleboard.collection.service.CollectionService;
 import com.source.bundleboard.image.dto.PreviewImageResponseDto;
 import com.source.bundleboard.image.service.PreviewImageService;
+import com.source.bundleboard.mediaresource.dto.MediaResourceResponseDto;
+import com.source.bundleboard.mediaresource.service.MediaResourceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
@@ -27,6 +29,8 @@ public class CollectionController {
     private final AuthorService authorService;
 
     private final PreviewImageService imageService;
+
+    private final MediaResourceService mediaResourceService;
 
     @QueryMapping
     public Flux<CollectionResponseDto> getAllCollections() {
@@ -57,13 +61,18 @@ public class CollectionController {
     }
 
     @SchemaMapping(typeName = "Collection", field = "author")
-    public Mono<AuthorResponseDto> getAuthor(CollectionResponseDto collection){
+    public Mono<AuthorResponseDto> getAuthorFromResponse(CollectionResponseDto collection){
         return authorService.findById(collection.authorId());
     }
 
     @SchemaMapping(typeName = "Collection", field = "previewImage")
     public Mono<PreviewImageResponseDto> getPreviewImage(CollectionResponseDto collection){
         return imageService.findByImageId(collection.previewImageId());
+    }
+
+    @SchemaMapping(typeName = "Collection", field = "mediaResource")
+    public Mono<MediaResourceResponseDto> getMediaResource(CollectionResponseDto collection){
+        return mediaResourceService.findById(collection.mediaResourceId());
     }
 
 
