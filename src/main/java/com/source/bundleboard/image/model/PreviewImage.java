@@ -1,4 +1,4 @@
-package com.source.bundleboard.image;
+package com.source.bundleboard.image.model;
 
 import com.source.bundleboard.mediaresource.MimeType;
 import org.springframework.data.annotation.Id;
@@ -10,7 +10,7 @@ public record PreviewImage(
 
         @Id
         @Column("id")
-        Long Id,
+        Long id,
 
         @Column("file_name")
         String fileName,
