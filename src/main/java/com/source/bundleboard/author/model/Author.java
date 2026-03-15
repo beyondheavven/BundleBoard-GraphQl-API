@@ -1,5 +1,6 @@
 package com.source.bundleboard.author.model;
 
+import io.r2dbc.postgresql.codec.Json;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
@@ -17,7 +18,7 @@ public record Author(
         String bio,
 
         @Column("social_links")
-        String socialLinks,
+        Json socialLinks,
 
         @Column("rating")
         BigDecimal rating,

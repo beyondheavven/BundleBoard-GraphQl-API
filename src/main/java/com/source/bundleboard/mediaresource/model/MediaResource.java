@@ -1,4 +1,4 @@
-package com.source.bundleboard.mediaresource;
+package com.source.bundleboard.mediaresource.model;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
@@ -9,7 +9,7 @@ public record MediaResource(
 
         @Id
         @Column("id")
-        Long Id,
+        Long id,
 
         @Column("file_name")
         String fileName,
@@ -17,17 +17,11 @@ public record MediaResource(
         @Column("file_path")
         String filePath,
 
-        @Column("media_mime_type")
+        @Column("mime_type")
         MimeType mimeType,
 
-        @Column("media_provider")
+        @Column("provider")
         Provider provider,
-
-        @Column("width")
-        Integer width,
-
-        @Column("height")
-        Integer height,
 
         @Column("file_size")
         Long fileSize
