@@ -1,4 +1,4 @@
-package com.source.bundleboard.mediaresource;
+package com.source.bundleboard.mediaresource.model;
 
 
 public enum MimeType {

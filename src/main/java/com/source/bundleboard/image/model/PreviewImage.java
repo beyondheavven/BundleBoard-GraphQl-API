@@ -1,6 +1,6 @@
 package com.source.bundleboard.image.model;
 
-import com.source.bundleboard.mediaresource.MimeType;
+import com.source.bundleboard.mediaresource.model.MimeType;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;

@@ -24,8 +24,8 @@ input CollectionInput {
     description: String!
     price: Float!
     authorId: ID!
-    previewImageId: ID
-    projectFileId: ID!
+    previewImageId: ID!
+    mediaResourceId: ID!
     videoTutorialUrl: String
 }
 
