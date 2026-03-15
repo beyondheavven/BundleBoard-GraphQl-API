@@ -17,7 +17,7 @@ public record MediaResource(
         @Column("file_path")
         String filePath,
 
-        @Column("media_mime_type")
+        @Column("mime_type")
         MimeType mimeType,
 
         @Column("media_provider")
