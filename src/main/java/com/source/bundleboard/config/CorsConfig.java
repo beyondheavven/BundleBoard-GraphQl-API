@@ -1,41 +1,35 @@
 package com.source.bundleboard.config;
 
+import com.source.bundleboard.properties.AppProperties;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsConfigurationSource;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 
-import java.util.List;
 
 @Configuration
+@RequiredArgsConstructor
 public class CorsConfig {
+
+    private final AppProperties appProperties;
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of(
-                "http://localhost:3000"
-                )
-        );
+        configuration.setAllowedOrigins(appProperties.getAllowedOrigins());
 
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        configuration.setAllowedMethods(appProperties.getAllowedMethods());
 
-        configuration.setAllowedHeaders(List.of(
-                "Authorization",
-                "Content-Type",
-                "X-Requested-With"
-        ));
+        configuration.setAllowedHeaders(appProperties.getAllowedHeaders());
 
-        configuration.setExposedHeaders(List.of(
-                "X-Total-Count",
-                "X-Page-Number"
-        ));
+        configuration.setExposedHeaders(appProperties.getExposedHeaders());
 
-        configuration.setAllowCredentials(true);
+        configuration.setAllowCredentials(appProperties.isAllowCredentials());
 
-        configuration.setMaxAge(3600L);
+        configuration.setMaxAge(appProperties.getMaxAge());
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

@@ -1,10 +1,17 @@
 spring:
+  profiles:
+    active: dev
   application:
     name: bundleboard
   r2dbc:
-    url: r2dbc:postgresql://postgres:${POSTGRES_PORT:5432}/${POSTGRES_DB}
+    url: r2dbc:postgresql://${SUPABASE_URL}:${SUPABASE_PORT:6543}/${SUPABASE_DB:postgres}?sslMode=verify-full
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
+    pool:
+      enabled: true
+      initial-size: ${DB_POOL_SIZE}
+      max-size: ${DB_MAX_POOL_SIZE}
+
   graphql:
     graphiql:
       enabled: true
@@ -15,13 +22,24 @@ spring:
       printer:
         enabled: true
     cors:
-      allowed-origins: "*"
-      allowed-methods: "*"
+      allowed-origins: ${ALLOWED_ORIGINS}
+      allowed-methods: ${ALLOWED_METHODS}
+      allowed-headers: ${ALLOWED_HEADERS}
+      allowed-credentials: ${ALLOWED_CREDENTIALS}
+      exposed-headers: ${EXPOSED_HEADERS}
+      max-age: ${MAX_AGE}
+  webflux:
+    base-path: /api
+
 logging:
   level:
     org.springframework.r2dbc: DEBUG
+    io.r2dbc.postgresql: DEBUG
+
+server:
+  port: ${SERVER_PORT}
 
 app:
   jwt:
-    access-token-expiration-ms: 900000
-    refresh-token-expiration-ms: 2592000000
+    access-token-expiration-ms: ${JWT_ACCESS_EXPIRY}
+    refresh-token-expiration-ms: ${JWT_REFRESH_EXPIRY}
