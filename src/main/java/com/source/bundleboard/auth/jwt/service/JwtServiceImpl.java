@@ -27,7 +27,8 @@ public class JwtServiceImpl implements JwtService {
 
     public JwtServiceImpl(JwtProperties jwtProperties) {
         this.jwtProperties = jwtProperties;
-        this.signingKey = Jwts.SIG.HS256.key().build();
+        byte[] keyBytes = jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8);
+        this.signingKey = Keys.hmacShaKeyFor(keyBytes);
     }
 
     // Generate access token with user details and roles embedded as claims
