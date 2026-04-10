@@ -43,3 +43,4 @@ app:
   jwt:
     access-token-expiration-ms: ${JWT_ACCESS_EXPIRY}
     refresh-token-expiration-ms: ${JWT_REFRESH_EXPIRY}
+    secret: ${JWT_SECRET}
