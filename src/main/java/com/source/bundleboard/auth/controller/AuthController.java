@@ -18,24 +18,23 @@ public class AuthController {
     private final AuthService authService;
 
     @MutationMapping
-    public Mono<AuthResponse> login(@Argument AuthRequest request) {
-        return authService.authenticate(request);
-    }
-
-
-    @MutationMapping
-    public Mono<AuthResponse> register(@Argument RegisterRequest request) {
-        return authService.register(request);
+    public Mono<AuthResponse> login(@Argument AuthRequest input) {
+        return authService.authenticate(input);
     }
 
     @MutationMapping
-    public Mono<AuthResponse> refreshToken(@Argument RefreshTokenRequest refreshToken) {
-        return authService.refreshToken(refreshToken);
+    public Mono<AuthResponse> register(@Argument RegisterRequest input) {
+        return authService.register(input);
     }
 
     @MutationMapping
-    public Mono<Void> logout(@Argument RefreshTokenRequest refreshToken){
-        return authService.logout(refreshToken);
+    public Mono<AuthResponse> refreshToken(@Argument RefreshTokenRequest input) {
+        return authService.refreshToken(input);
+    }
+
+    @MutationMapping
+    public Mono<Void> logout(@Argument RefreshTokenRequest input){
+        return authService.logout(input);
     }
 
 }
