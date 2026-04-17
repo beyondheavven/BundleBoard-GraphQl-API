@@ -4,6 +4,12 @@ extend type Query {
     me: User
 }
 
+extend type Mutation {
+    updateMe(input: UpdateUserRequest!): User!
+    changePassword(input: ChangePasswordRequest!): Boolean!
+    resetPassword(input: ResetPasswordRequest!): Boolean!
+}
+
 type User {
     id: ID!
     username: String!
@@ -21,6 +27,20 @@ type Author {
     totalSales: Int!
     socialLinks: String!
     stripeAccountId: String!
+}
+
+input UpdateUserRequest {
+    username: String!,
+    avatarUrl: String!
+}
+
+input ChangePasswordRequest {
+    password: String!
+}
+
+input ResetPasswordRequest {
+    token: String!
+    newPassword: String!
 }
 
 enum UserRole {
