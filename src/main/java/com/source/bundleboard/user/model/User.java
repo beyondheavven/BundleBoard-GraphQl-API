@@ -13,7 +13,7 @@ import java.util.Set;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Table("users")
+@Table(name = "users")
 public class User {
     @Id
     private Long id;

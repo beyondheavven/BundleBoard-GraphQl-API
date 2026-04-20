@@ -14,7 +14,6 @@ import com.source.bundleboard.user.model.UserRole;
 import com.source.bundleboard.user.model.UserStatus;
 import com.source.bundleboard.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
