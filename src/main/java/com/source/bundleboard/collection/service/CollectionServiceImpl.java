@@ -62,11 +62,11 @@ public class CollectionServiceImpl implements CollectionService {
         return collectionRepository.findCollectionById(id)
                 .switchIfEmpty(Mono.error(new CollectionNotFoundException("Collection not found")))
                 .flatMap(entity -> {
-                    if(entity.price().compareTo(MIN_PRICE) < 0){
+                    if(entity.getPrice().compareTo(MIN_PRICE) < 0){
                         return Mono.error(new MinimalPriceException("Minimal price is 5 USD"));
                     }
 
-                    if(entity.description().length() < 200 || entity.description().length() > 1000){
+                    if(entity.getDescription().length() < 200 || entity.getDescription().length() > 1000){
                         return Mono.error(new DescriptionException("Description must be between 200 and 1000 characters"));
                     }
 

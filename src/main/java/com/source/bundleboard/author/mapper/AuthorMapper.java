@@ -13,7 +13,7 @@ public interface AuthorMapper {
     @Mapping(target = "bio", source = "bio")
     @Mapping(target = "rating", source = "rating")
     @Mapping(target = "totalSales", source = "totalSales")
-    @Mapping(target = "socialLinks", expression = "java(mapJsonToString(author.socialLinks()))")
+    @Mapping(target = "socialLinks", expression = "java(mapJsonToString(author.getSocialLinks()))")
     @Mapping(target = "stripeAccountId", source = "stripeAccountId")
     AuthorResponseDto toDto(Author author);
 
