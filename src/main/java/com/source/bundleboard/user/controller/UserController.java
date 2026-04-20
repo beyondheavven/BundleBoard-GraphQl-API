@@ -1,9 +1,12 @@
 package com.source.bundleboard.user.controller;
 
+import com.source.bundleboard.user.dto.UpdateUserRequest;
 import com.source.bundleboard.user.dto.UserResponseDto;
+import com.source.bundleboard.user.dto.UserUpdateResponse;
 import com.source.bundleboard.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.graphql.data.method.annotation.Argument;
+import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -36,6 +39,11 @@ public class UserController {
     @QueryMapping
     public Flux<UserResponseDto> getAllUsers(){
         return userService.findAllUsers();
+    }
+
+    @MutationMapping
+    public Mono<UserUpdateResponse> updateMe(@Argument UpdateUserRequest input) {
+        return userService.updateMe(input);
     }
 
 
