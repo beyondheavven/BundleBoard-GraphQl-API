@@ -28,9 +28,9 @@ public class ReactiveUserDetailsServiceImpl implements ReactiveUserDetailsServic
 
     private UserDetails toUserDetails(User user) {
         return org.springframework.security.core.userdetails.User.builder()
-                .username(user.username())
-                .password(user.passwordHash())
-                .authorities(UserRole.toAuthorities(user.roles()))
+                .username(user.getUsername())
+                .password(user.getPasswordHash())
+                .authorities(UserRole.toAuthorities(user.getRoles()))
                 .accountExpired(false)
                 .accountLocked(false)
                 .credentialsExpired(false)

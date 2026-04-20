@@ -42,25 +42,25 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public Mono<AuthResponse> authenticate(AuthRequest request) {
         return userRepository.findByUsername(request.username())
-                .switchIfEmpty(Mono.error(new UserNotFoundException("User not found.")))
+                .switchIfEmpty(Mono.error(new UserNotFoundException()))
                 .flatMap(user -> {
 
-                    if (!passwordEncoder.matches(request.password(), user.passwordHash())) {
+                    if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
                         return Mono.error(new IncorrectPasswordException("Incorrect password."));
                     }
 
-                    if (user.status() == UserStatus.banned) {
+                    if (user.getStatus() == UserStatus.banned) {
                         return Mono.error(new UserStatusException("User is banned."));
                     }
 
-                    if (user.status() == UserStatus.inactive) {
+                    if (user.getStatus() == UserStatus.inactive) {
                         return Mono.error(new UserStatusException("User is inactive."));
                     }
 
                     User updatedUser = new User(
-                            user.id(), user.username(), user.email(), user.passwordHash(),
-                            user.avatarUrl(), user.roles(), user.status(),
-                            Instant.now(), user.createdAt()
+                            user.getId(), user.getUsername(), user.getEmail(), user.getPasswordHash(),
+                            user.getAvatarUrl(), user.getRoles(), user.getStatus(),
+                            Instant.now(), user.getCreatedAt()
                     );
 
                     return userRepository.save(updatedUser)
@@ -107,9 +107,9 @@ public class AuthServiceImpl implements AuthService {
                     return jwtService.extractUsername(refreshToken);
                 })
                 .flatMap(userRepository::findByUsername)
-                .switchIfEmpty(Mono.error(new UserNotFoundException("User not found.")))
+                .switchIfEmpty(Mono.error(new UserNotFoundException()))
                 .flatMap(user -> {
-                    if (user.status() == UserStatus.banned || user.status() == UserStatus.inactive) {
+                    if (user.getStatus() == UserStatus.banned || user.getStatus() == UserStatus.inactive) {
                         return Mono.error(new UserStatusException("User is banned or inactive."));
                     }
 
@@ -126,17 +126,17 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private Mono<AuthResponse> generateAuthResponse(User user) {
-        String accessToken = jwtService.generateAccessToken(user.username(), UserRole.toAuthorities(user.roles()));
-        String refreshToken = jwtService.generateRefreshToken(user.username());
+        String accessToken = jwtService.generateAccessToken(user.getUsername(), UserRole.toAuthorities(user.getRoles()));
+        String refreshToken = jwtService.generateRefreshToken(user.getUsername());
         RefreshToken refreshTokenEntity = new RefreshToken(
                 null,
-                user.id(),
+                user.getId(),
                 refreshToken,
                 Instant.now(),
                 Instant.now().plusMillis(jwtProperties.getRefreshTokenExpirationMs())
         );
 
         return refreshTokenRepository.save(refreshTokenEntity)
-                .map(savedRefreshToken -> new AuthResponse(accessToken, savedRefreshToken.token(), null));
+                .map(savedRefreshToken -> new AuthResponse(accessToken, savedRefreshToken.getToken(), null));
     }
 }

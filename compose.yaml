@@ -33,7 +33,7 @@ services:
     ports:
       - "3100:3100"
     command:
-      -config.file=/etc/loki/local-config.yaml.ro
+      -config.file=/etc/loki/local-config.yml.ro
     volumes:
       - ./monitoring/loki/loki-config.yml:/etc/loki/local-config.yml.ro
       - loki-data:/loki
