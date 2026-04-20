@@ -4,6 +4,7 @@ services:
     build: .
     environment:
       - SPRING_R2DBC_URL=r2dbc:postgresql://${POSTGRES_URL}:${POSTGRES_PORT}/${POSTGRES_DB}
+      - POSTGRES_SCHEMA=public
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - DB_POOL_SIZE=${DB_POOL_SIZE}
