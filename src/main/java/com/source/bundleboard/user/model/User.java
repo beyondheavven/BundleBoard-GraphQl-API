@@ -13,9 +13,11 @@ import java.util.Set;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Table("users")
+@Table(value = "users")
 public class User {
+
     @Id
+    @Column("id")
     private Long id;
 
     @Column("username")
