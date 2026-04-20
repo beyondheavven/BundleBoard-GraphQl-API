@@ -33,9 +33,9 @@ services:
     ports:
       - "3100:3100"
     command:
-      -config.file=/etc/loki/local-config.yaml
+      -config.file=/etc/loki/local-config.yaml.ro
     volumes:
-      - ./monitoring/loki/loki-config.yml:/etc/loki/local-config.yml
+      - ./monitoring/loki/loki-config.yml:/etc/loki/local-config.yml.ro
       - loki-data:/loki
     networks:
       - bundleboard_net
@@ -43,10 +43,10 @@ services:
   promtail:
     image: grafana/promtail:latest
     container_name: promtail
-    command: -config.file=/etc/promtail/config.yml
+    command: -config.file=/etc/promtail/config.yml.ro
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./monitoring/promtail/promtail-config.yml:/etc/promtail/config.yml
+      - ./monitoring/promtail/promtail-config.yml:/etc/promtail/config.yml.ro
     depends_on:
       - loki
     networks:
@@ -64,8 +64,8 @@ services:
       - loki
     volumes:
       - grafana-storage:/var/lib/grafana
-      - ./monitoring/grafana/provisioning/datasources/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
-      - ./monitoring/grafana/provisioning/dashboards/dashboard.yml:/etc/grafana/provisioning/dashboards/dashboard.yml
+      - ./monitoring/grafana/provisioning/datasources/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml.ro
+      - ./monitoring/grafana/provisioning/dashboards/dashboard.yml:/etc/grafana/provisioning/dashboards/dashboard.yml.ro
       - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards/imported
     networks:
       - bundleboard_net
