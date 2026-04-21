@@ -12,7 +12,7 @@ import java.time.Instant;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Table("refresh_tokens")
+@Table("refresh_token")
 public class RefreshToken {
     @Id
     Long id;
