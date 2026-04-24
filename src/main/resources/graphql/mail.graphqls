@@ -1,0 +1,10 @@
+extend type Mutation {
+    requestPasswordReset(email: String!): Boolean!
+    confirmPasswordReset(input: ConfirmPasswordRequest!): Boolean!
+}
+
+input ConfirmPasswordRequest {
+    email: String!
+    code: String!
+    newPassword: String!
+}
