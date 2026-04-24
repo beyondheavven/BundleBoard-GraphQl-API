@@ -8,8 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -22,13 +20,7 @@ public class UserController {
 
     @QueryMapping
     public Mono<UserResponseDto> me(){
-        return ReactiveSecurityContextHolder.getContext()
-                .map(securityContext -> securityContext.getAuthentication())
-                .filter(Authentication::isAuthenticated)
-                .flatMap(auth -> {
-                    String username = auth.getName();
-                    return userService.findUserByUsername(username);
-                });
+        return userService.findMe();
     }
 
     @QueryMapping

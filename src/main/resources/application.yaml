@@ -4,7 +4,7 @@ spring:
   application:
     name: bundleboard
   r2dbc:
-    url: r2dbc:postgresql://${POSTGRES_URL}:${POSTGRES_PORT:6543}/${POSTGRES_DB:postgres}
+    url: r2dbc:postgresql://${POSTGRES_URL}:${POSTGRES_PORT:6543}/${POSTGRES_DB:postgres}?options=-c%20search_path%3D${POSTGRES_SCHEMA:public}
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
     pool:

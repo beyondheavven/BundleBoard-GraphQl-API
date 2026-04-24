@@ -1,7 +1,7 @@
 extend type Query {
     getUserById(id: ID!): User
-    getAllUsers: [User!]!
-    me: User
+    getAllUsers: [UserResponseDto!]!
+    me: UserResponseDto!
 }
 
 extend type Mutation {
@@ -14,7 +14,7 @@ type User {
     id: ID!
     username: String!
     email: String!
-    roles: UserRole!
+    roles: [UserRole!]
     avatarUrl: String
     status: UserStatus!
 }
@@ -29,6 +29,15 @@ type Author {
     stripeAccountId: String!
 }
 
+type UserResponseDto {
+    id: ID!
+    username: String!
+    email: String!
+    avatarUrl: String!
+    roles: [UserRole!]
+    status: UserStatus!
+}
+
 type UserUpdateResponse {
     id: ID!
     username: String!
@@ -38,8 +47,8 @@ type UserUpdateResponse {
 
 input UpdateUserRequest {
     id: ID!
-    username: String!,
-    avatarUrl: String!
+    username: String,
+    avatarUrl: String
 }
 
 input ChangePasswordRequest {

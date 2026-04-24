@@ -8,6 +8,9 @@ import com.source.bundleboard.user.mapper.UserMapper;
 import com.source.bundleboard.user.model.User;
 import com.source.bundleboard.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -40,21 +43,34 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Mono<UserUpdateResponse> updateMe(UpdateUserRequest request) {
-        return userRepository.findById(request.id())
+        return ReactiveSecurityContextHolder.getContext()
+                .map(securityContext -> securityContext.getAuthentication())
+                .filter(Authentication::isAuthenticated)
+                .flatMap(authentication -> userRepository.findByUsername(authentication.getName()))
                 .switchIfEmpty(Mono.error(new UserNotFoundException()))
                 .flatMap( user -> {
 
-                            if (request.avatarUrl() != null){
-                                user.setAvatarUrl(request.avatarUrl());
-                            }
+                    if (request.avatarUrl() != null){
+                        user.setAvatarUrl(request.avatarUrl());
+                    }
 
-                            if(request.username() != null){
-                                user.setUsername(request.username());
-                            }
+                    if(request.username() != null){
+                        user.setUsername(request.username());
+                    }
 
-                            return userRepository.save(user);
-                        })
+                    return userRepository.save(user);
+                })
                 .map(userMapper::toUpdateResponse);
+    }
+
+    @Override
+    public Mono<UserResponseDto> findMe() {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(SecurityContext::getAuthentication)
+                .filter(Authentication::isAuthenticated)
+                .flatMap(authentication -> userRepository.findByUsername(authentication.getName()))
+                .switchIfEmpty(Mono.error(new UserNotFoundException()))
+                .map(userMapper::toDto);
     }
 
 
