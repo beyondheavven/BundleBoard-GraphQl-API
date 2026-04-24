@@ -47,8 +47,8 @@ type UserUpdateResponse {
 
 input UpdateUserRequest {
     id: ID!
-    username: String!,
-    avatarUrl: String!
+    username: String,
+    avatarUrl: String
 }
 
 input ChangePasswordRequest {
