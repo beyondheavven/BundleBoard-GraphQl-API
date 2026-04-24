@@ -17,4 +17,6 @@ public interface UserService {
 
 
     Mono<UserUpdateResponse> updateMe(UpdateUserRequest request);
+
+    Mono<UserResponseDto> findMe();
 }
