@@ -10,6 +10,7 @@ import com.source.bundleboard.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -22,8 +23,6 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
 
     private final UserMapper userMapper;
-
-    private final UserService userService;
 
     @Override
     public Mono<UserResponseDto> findUserByUsername(String username) {
@@ -62,6 +61,16 @@ public class UserServiceImpl implements UserService {
                     return userRepository.save(user);
                 })
                 .map(userMapper::toUpdateResponse);
+    }
+
+    @Override
+    public Mono<UserResponseDto> findMe() {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(SecurityContext::getAuthentication)
+                .filter(Authentication::isAuthenticated)
+                .flatMap(authentication -> userRepository.findByUsername(authentication.getName()))
+                .switchIfEmpty(Mono.error(new UserNotFoundException()))
+                .map(userMapper::toDto);
     }
 
 
