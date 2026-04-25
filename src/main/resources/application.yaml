@@ -56,3 +56,22 @@ app:
     access-token-expiration-ms: ${JWT_ACCESS_EXPIRY}
     refresh-token-expiration-ms: ${JWT_REFRESH_EXPIRY}
     secret: ${JWT_SECRET}
+
+  mail:
+    from: ${spring.mail.username}
+    templates:
+      verify-email: mail/verify-email
+      reset-password: mail/reset-password
+
+    subjects:
+      verify-email: Verify Email
+      reset-password: Reset Password
+
+    paths:
+      verify-email: /auth/verify
+      reset-password: /auth/reset-password
+
+
+  email-verification:
+    ttl-ms: ${EMAIL_VERIFICATION_TTL_MS}
+    verify-email-url: ${VERIFY_EMAIL_URL}
