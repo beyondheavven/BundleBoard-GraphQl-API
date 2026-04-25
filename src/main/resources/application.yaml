@@ -60,15 +60,15 @@ app:
   mail:
     from: ${spring.mail.username}
     templates:
-      verify-email: mail/verify-email
+      verification-email: mail/verify-email
       reset-password: mail/reset-password
 
     subjects:
-      verify-email: Verify Email
+      verification-email: Verify Email
       reset-password: Reset Password
 
     paths:
-      verify-email: /auth/verify
+      verification-email: /auth/verify
       reset-password: /auth/reset-password
 
 
