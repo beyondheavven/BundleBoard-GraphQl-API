@@ -30,6 +30,9 @@ public class EmailVerificationToken {
     @Column("token_status")
     private TokenStatus tokenStatus;
 
+    @Column("new_email")
+    private String newEmail;
+
     @Column("expires_at")
     private Instant expiresAt;
 
