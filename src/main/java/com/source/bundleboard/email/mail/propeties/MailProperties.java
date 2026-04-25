@@ -22,7 +22,7 @@ public class MailProperties {
 
     @Getter
     @Setter
-    private static class Templates {
+    public static class Templates {
 
         private String verificationEmail;
 
@@ -32,7 +32,7 @@ public class MailProperties {
 
     @Getter
     @Setter
-    private static class Subjects {
+    public static class Subjects {
 
         private String verificationEmail;
 
@@ -42,7 +42,7 @@ public class MailProperties {
 
     @Getter
     @Setter
-    private static class Paths {
+    public static class Paths {
 
         private String verificationEmail;
 
