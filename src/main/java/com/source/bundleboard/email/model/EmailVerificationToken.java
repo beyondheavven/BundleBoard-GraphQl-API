@@ -27,6 +27,9 @@ public class EmailVerificationToken {
     @Column("token_type")
     private TokenType tokenType;
 
+    @Column("token_status")
+    private TokenStatus tokenStatus;
+
     @Column("expires_at")
     private Instant expiresAt;
 
