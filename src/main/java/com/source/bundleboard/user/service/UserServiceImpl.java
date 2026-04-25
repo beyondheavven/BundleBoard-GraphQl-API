@@ -73,5 +73,20 @@ public class UserServiceImpl implements UserService {
                 .map(userMapper::toDto);
     }
 
+    @Override
+    public Mono<User> getUserById(Long id) {
+        return userRepository.findById(id).switchIfEmpty(Mono.error(new UserNotFoundException()));
+    }
+
+    @Override
+    public Mono<User> saveUser(User user) {
+        return userRepository.save(user).switchIfEmpty(Mono.error(new UserNotFoundException()));
+    }
+
+    @Override
+    public Mono<User> getUserByEmail(String email) {
+        return userRepository.findByEmail(email).switchIfEmpty(Mono.error(new UserNotFoundException()));
+    }
+
 
 }

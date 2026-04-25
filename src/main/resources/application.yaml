@@ -31,6 +31,18 @@ spring:
   webflux:
     base-path: /api
 
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_SMTP_AUTH}
+          starttls:
+            enable: ${MAIL_SMTP_STARTTLS_ENABLE}
+
 logging:
   level:
     org.springframework.r2dbc: DEBUG
@@ -44,3 +56,22 @@ app:
     access-token-expiration-ms: ${JWT_ACCESS_EXPIRY}
     refresh-token-expiration-ms: ${JWT_REFRESH_EXPIRY}
     secret: ${JWT_SECRET}
+
+  mail:
+    from: ${spring.mail.username}
+    templates:
+      verification-email: mail/verify-email
+      reset-password: mail/reset-password
+
+    subjects:
+      verification-email: Verify Email
+      reset-password: Reset Password
+
+    paths:
+      verification-email: /auth/verify
+      reset-password: /auth/reset-password
+
+
+  email-verification:
+    ttl-ms: ${EMAIL_VERIFICATION_TTL_MS}
+    verify-email-url: ${VERIFY_EMAIL_URL}

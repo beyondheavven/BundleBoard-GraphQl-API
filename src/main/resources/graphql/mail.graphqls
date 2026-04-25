@@ -1,0 +1,5 @@
+extend type Mutation {
+    verifyEmail(token: String!): Boolean!
+    requestEmailChange(newEmail: String!): Boolean!
+    resendVerificationEmail(email: String!): Boolean!
+}
