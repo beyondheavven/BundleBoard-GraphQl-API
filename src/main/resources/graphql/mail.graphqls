@@ -1,10 +1,5 @@
 extend type Mutation {
-    requestPasswordReset(email: String!): Boolean!
-    confirmPasswordReset(input: ConfirmPasswordRequest!): Boolean!
-}
-
-input ConfirmPasswordRequest {
-    email: String!
-    code: String!
-    newPassword: String!
+    verifyEmail(token: String!): Boolean!
+    requestEmailChange(newEmail: String!): Boolean!
+    resendVerificationEmail(email: String!): Boolean!
 }
