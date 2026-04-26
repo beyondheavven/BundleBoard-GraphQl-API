@@ -26,4 +26,6 @@ public interface UserService {
     Mono<User> saveUser(User user);
 
     Mono<User> getUserByEmail(String email);
+
+    Mono<User> getUserByUsername(String username);
 }

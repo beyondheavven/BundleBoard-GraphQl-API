@@ -59,8 +59,8 @@ public class EmailVerificationTokenServiceImpl implements EmailVerificationToken
     }
 
     @Override
-    public Mono<Boolean> sendChangeEmailToken(String newEmail, String currentEmail) {
-        return userService.getUserByEmail(currentEmail)
+    public Mono<Boolean> sendChangeEmailToken(String newEmail, String username) {
+        return userService.getUserByUsername(username)
                 .flatMap(user -> {
                     TokenEntity tokenEntity = createTokenEntity(user.getId(), TokenType.change_email);
                     tokenEntity.token().setNewEmail(newEmail);
@@ -76,7 +76,6 @@ public class EmailVerificationTokenServiceImpl implements EmailVerificationToken
     @Override
     public Mono<Boolean> resendVerificationEmail(String email) {
         return userService.getUserByEmail(email)
-                .filter(user -> user.getStatus() == UserStatus.inactive)
                 .switchIfEmpty(Mono.error(new UserNotFoundException()))
                 .flatMap(user -> {
                     TokenEntity tokenEntity = createTokenEntity(user.getId(), TokenType.verify_email);
