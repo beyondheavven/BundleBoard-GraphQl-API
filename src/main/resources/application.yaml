@@ -75,3 +75,7 @@ app:
   email-verification:
     ttl-ms: ${EMAIL_VERIFICATION_TTL_MS}
     verify-email-url: ${VERIFY_EMAIL_URL}
+    hash-algorithm: ${EMAIL_HASH_ALGORITHM}
+    hex-format: ${EMAIL_HEX_FORMAT}
+    hash-length: ${EMAIL_HASH_LENGTH}
+    byte-length: ${EMAIL_BYTE_LENGTH}

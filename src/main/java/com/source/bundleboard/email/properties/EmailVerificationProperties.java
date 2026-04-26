@@ -15,4 +15,12 @@ public class EmailVerificationProperties {
 
     private String verifyEmailUrl;
 
+    private String hashAlgorithm;
+
+    private String hexFormat;
+
+    private int hashLength;
+
+    private int byteLength;
+
 }

@@ -18,16 +18,16 @@ public class EmailVerificationToken {
     @Id
     private Long id;
 
-    @Column("users_id")
+    @Column("user_id")
     private Long userId;
 
     @Column("token")
     private String token;
 
-    @Column("token_type")
+    @Column("type")
     private TokenType tokenType;
 
-    @Column("token_status")
+    @Column("status")
     private TokenStatus tokenStatus;
 
     @Column("new_email")
