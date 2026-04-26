@@ -65,6 +65,8 @@ public class EmailVerificationTokenServiceImpl implements EmailVerificationToken
                     TokenEntity tokenEntity = createTokenEntity(user.getId(), TokenType.change_email);
                     tokenEntity.token().setNewEmail(newEmail);
 
+                    log.info("Sending change email token for user: {}", tokenEntity.rawToken());
+
                     return emailVerificationTokenRepository.save(tokenEntity.token())
                             .flatMap(token -> mailService.sendVerificationEmail(newEmail, tokenEntity.rawToken()))
                             .thenReturn(true);
@@ -78,6 +80,8 @@ public class EmailVerificationTokenServiceImpl implements EmailVerificationToken
                 .switchIfEmpty(Mono.error(new UserNotFoundException()))
                 .flatMap(user -> {
                     TokenEntity tokenEntity = createTokenEntity(user.getId(), TokenType.verify_email);
+
+                    log.info("GENERATE VERIFICATION TOKEN: {}", tokenEntity.rawToken());
 
                     return emailVerificationTokenRepository.save(tokenEntity.token())
                             .flatMap(token -> mailService.sendVerificationEmail(email, tokenEntity.rawToken()))
