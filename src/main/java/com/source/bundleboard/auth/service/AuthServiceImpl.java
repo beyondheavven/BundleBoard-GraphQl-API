@@ -7,6 +7,7 @@ import com.source.bundleboard.auth.dto.RefreshTokenRequest;
 import com.source.bundleboard.auth.dto.RegisterRequest;
 import com.source.bundleboard.auth.jwt.JwtProperties;
 import com.source.bundleboard.auth.jwt.service.JwtService;
+import com.source.bundleboard.email.service.EmailVerificationTokenService;
 import com.source.bundleboard.refreshtoken.model.RefreshToken;
 import com.source.bundleboard.refreshtoken.repository.RefreshTokenRepository;
 import com.source.bundleboard.user.model.User;
@@ -36,6 +37,8 @@ public class AuthServiceImpl implements AuthService {
 
     private final JwtProperties jwtProperties;
 
+    private final EmailVerificationTokenService emailVerificationTokenService;
+
 
     @Transactional
     @Override
@@ -49,11 +52,11 @@ public class AuthServiceImpl implements AuthService {
                     }
 
                     if (user.getStatus() == UserStatus.banned) {
-                        return Mono.error(new UserStatusException("User is banned."));
+                        return Mono.error(new UserStatusException());
                     }
 
                     if (user.getStatus() == UserStatus.inactive) {
-                        return Mono.error(new UserStatusException("User is inactive."));
+                        return Mono.error(new UserStatusException());
                     }
 
                     User updatedUser = new User(
@@ -73,7 +76,7 @@ public class AuthServiceImpl implements AuthService {
         return userRepository.existsByUsername(request.username())
                 .flatMap(exists -> {
                     if (exists){
-                        return Mono.error(new UserAlreadyExistsException("Username already exists."));
+                        return Mono.error(new UserAlreadyExistsException());
                     }
                     User user = new User(
                             null,
@@ -82,13 +85,16 @@ public class AuthServiceImpl implements AuthService {
                             passwordEncoder.encode(request.password()),
                             "",
                             Set.of(UserRole.client),
-                            UserStatus.active,
+                            UserStatus.inactive,
                             null,
                             Instant.now()
                     );
                     return userRepository.save(user);
                 })
-                .flatMap(this::generateAuthResponse);
+                .flatMap(savedUser ->
+                    emailVerificationTokenService.resendVerificationEmail(savedUser.getEmail())
+                            .then(generateAuthResponse(savedUser))
+                );
     }
 
     @Override
@@ -97,19 +103,19 @@ public class AuthServiceImpl implements AuthService {
         return jwtService.isRefreshToken(refreshToken)
                 .flatMap(isRefresh -> {
                     if (!isRefresh){
-                        return Mono.error(new InvalidTokenException("Invalid refresh token."));
+                        return Mono.error(new InvalidTokenException());
                     }
                     return refreshTokenRepository.existsByTokenAndExpirationTimeAfter(refreshToken, Instant.now());
                 })
                 .flatMap(exists -> {
-                    if (!exists) return Mono.error(new InvalidTokenException("Token expired or revoked."));
+                    if (!exists) return Mono.error(new InvalidTokenException());
                     return jwtService.extractUsername(refreshToken);
                 })
                 .flatMap(userRepository::findByUsername)
                 .switchIfEmpty(Mono.error(new UserNotFoundException()))
                 .flatMap(user -> {
                     if (user.getStatus() == UserStatus.banned || user.getStatus() == UserStatus.inactive) {
-                        return Mono.error(new UserStatusException("User is banned or inactive."));
+                        return Mono.error(new UserStatusException());
                     }
 
                     return refreshTokenRepository.deleteByToken(refreshToken)
