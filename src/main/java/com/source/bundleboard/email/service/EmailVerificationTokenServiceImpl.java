@@ -66,7 +66,7 @@ public class EmailVerificationTokenServiceImpl implements EmailVerificationToken
                     tokenEntity.token().setNewEmail(newEmail);
 
                     return emailVerificationTokenRepository.save(tokenEntity.token())
-                            .flatMap(token -> mailService.sendVerificationEmail(newEmail, token.getToken()))
+                            .flatMap(token -> mailService.sendVerificationEmail(newEmail, tokenEntity.rawToken()))
                             .thenReturn(true);
                 });
     }
@@ -80,7 +80,7 @@ public class EmailVerificationTokenServiceImpl implements EmailVerificationToken
                     TokenEntity tokenEntity = createTokenEntity(user.getId(), TokenType.verify_email);
 
                     return emailVerificationTokenRepository.save(tokenEntity.token())
-                            .flatMap(token -> mailService.sendVerificationEmail(email, token.getToken()))
+                            .flatMap(token -> mailService.sendVerificationEmail(email, tokenEntity.rawToken()))
                             .thenReturn(true);
                 });
     }
