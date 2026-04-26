@@ -88,5 +88,10 @@ public class UserServiceImpl implements UserService {
         return userRepository.findByEmail(email).switchIfEmpty(Mono.error(new UserNotFoundException()));
     }
 
+    @Override
+    public Mono<User> getUserByUsername(String username) {
+        return userRepository.findByUsername(username).switchIfEmpty(Mono.error(new UserNotFoundException()));
+    }
+
 
 }
