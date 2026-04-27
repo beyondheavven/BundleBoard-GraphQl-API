@@ -1,0 +1,57 @@
+testcontainers:
+  reuse:
+    enable: true
+
+
+spring:
+  application:
+    name: bundleboard-test
+
+  flyway:
+    enabled: true
+    locations: filesystem:${user.dir}/supabase/migrations
+    sql-migration-prefix: ''
+    sql-migration-separator: '_'
+    clean-disabled: false
+
+  r2dbc:
+    pool:
+      enabled: true
+      initial-size: 2
+      max-size: 5
+
+  graphql:
+    graphiql:
+      enabled: false
+    schema:
+      inspection:
+        enabled: true
+
+  mail:
+    host: localhost
+    port: 3025
+
+app:
+  jwt:
+    secret: test-secret-at-least-256-bits-long-for-hmac-sha-512-logic
+    access-token-expiration-ms: 900000
+    refresh-token-expiration-ms: 2592000000
+
+  email-verification:
+    ttl-ms: 600000
+    verify-email-url: http://test-env:3000/auth/verify
+    hash-algorithm: SHA-256
+    hex-format: "%02x"
+    hash-length: 64
+    byte-length: 16
+
+  mail:
+    from: moreply@bundleboard.com
+
+logging:
+  level:
+    root: INFO
+    com.source.bundleboard: DEBUG
+    org.flywaydb: DEBUG
+    org.springframework.r2dbc: DEBUG
+
