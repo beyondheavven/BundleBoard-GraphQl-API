@@ -3,6 +3,8 @@ package com.source.bundleboard.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.springframework.context.annotation.Bean;
 
@@ -21,7 +23,7 @@ public class PostgresTestContainersConfig {
 
     @Bean
     @ServiceConnection
-    public PostgreSQLContainer<?> postgreSQLContainer(@Value(REUSE_PROPERTY) boolean reuse) {
+    public PostgreSQLContainer<?> postgreSQLContainer(@Value("${" + REUSE_PROPERTY + ":false}") boolean reuse) {
         return new PostgreSQLContainer<>(POSTGRES_IMAGE)
                 .withUsername(POSTGRES_USER)
                 .withPassword(POSTGRES_PASSWORD)
