@@ -2,7 +2,6 @@ testcontainers:
   reuse:
     enable: true
 
-
 spring:
   application:
     name: bundleboard-test
@@ -12,13 +11,11 @@ spring:
     locations: filesystem:${user.dir}/supabase/migrations
     sql-migration-prefix: ''
     sql-migration-separator: '_'
+    baseline-on-migrate: true
     clean-disabled: false
 
-  r2dbc:
-    pool:
-      enabled: true
-      initial-size: 2
-      max-size: 5
+  webflux:
+    base-path: /api
 
   graphql:
     graphiql:
