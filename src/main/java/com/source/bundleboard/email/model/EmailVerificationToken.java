@@ -33,9 +33,15 @@ public class EmailVerificationToken {
     @Column("new_email")
     private String newEmail;
 
+    @Column("code")
+    private String code;
+
     @Column("expires_at")
     private Instant expiresAt;
 
     @Column("created_at")
     private Instant createdAt;
+
+    @Column("resend_count")
+    private int resendCount;
 }
