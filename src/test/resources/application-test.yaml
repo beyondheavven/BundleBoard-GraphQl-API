@@ -6,13 +6,11 @@ spring:
   application:
     name: bundleboard-test
 
-  flyway:
-    enabled: true
-    locations: filesystem:${user.dir}/supabase/migrations
-    sql-migration-prefix: ''
-    sql-migration-separator: '_'
-    baseline-on-migrate: true
-    clean-disabled: false
+  r2dbc:
+    pool:
+      enabled: true
+      initial-size: 1
+      max-size: 5
 
   webflux:
     base-path: /api
