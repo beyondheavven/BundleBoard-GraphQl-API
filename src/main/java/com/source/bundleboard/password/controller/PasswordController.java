@@ -1,8 +1,6 @@
 package com.source.bundleboard.password.controller;
 
-import com.source.bundleboard.password.dto.PasswordChangeResponse;
-import com.source.bundleboard.password.dto.PasswordChangeInput;
-import com.source.bundleboard.password.dto.PasswordResetInput;
+import com.source.bundleboard.password.dto.*;
 import com.source.bundleboard.password.service.PasswordService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.graphql.data.method.annotation.Argument;
@@ -28,11 +26,11 @@ public class PasswordController {
         return passwordService.confirmPasswordChange(code, user);
     }
 
-    public Mono<Boolean> requestPasswordReset(@Argument PasswordResetInput input){
-
+    public Mono<PasswordResetResponse> requestPasswordReset(@Argument PasswordResetInput input){
+        return passwordService.requestPasswordReset(input);
     }
 
-    public Mono<Boolean> confirmPasswordReset(@Argument PasswordResetInput input){
-
+    public Mono<PasswordResetResponse> confirmPasswordReset(@Argument PasswordConfirmResetInput input){
+        return passwordService.confirmPasswordReset(input);
     }
 }
