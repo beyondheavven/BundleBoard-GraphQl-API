@@ -5,8 +5,8 @@ import com.source.bundleboard.api.exception.UserNotFoundException;
 import com.source.bundleboard.email.dto.TokenEntity;
 import com.source.bundleboard.email.mail.service.MailService;
 import com.source.bundleboard.email.model.EmailVerificationToken;
-import com.source.bundleboard.email.model.TokenStatus;
-import com.source.bundleboard.email.model.TokenType;
+import com.source.bundleboard.email.model.EmailTokenStatus;
+import com.source.bundleboard.email.model.EmailTokenType;
 import com.source.bundleboard.email.properties.EmailVerificationProperties;
 import com.source.bundleboard.email.repository.EmailVerificationTokenRepository;
 import com.source.bundleboard.user.model.User;
@@ -46,12 +46,12 @@ public class EmailVerificationTokenServiceImpl implements EmailVerificationToken
         String hashedToken = sha256Hex(tokenValue);
         log.debug("Attempting to verify email with token hash: {}", hashedToken);
         return emailVerificationTokenRepository.findByToken(hashedToken)
-                .filter(token -> token.getTokenStatus() == TokenStatus.pending && token.getExpiresAt().isAfter(Instant.now()))
+                .filter(token -> token.getEmailTokenStatus() == EmailTokenStatus.pending && token.getExpiresAt().isAfter(Instant.now()))
                 .switchIfEmpty(Mono.error(new InvalidEmailVerificationTokenException()))
                 .flatMap(token -> userService.getUserById(token.getUserId())
                         .flatMap(user -> processUserUpdate(user, token))
                         .flatMap(user -> {
-                            token.setTokenStatus(TokenStatus.verified);
+                            token.setEmailTokenStatus(EmailTokenStatus.verified);
                             return emailVerificationTokenRepository.save(token);
                         })
                         .thenReturn(true))
@@ -62,7 +62,7 @@ public class EmailVerificationTokenServiceImpl implements EmailVerificationToken
     public Mono<Boolean> sendChangeEmailToken(String newEmail, String username) {
         return userService.getUserByUsername(username)
                 .flatMap(user -> {
-                    TokenEntity tokenEntity = createTokenEntity(user.getId(), TokenType.change_email);
+                    TokenEntity tokenEntity = createTokenEntity(user.getId(), EmailTokenType.change_email);
                     tokenEntity.token().setNewEmail(newEmail);
 
                     log.info("Sending change email token for user: {}", tokenEntity.rawToken());
@@ -78,7 +78,7 @@ public class EmailVerificationTokenServiceImpl implements EmailVerificationToken
         return userService.getUserByEmail(email)
                 .switchIfEmpty(Mono.error(new UserNotFoundException()))
                 .flatMap(user -> {
-                    TokenEntity tokenEntity = createTokenEntity(user.getId(), TokenType.verify_email);
+                    TokenEntity tokenEntity = createTokenEntity(user.getId(), EmailTokenType.verify_email);
 
                     log.info("GENERATE VERIFICATION TOKEN: {}", tokenEntity.rawToken());
 
@@ -88,22 +88,22 @@ public class EmailVerificationTokenServiceImpl implements EmailVerificationToken
                 });
     }
 
-    private TokenEntity createTokenEntity(Long userId, TokenType tokenType) {
+    private TokenEntity createTokenEntity(Long userId, EmailTokenType emailTokenType) {
         String rawToken = generateRawToken();
         String hashedToken = sha256Hex(rawToken);
 
         EmailVerificationToken token = new EmailVerificationToken();
         token.setUserId(userId);
         token.setToken(hashedToken);
-        token.setTokenType(tokenType);
-        token.setTokenStatus(TokenStatus.pending);
+        token.setEmailTokenType(emailTokenType);
+        token.setEmailTokenStatus(EmailTokenStatus.pending);
         token.setCreatedAt(Instant.now());
         token.setExpiresAt(Instant.now().plusSeconds(3600));
         return new TokenEntity(rawToken, token);
     }
 
     private Mono<User> processUserUpdate(User user, EmailVerificationToken token) {
-        if(token.getTokenType() == TokenType.change_email && token.getNewEmail() != null){
+        if(token.getEmailTokenType() == EmailTokenType.change_email && token.getNewEmail() != null){
             user.setEmail(token.getNewEmail());
         }
         user.setStatus(UserStatus.active);
