@@ -51,15 +51,6 @@ input UpdateUserRequest {
     avatarUrl: String
 }
 
-input ChangePasswordRequest {
-    password: String!
-}
-
-input ResetPasswordRequest {
-    token: String!
-    newPassword: String!
-}
-
 enum UserRole {
     admin, author, client
 }

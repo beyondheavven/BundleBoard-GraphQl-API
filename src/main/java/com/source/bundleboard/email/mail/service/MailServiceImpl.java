@@ -45,12 +45,22 @@ public class MailServiceImpl implements MailService {
     }
 
     @Override
-    public Mono<Void> sendPasswordResetEmail(String toEmail, String code) {
+    public Mono<Void> sendPasswordChangeEmail(String toEmail, String code) {
         return sendTemplateEmail(
                 toEmail,
                 mailProperties.getSubjects().getResetPassword(),
                 mailProperties.getTemplates().getResetPassword(),
                 Map.of("resetCode", code)
+        );
+    }
+
+    @Override
+    public Mono<Void> sendPasswordResetLink(String toEmail, String link) {
+        return sendTemplateEmail(
+                toEmail,
+                mailProperties.getSubjects().getResetPassword(),
+                mailProperties.getTemplates().getResetPassword(),
+                Map.of("resetLink", link)
         );
     }
 

@@ -2,11 +2,13 @@ package com.source.bundleboard.email.service;
 
 import com.source.bundleboard.api.exception.InvalidEmailVerificationTokenException;
 import com.source.bundleboard.api.exception.UserNotFoundException;
+import com.source.bundleboard.api.exception.UserStatusException;
+import com.source.bundleboard.email.dto.EmailResponse;
 import com.source.bundleboard.email.dto.TokenEntity;
 import com.source.bundleboard.email.mail.service.MailService;
 import com.source.bundleboard.email.model.EmailVerificationToken;
-import com.source.bundleboard.email.model.TokenStatus;
-import com.source.bundleboard.email.model.TokenType;
+import com.source.bundleboard.email.model.EmailTokenStatus;
+import com.source.bundleboard.email.model.EmailTokenType;
 import com.source.bundleboard.email.properties.EmailVerificationProperties;
 import com.source.bundleboard.email.repository.EmailVerificationTokenRepository;
 import com.source.bundleboard.user.model.User;
@@ -42,81 +44,89 @@ public class EmailVerificationTokenServiceImpl implements EmailVerificationToken
 
     @Override
     @Transactional
-    public Mono<Boolean> verifyEmail(String tokenValue) {
+    public Mono<EmailResponse> verifyEmail(String tokenValue) {
         String hashedToken = sha256Hex(tokenValue);
         log.debug("Attempting to verify email with token hash: {}", hashedToken);
         return emailVerificationTokenRepository.findByToken(hashedToken)
-                .filter(token -> token.getTokenStatus() == TokenStatus.pending && token.getExpiresAt().isAfter(Instant.now()))
-                .switchIfEmpty(Mono.error(new InvalidEmailVerificationTokenException()))
-                .flatMap(token -> userService.getUserById(token.getUserId())
-                        .flatMap(user -> processUserUpdate(user, token))
-                        .flatMap(user -> {
-                            token.setTokenStatus(TokenStatus.verified);
-                            return emailVerificationTokenRepository.save(token);
-                        })
-                        .thenReturn(true))
-                .doOnSuccess(s -> log.info("Email verified and token deleted for hash: {}", hashedToken));
+                .flatMap(token -> {
+                    if (token.getBlockedUntil() != null && token.getBlockedUntil().isAfter(Instant.now())) {
+                        return Mono.error(new UserStatusException());
+                    }
+
+                    boolean isValid = token.getEmailTokenStatus() == EmailTokenStatus.pending &&
+                            token.getExpiresAt().isAfter(Instant.now());
+
+                    if (!isValid) {
+                        return handleFailedAttempt(token);
+                    }
+
+                    return userService.getUserById(token.getUserId())
+                            .flatMap(user -> processUserUpdate(user, token))
+                            .flatMap(user -> {
+                                token.setEmailTokenStatus(EmailTokenStatus.verified);
+                                return emailVerificationTokenRepository.save(token);
+                            })
+                            .thenReturn(new EmailResponse(true, "Email verified successfully", null));
+                }).switchIfEmpty(Mono.error(new InvalidEmailVerificationTokenException()));
     }
 
     @Override
-    public Mono<Boolean> sendChangeEmailToken(String newEmail, String username) {
+    @Transactional
+    public Mono<EmailResponse> sendChangeEmailToken(String newEmail, String username) {
         return userService.getUserByUsername(username)
                 .flatMap(user -> {
-                    TokenEntity tokenEntity = createTokenEntity(user.getId(), TokenType.change_email);
+                    TokenEntity tokenEntity = createTokenEntity(user.getId(), EmailTokenType.change_email);
                     tokenEntity.token().setNewEmail(newEmail);
 
                     log.info("Sending change email token for user: {}", tokenEntity.rawToken());
 
                     return emailVerificationTokenRepository.save(tokenEntity.token())
                             .flatMap(token -> mailService.sendVerificationEmail(newEmail, tokenEntity.rawToken()))
-                            .thenReturn(true);
+                            .thenReturn(new EmailResponse(true, "Email verification link sent to " + newEmail, null));
                 });
     }
 
     @Override
-    public Mono<Boolean> resendVerificationEmail(String email) {
+    @Transactional
+    public Mono<EmailResponse> resendVerificationEmail(String email) {
         return userService.getUserByEmail(email)
                 .switchIfEmpty(Mono.error(new UserNotFoundException()))
                 .flatMap(user -> {
-                    TokenEntity tokenEntity = createTokenEntity(user.getId(), TokenType.verify_email);
+                    TokenEntity tokenEntity = createTokenEntity(user.getId(), EmailTokenType.verify_email);
 
                     log.info("GENERATE VERIFICATION TOKEN: {}", tokenEntity.rawToken());
 
                     return emailVerificationTokenRepository.save(tokenEntity.token())
                             .flatMap(token -> mailService.sendVerificationEmail(email, tokenEntity.rawToken()))
-                            .thenReturn(true);
+                            .thenReturn(new EmailResponse(true, "Email verification link sent to " + email, null));
                 });
     }
 
-    private TokenEntity createTokenEntity(Long userId, TokenType tokenType) {
+    private TokenEntity createTokenEntity(Long userId, EmailTokenType emailTokenType) {
         String rawToken = generateRawToken();
         String hashedToken = sha256Hex(rawToken);
 
         EmailVerificationToken token = new EmailVerificationToken();
         token.setUserId(userId);
         token.setToken(hashedToken);
-        token.setTokenType(tokenType);
-        token.setTokenStatus(TokenStatus.pending);
+        token.setEmailTokenType(emailTokenType);
+        token.setEmailTokenStatus(EmailTokenStatus.pending);
         token.setCreatedAt(Instant.now());
         token.setExpiresAt(Instant.now().plusSeconds(3600));
+        token.setAttemptCount(0);
+        token.setResendCount(0);
         return new TokenEntity(rawToken, token);
     }
 
-    private Mono<User> processUserUpdate(User user, EmailVerificationToken token) {
-        if(token.getTokenType() == TokenType.change_email && token.getNewEmail() != null){
-            user.setEmail(token.getNewEmail());
-        }
-        user.setStatus(UserStatus.active);
-        return userService.saveUser(user);
-    }
-
-    private String generateRawToken() {
+    @Override
+    public String generateRawToken() {
         byte[] tokenBytes = new byte[emailVerificationProperties.getByteLength()];
         random.nextBytes(tokenBytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(tokenBytes);
     }
 
-    private String sha256Hex(String value) {
+    @Override
+    public String sha256Hex(String value) {
         try {
             MessageDigest md = MessageDigest.getInstance(emailVerificationProperties.getHashAlgorithm());
             byte[] digest = md.digest(value.getBytes(StandardCharsets.UTF_8));
@@ -129,6 +139,27 @@ public class EmailVerificationTokenServiceImpl implements EmailVerificationToken
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 algorithm not available", e);
         }
+    }
+
+    private Mono<User> processUserUpdate(User user, EmailVerificationToken token) {
+        if (token.getEmailTokenType() == EmailTokenType.change_email && token.getNewEmail() != null) {
+            user.setEmail(token.getNewEmail());
+        }
+        user.setStatus(UserStatus.active);
+        return userService.saveUser(user);
+    }
+
+    private Mono<EmailResponse> handleFailedAttempt(EmailVerificationToken token) {
+        token.setAttemptCount(token.getAttemptCount() + 1);
+        int max = emailVerificationProperties.getMaxAttempts();
+        int left = max - token.getAttemptCount();
+
+        if(left <= 0){
+            token.setBlockedUntil(Instant.now().plusSeconds(emailVerificationProperties.getBlockDurationSeconds()));
+        }
+
+        return emailVerificationTokenRepository.save(token)
+                .flatMap(savedToken -> Mono.error(new InvalidEmailVerificationTokenException()));
     }
 
 }
