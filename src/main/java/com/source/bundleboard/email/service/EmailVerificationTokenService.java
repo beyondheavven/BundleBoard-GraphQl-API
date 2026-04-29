@@ -12,4 +12,6 @@ public interface EmailVerificationTokenService {
     Mono<EmailResponse> resendVerificationEmail(String email);
 
     String sha256Hex(String value);
+
+    String generateRawToken();
 }

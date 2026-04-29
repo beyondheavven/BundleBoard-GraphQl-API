@@ -53,7 +53,7 @@ public class PasswordServiceImpl implements PasswordService {
                     token.setType(PasswordResetType.change_password);
 
                     return passwordResetTokenRepository.save(token)
-                            .flatMap(savedToken -> mailService.sendPasswordResetEmail(user.getEmail(), rawCode))
+                            .flatMap(savedToken -> mailService.sendPasswordChangeEmail(user.getEmail(), rawCode))
                             .thenReturn(new PasswordChangeResponse(true, "Code sent successfully", null));
                 });
     }
@@ -83,12 +83,43 @@ public class PasswordServiceImpl implements PasswordService {
 
     @Override
     public Mono<PasswordResetResponse> requestPasswordReset(PasswordResetInput input) {
-        return null;
+        return userService.getUserByEmail(input.email())
+                .flatMap(user -> {
+                    String rawToken = tokenService.generateRawToken();
+                    PasswordResetToken token = createBaseToken(user.getId(), rawToken, "");
+                    token.setType(PasswordResetType.reset_password);
+
+                    return passwordResetTokenRepository.save(token)
+                            .flatMap(savedToken -> mailService.sendPasswordResetLink(user.getEmail(), rawToken))
+                            .thenReturn(new PasswordResetResponse(true, "Reset link sent to your email"));
+                })
+                .switchIfEmpty(Mono.error(new InvalidTokenException()));
     }
 
     @Override
+    @Transactional
     public Mono<PasswordResetResponse> confirmPasswordReset(PasswordConfirmResetInput input) {
-        return null;
+        String hashedToken = tokenService.sha256Hex(input.token());
+
+        return passwordResetTokenRepository.findByCode(hashedToken)
+                .filter(token -> token.getType() == PasswordResetType.reset_password)
+                .flatMap(token -> {
+                    if (token.getBlockedUntil() != null && token.getBlockedUntil().isAfter(Instant.now())) {
+                        return Mono.error(new UserStatusException());
+                    }
+
+                    if (token.getExpiresAt().isBefore(Instant.now())) {
+                        return handleResetFailedAttempt(token);
+                    }
+
+                    return userService.getUserById(token.getUserId())
+                            .flatMap(user -> {
+                                user.setPasswordHash(passwordEncoder.encode(input.newPassword()));
+                                return userService.saveUser(user)
+                                        .thenReturn(new PasswordResetResponse(true, "Password reset successfully"));
+                            });
+                })
+                .switchIfEmpty(Mono.error(new InvalidTokenException()));
     }
 
     private PasswordResetToken createBaseToken(Long userId, String code, String newPassword) {
@@ -117,5 +148,17 @@ public class PasswordServiceImpl implements PasswordService {
         return passwordResetTokenRepository.save(token)
                 .flatMap(savedToken -> Mono.error(new InvalidTokenException()));
 
+    }
+
+    private Mono<PasswordResetResponse> handleResetFailedAttempt(PasswordResetToken token) {
+        token.setAttemptCount(token.getAttemptCount() + 1);
+        int left = Math.max(0, passwordResetTokenProperties.getMaxAttempts() - token.getAttemptCount());
+
+        if (left <= 0) {
+            token.setBlockedUntil(Instant.now().plusSeconds(passwordResetTokenProperties.getBlockDurationSeconds()));
+        }
+
+        return passwordResetTokenRepository.save(token)
+                .flatMap(saved -> Mono.error(new InvalidTokenException()));
     }
 }
