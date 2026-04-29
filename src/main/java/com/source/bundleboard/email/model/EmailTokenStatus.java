@@ -1,6 +1,6 @@
 package com.source.bundleboard.email.model;
 
-public enum TokenStatus {
+public enum EmailTokenStatus {
 
     pending, verified, expired
 }

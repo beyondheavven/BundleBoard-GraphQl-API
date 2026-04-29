@@ -1,5 +1,6 @@
 package com.source.bundleboard.email.controller;
 
+import com.source.bundleboard.email.dto.EmailResponse;
 import com.source.bundleboard.email.service.EmailVerificationTokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.graphql.data.method.annotation.Argument;
@@ -16,17 +17,17 @@ public class EmailVerificationTokenController {
     private final EmailVerificationTokenService tokenService;
 
     @MutationMapping
-    public Mono<Boolean> verifyEmail(@Argument String token) {
+    public Mono<EmailResponse> verifyEmail(@Argument String token) {
         return tokenService.verifyEmail(token);
     }
 
     @MutationMapping
-    public Mono<Boolean> requestEmailChange(@Argument String newEmail, Principal principal) {
+    public Mono<EmailResponse> requestEmailChange(@Argument String newEmail, Principal principal) {
         return tokenService.sendChangeEmailToken(newEmail, principal.getName());
     }
 
     @MutationMapping
-    public Mono<Boolean> resendVerificationEmail(@Argument String email){
+    public Mono<EmailResponse> resendVerificationEmail(@Argument String email){
         return tokenService.resendVerificationEmail(email);
     }
 

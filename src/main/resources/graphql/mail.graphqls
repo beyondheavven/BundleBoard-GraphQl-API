@@ -1,5 +1,13 @@
 extend type Mutation {
-    verifyEmail(token: String!): Boolean!
-    requestEmailChange(newEmail: String!): Boolean!
-    resendVerificationEmail(email: String!): Boolean!
+    verifyEmail(token: String!): EmailResponse!
+    requestEmailChange(newEmail: String!): EmailResponse!
+    resendVerificationEmail(email: String!): EmailResponse!
 }
+
+type EmailResponse {
+    success: Boolean!
+    message: String!
+    attemptsLeft: Int!
+}
+
+

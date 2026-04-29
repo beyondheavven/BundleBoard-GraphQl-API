@@ -23,4 +23,8 @@ public class EmailVerificationProperties {
 
     private int byteLength;
 
+    private int maxAttempts;
+
+    private int blockDurationSeconds;
+
 }

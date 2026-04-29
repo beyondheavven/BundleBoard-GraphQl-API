@@ -1,12 +1,17 @@
 package com.source.bundleboard.email.service;
 
+import com.source.bundleboard.email.dto.EmailResponse;
 import reactor.core.publisher.Mono;
 
 public interface EmailVerificationTokenService {
 
-    Mono<Boolean> verifyEmail(String tokenValue);
+    Mono<EmailResponse> verifyEmail(String tokenValue);
 
-    Mono<Boolean> sendChangeEmailToken(String newEmail, String name);
+    Mono<EmailResponse> sendChangeEmailToken(String newEmail, String name);
 
-    Mono<Boolean> resendVerificationEmail(String email);
+    Mono<EmailResponse> resendVerificationEmail(String email);
+
+    String sha256Hex(String value);
+
+    String generateRawToken();
 }
