@@ -10,4 +10,6 @@ public interface EmailVerificationTokenService {
     Mono<EmailResponse> sendChangeEmailToken(String newEmail, String name);
 
     Mono<EmailResponse> resendVerificationEmail(String email);
+
+    String sha256Hex(String value);
 }

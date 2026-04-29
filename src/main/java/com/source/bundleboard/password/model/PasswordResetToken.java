@@ -27,8 +27,8 @@ public class PasswordResetToken {
     @Column("new_password_hash")
     private String newPasswordHash;
 
-    @Column("status")
-    private PasswordResetType status;
+    @Column("type")
+    private PasswordResetType type;
 
     @Column("resend_count")
     private int resendCount;

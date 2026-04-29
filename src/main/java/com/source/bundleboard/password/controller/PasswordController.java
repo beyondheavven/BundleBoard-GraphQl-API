@@ -1,7 +1,8 @@
 package com.source.bundleboard.password.controller;
 
-import com.source.bundleboard.password.dto.PasswordActionResponse;
+import com.source.bundleboard.password.dto.PasswordChangeResponse;
 import com.source.bundleboard.password.dto.PasswordChangeInput;
+import com.source.bundleboard.password.dto.PasswordResetInput;
 import com.source.bundleboard.password.service.PasswordService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.graphql.data.method.annotation.Argument;
@@ -18,20 +19,20 @@ public class PasswordController {
     private final PasswordService passwordService;
 
     @MutationMapping
-    public Mono<PasswordActionResponse> requestPasswordChange(@Argument PasswordChangeInput input, @AuthenticationPrincipal UserDetails user){
+    public Mono<PasswordChangeResponse> requestPasswordChange(@Argument PasswordChangeInput input, @AuthenticationPrincipal UserDetails user){
         return passwordService.requestPasswordChange(input, user);
     }
 
     @MutationMapping
-    public Mono<PasswordActionResponse> confirmPasswordChange(@Argument String code, @AuthenticationPrincipal UserDetails user){
+    public Mono<PasswordChangeResponse> confirmPasswordChange(@Argument String code, @AuthenticationPrincipal UserDetails user){
         return passwordService.confirmPasswordChange(code, user);
     }
 
-    public Mono<Boolean> verifyPasswordResetCode(PasswordChangeInput input){
+    public Mono<Boolean> requestPasswordReset(@Argument PasswordResetInput input){
 
     }
 
-    public Mono<Boolean> resetPassword(PasswordChangeInput input){
+    public Mono<Boolean> confirmPasswordReset(@Argument PasswordResetInput input){
 
     }
 }
