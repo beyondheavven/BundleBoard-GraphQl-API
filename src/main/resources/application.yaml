@@ -79,3 +79,5 @@ app:
     hex-format: ${EMAIL_HEX_FORMAT}
     hash-length: ${EMAIL_HASH_LENGTH}
     byte-length: ${EMAIL_BYTE_LENGTH}
+    max-attempts: ${MAX_ATTEMPTS}
+    block-duration-seconds: ${BLOCK_DURATION_SECONDS}
