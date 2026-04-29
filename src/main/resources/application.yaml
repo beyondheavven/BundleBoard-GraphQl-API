@@ -81,3 +81,7 @@ app:
     byte-length: ${EMAIL_BYTE_LENGTH}
     max-attempts: ${MAX_ATTEMPTS}
     block-duration-seconds: ${BLOCK_DURATION_SECONDS}
+
+  password-verification:
+    max-attempts: ${MAX_ATTEMPTS}
+    block-duration-seconds: ${BLOCK_DURATION_SECONDS}

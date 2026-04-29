@@ -113,6 +113,8 @@ public class EmailVerificationTokenServiceImpl implements EmailVerificationToken
         token.setEmailTokenStatus(EmailTokenStatus.pending);
         token.setCreatedAt(Instant.now());
         token.setExpiresAt(Instant.now().plusSeconds(3600));
+        token.setAttemptCount(0);
+        token.setResendCount(0);
         return new TokenEntity(rawToken, token);
     }
 
@@ -122,7 +124,8 @@ public class EmailVerificationTokenServiceImpl implements EmailVerificationToken
         return Base64.getUrlEncoder().withoutPadding().encodeToString(tokenBytes);
     }
 
-    private String sha256Hex(String value) {
+    @Override
+    public String sha256Hex(String value) {
         try {
             MessageDigest md = MessageDigest.getInstance(emailVerificationProperties.getHashAlgorithm());
             byte[] digest = md.digest(value.getBytes(StandardCharsets.UTF_8));
