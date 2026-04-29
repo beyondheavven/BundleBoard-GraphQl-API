@@ -6,6 +6,8 @@ public interface MailService {
 
     Mono<Void> sendVerificationEmail(String toEmail, String verificationToken);
 
-    Mono<Void> sendPasswordResetEmail(String toEmail, String code);
+    Mono<Void> sendPasswordChangeEmail(String toEmail, String code);
+
+    Mono<Void> sendPasswordResetLink(String toEmail, String link);
 
 }

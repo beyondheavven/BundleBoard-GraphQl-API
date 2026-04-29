@@ -26,10 +26,12 @@ public class PasswordController {
         return passwordService.confirmPasswordChange(code, user);
     }
 
+    @MutationMapping
     public Mono<PasswordResetResponse> requestPasswordReset(@Argument PasswordResetInput input){
         return passwordService.requestPasswordReset(input);
     }
 
+    @MutationMapping
     public Mono<PasswordResetResponse> confirmPasswordReset(@Argument PasswordConfirmResetInput input){
         return passwordService.confirmPasswordReset(input);
     }

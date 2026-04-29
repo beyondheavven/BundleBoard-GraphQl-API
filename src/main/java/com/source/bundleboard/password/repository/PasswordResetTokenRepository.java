@@ -10,4 +10,6 @@ public interface PasswordResetTokenRepository extends R2dbcRepository<PasswordRe
 
 
     Mono<PasswordResetToken> findByUserIdAndCode(Long id, String hashedCode);
+
+    Mono<PasswordResetToken> findByCode(String hashedToken);
 }

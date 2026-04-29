@@ -118,7 +118,8 @@ public class EmailVerificationTokenServiceImpl implements EmailVerificationToken
         return new TokenEntity(rawToken, token);
     }
 
-    private String generateRawToken() {
+    @Override
+    public String generateRawToken() {
         byte[] tokenBytes = new byte[emailVerificationProperties.getByteLength()];
         random.nextBytes(tokenBytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(tokenBytes);
