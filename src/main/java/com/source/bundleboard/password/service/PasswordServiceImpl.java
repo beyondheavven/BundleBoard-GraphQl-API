@@ -5,8 +5,11 @@ import com.source.bundleboard.api.exception.UnmatchedPasswordsException;
 import com.source.bundleboard.api.exception.UserStatusException;
 import com.source.bundleboard.email.mail.service.MailService;
 import com.source.bundleboard.email.service.EmailVerificationTokenService;
-import com.source.bundleboard.password.dto.*;
-import com.source.bundleboard.password.mapper.PasswordMapper;
+import com.source.bundleboard.password.dto.PasswordConfirmResetInput;
+import com.source.bundleboard.password.dto.PasswordChangeInput;
+import com.source.bundleboard.password.dto.PasswordResetInput;
+import com.source.bundleboard.password.dto.PasswordChangeResponse;
+import com.source.bundleboard.password.dto.PasswordResetResponse;
 import com.source.bundleboard.password.model.PasswordResetToken;
 import com.source.bundleboard.password.model.PasswordResetType;
 import com.source.bundleboard.password.properties.PasswordResetTokenProperties;
@@ -25,8 +28,6 @@ import java.util.concurrent.ThreadLocalRandom;
 @Service
 @RequiredArgsConstructor
 public class PasswordServiceImpl implements PasswordService {
-
-    private final PasswordMapper passwordMapper;
 
     private final PasswordResetTokenRepository passwordResetTokenRepository;
 
