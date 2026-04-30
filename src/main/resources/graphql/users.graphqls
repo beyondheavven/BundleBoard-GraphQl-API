@@ -6,8 +6,6 @@ extend type Query {
 
 extend type Mutation {
     updateMe(input: UpdateUserRequest!): UserUpdateResponse!
-    changePassword(input: ChangePasswordRequest!): Boolean!
-    resetPassword(input: ResetPasswordRequest!): Boolean!
 }
 
 type User {
