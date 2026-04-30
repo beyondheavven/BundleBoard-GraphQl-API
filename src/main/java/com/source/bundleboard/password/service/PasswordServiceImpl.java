@@ -92,7 +92,7 @@ public class PasswordServiceImpl implements PasswordService {
 
                     return passwordResetTokenRepository.save(token)
                             .flatMap(savedToken -> mailService.sendPasswordResetLink(user.getEmail(), rawToken))
-                            .thenReturn(new PasswordResetResponse(true, "Reset link sent to your email"));
+                            .thenReturn(new PasswordResetResponse(true, "Reset link sent to your email", rawToken));
                 })
                 .switchIfEmpty(Mono.error(new InvalidTokenException()));
     }
@@ -117,7 +117,7 @@ public class PasswordServiceImpl implements PasswordService {
                             .flatMap(user -> {
                                 user.setPasswordHash(passwordEncoder.encode(input.newPassword()));
                                 return userService.saveUser(user)
-                                        .thenReturn(new PasswordResetResponse(true, "Password reset successfully"));
+                                        .thenReturn(new PasswordResetResponse(true, "Password reset successfully", null));
                             });
                 })
                 .switchIfEmpty(Mono.error(new InvalidTokenException()));
