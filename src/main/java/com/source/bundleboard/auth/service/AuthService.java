@@ -14,7 +14,7 @@ public interface AuthService {
 
     Mono<AuthResponse> refreshToken(RefreshTokenRequest refreshTokenRequest);
 
-    Mono<Void> logout(RefreshTokenRequest refreshTokenRequest);
+    Mono<Boolean> logout(RefreshTokenRequest refreshTokenRequest);
 
 
 

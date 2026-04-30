@@ -124,10 +124,10 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public Mono<Void> logout(RefreshTokenRequest refreshTokenRequest) {
-        String refreshToken = refreshTokenRequest.refreshToken();
-        refreshTokenRepository.deleteByToken(refreshToken);
-        return Mono.empty();
+    public Mono<Boolean> logout(RefreshTokenRequest refreshTokenRequest) {
+        return refreshTokenRepository.deleteByToken(refreshTokenRequest.refreshToken())
+                .thenReturn(true)
+                .defaultIfEmpty(false);
     }
 
     private Mono<AuthResponse> generateAuthResponse(User user) {
