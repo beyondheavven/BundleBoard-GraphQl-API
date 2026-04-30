@@ -33,7 +33,7 @@ public class AuthController {
     }
 
     @MutationMapping
-    public Mono<Void> logout(@Argument RefreshTokenRequest input){
+    public Mono<Boolean> logout(@Argument RefreshTokenRequest input){
         return authService.logout(input);
     }
 

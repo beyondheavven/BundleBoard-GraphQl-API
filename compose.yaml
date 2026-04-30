@@ -36,6 +36,8 @@ services:
       - VERIFY_EMAIL_URL=${VERIFY_EMAIL_URL}
 
       - SPRING_PROFILES_ACTIVE=dev
+      - BLOCK_DURATION_SECONDS=${BLOCK_DURATION_SECONDS}
+      - MAX_ATTEMPTS=${MAX_ATTEMPTS}
     ports:
       - "8080:8080"
     networks:

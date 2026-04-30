@@ -7,6 +7,9 @@ import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
@@ -21,6 +24,8 @@ public class JwtAuthenticationFilter implements WebFilter {
 
     private final JwtService jwtService;
 
+    private final ReactiveUserDetailsService userDetailsService;
+
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         String token = extractToken(exchange.getRequest());
@@ -32,13 +37,18 @@ public class JwtAuthenticationFilter implements WebFilter {
         return jwtService.validateToken(token)
                 .flatMap(claims -> {
                     String username = claims.getSubject();
-
-                    return jwtService.extractAuthorities(token)
-                            .map(grantedAuthorities -> {
-                                Authentication auth = new UsernamePasswordAuthenticationToken(username, null, grantedAuthorities);
-                                return auth;
-                            });
-
+                    return userDetailsService.findByUsername(username)
+                            .flatMap(userDetails ->
+                                    jwtService.extractAuthorities(token)
+                                            .map(grantedAuthorities -> {
+                                                // 3. Теперь передаем в Auth сам объект userDetails, а не Mono
+                                                return new UsernamePasswordAuthenticationToken(
+                                                        userDetails,
+                                                        null,
+                                                        grantedAuthorities
+                                                );
+                                            })
+                            );
                 })
                 .flatMap(auth -> chain.filter(exchange)
                         .contextWrite(ReactiveSecurityContextHolder.withAuthentication(auth))
