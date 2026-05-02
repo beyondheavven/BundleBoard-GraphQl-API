@@ -2,6 +2,7 @@ package com.source.bundleboard.config;
 
 import com.source.bundleboard.auth.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.graphql.autoconfigure.GraphQlProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -51,17 +52,16 @@ public class SecurityConfig {
                         .accessDeniedHandler(new HttpStatusServerAccessDeniedHandler(HttpStatus.FORBIDDEN))
                 )
                 .authorizeExchange(exchangeSpec -> exchangeSpec
+                                .pathMatchers(HttpMethod.OPTIONS).permitAll()
+                                .pathMatchers("/api/graphql", "/api/graphiql/**", "/api/auth/**").permitAll()
                         // Public endpoints that don't require authentication
-                        .pathMatchers("/auth/**").permitAll()
-                        .pathMatchers("/graphql", "/graphiql/**").permitAll()
-                        .pathMatchers("/actuator/health").permitAll()
-                        .pathMatchers(HttpMethod.OPTIONS).permitAll()
+//                        .pathMatchers("/auth/**").permitAll()
+//                        .pathMatchers("/graphql", "/graphiql/**").permitAll()
+//                        .pathMatchers("/actuator/health").permitAll()
+//                        .pathMatchers(HttpMethod.OPTIONS).permitAll()
 
                         // Admin-only endpoints
-                        .pathMatchers("/admin/**").hasRole("ADMIN")
-
-                        // User endpoints require authentication
-                        .pathMatchers("/users/**").hasAnyRole("CLIENT", "AUTHOR", "ADMIN")
+                        .pathMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyExchange().authenticated()
                 )
                 // Add JWT filter before the authentication filter

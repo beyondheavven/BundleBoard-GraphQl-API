@@ -21,13 +21,13 @@ spring:
         enabled: true
       printer:
         enabled: true
-    cors:
-      allowed-origins: ${ALLOWED_ORIGINS}
-      allowed-methods: ${ALLOWED_METHODS}
-      allowed-headers: ${ALLOWED_HEADERS}
-      allowed-credentials: ${ALLOWED_CREDENTIALS}
-      exposed-headers: ${EXPOSED_HEADERS}
-      max-age: ${MAX_AGE}
+#    cors:
+#      allowed-origins: ${ALLOWED_ORIGINS}
+#      allowed-methods: ${ALLOWED_METHODS}
+#      allowed-headers: ${ALLOWED_HEADERS}
+#      allowed-credentials: ${ALLOWED_CREDENTIALS}
+#      exposed-headers: ${EXPOSED_HEADERS}
+#      max-age: ${MAX_AGE}
   webflux:
     base-path: /api
 
