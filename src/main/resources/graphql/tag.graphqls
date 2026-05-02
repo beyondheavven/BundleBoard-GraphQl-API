@@ -1,0 +1,14 @@
+extend type Query {
+    getAllTags:[Tag!]!
+    getTagById(id: ID): Tag!
+}
+
+extend type Mutation {
+    createTag(input: CreateNewTagInput!): Tag!
+    updateTag(id: ID!, input: CreateNewTagInput!): Tag!
+    deleteTag(id: ID!): Boolean!
+}
+
+input CreateNewTagInput {
+    name: String!
+}
