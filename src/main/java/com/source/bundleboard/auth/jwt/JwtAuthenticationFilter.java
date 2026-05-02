@@ -3,6 +3,7 @@ package com.source.bundleboard.auth.jwt;
 import com.source.bundleboard.auth.jwt.service.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -28,6 +29,11 @@ public class JwtAuthenticationFilter implements WebFilter {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+
+        if (HttpMethod.OPTIONS.equals(exchange.getRequest().getMethod())) {
+            return chain.filter(exchange);
+        }
+
         String token = extractToken(exchange.getRequest());
 
         if (token == null) {
@@ -40,15 +46,13 @@ public class JwtAuthenticationFilter implements WebFilter {
                     return userDetailsService.findByUsername(username)
                             .flatMap(userDetails ->
                                     jwtService.extractAuthorities(token)
-                                            .map(grantedAuthorities -> {
-                                                // 3. Теперь передаем в Auth сам объект userDetails, а не Mono
-                                                return new UsernamePasswordAuthenticationToken(
+                                            .map(grantedAuthorities -> new UsernamePasswordAuthenticationToken(
                                                         userDetails,
                                                         null,
                                                         grantedAuthorities
-                                                );
-                                            })
-                            );
+                                                ))
+                                            );
+
                 })
                 .flatMap(auth -> chain.filter(exchange)
                         .contextWrite(ReactiveSecurityContextHolder.withAuthentication(auth))
