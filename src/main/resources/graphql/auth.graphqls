@@ -24,5 +24,13 @@ input RefreshTokenRequest {
 type AuthResponse {
     accessToken: String!
     refreshToken: String!
+    user: UserDto!
     error: String
+}
+
+type UserDto {
+    id: ID!
+    username: String!
+    email: String!
+    roles: [UserRole!]!
 }
