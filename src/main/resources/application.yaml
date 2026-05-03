@@ -21,15 +21,6 @@ spring:
         enabled: true
       printer:
         enabled: true
-#    cors:
-#      allowed-origins: ${ALLOWED_ORIGINS}
-#      allowed-methods: ${ALLOWED_METHODS}
-#      allowed-headers: ${ALLOWED_HEADERS}
-#      allowed-credentials: ${ALLOWED_CREDENTIALS}
-#      exposed-headers: ${EXPOSED_HEADERS}
-#      max-age: ${MAX_AGE}
-  webflux:
-    base-path: /api
 
   mail:
     host: ${MAIL_HOST}
@@ -45,6 +36,7 @@ spring:
 
 logging:
   level:
+    org.springframework.security: DEBUG
     org.springframework.r2dbc: DEBUG
     io.r2dbc.postgresql: DEBUG
 
@@ -52,6 +44,14 @@ server:
   port: ${SERVER_PORT}
 
 app:
+  cors:
+        allowed-origins: ${ALLOWED_ORIGINS}
+        allowed-methods: ${ALLOWED_METHODS}
+        allowed-headers: ${ALLOWED_HEADERS}
+        allowed-credentials: ${ALLOWED_CREDENTIALS}
+        exposed-headers: ${EXPOSED_HEADERS}
+        max-age: ${MAX_AGE}
+
   jwt:
     access-token-expiration-ms: ${JWT_ACCESS_EXPIRY}
     refresh-token-expiration-ms: ${JWT_REFRESH_EXPIRY}

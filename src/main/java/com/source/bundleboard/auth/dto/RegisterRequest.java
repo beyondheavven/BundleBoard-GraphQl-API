@@ -3,6 +3,7 @@ package com.source.bundleboard.auth.dto;
 import com.source.bundleboard.user.model.UserRole;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record RegisterRequest(
@@ -19,7 +20,7 @@ public record RegisterRequest(
         @Size(min = 8, max = 50, message = "Password must be between 8 and 50 characters")
         String password,
 
-        @NotBlank(message = "Role can not be null")
+        @NotNull(message = "Role can not be null")
         UserRole role
 ) {
 }
