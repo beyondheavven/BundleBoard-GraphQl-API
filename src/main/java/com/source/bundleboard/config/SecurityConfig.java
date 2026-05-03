@@ -52,16 +52,10 @@ public class SecurityConfig {
                         .accessDeniedHandler(new HttpStatusServerAccessDeniedHandler(HttpStatus.FORBIDDEN))
                 )
                 .authorizeExchange(exchangeSpec -> exchangeSpec
-                                .pathMatchers(HttpMethod.OPTIONS).permitAll()
-                                .pathMatchers("/api/graphql", "/api/graphiql/**", "/api/auth/**").permitAll()
-                        // Public endpoints that don't require authentication
-//                        .pathMatchers("/auth/**").permitAll()
-//                        .pathMatchers("/graphql", "/graphiql/**").permitAll()
-//                        .pathMatchers("/actuator/health").permitAll()
-//                        .pathMatchers(HttpMethod.OPTIONS).permitAll()
+                                .pathMatchers("/graphql", "/graphql/**", "/graphiql/**").permitAll()
 
                         // Admin-only endpoints
-                        .pathMatchers("/api/admin/**").hasRole("ADMIN")
+                        .pathMatchers("/graphql/admin/**").hasRole("ADMIN")
                         .anyExchange().authenticated()
                 )
                 // Add JWT filter before the authentication filter
