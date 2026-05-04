@@ -1,9 +1,6 @@
 package com.source.bundleboard.auth.controller;
 
-import com.source.bundleboard.auth.dto.AuthRequest;
-import com.source.bundleboard.auth.dto.AuthResponse;
-import com.source.bundleboard.auth.dto.RefreshTokenRequest;
-import com.source.bundleboard.auth.dto.RegisterRequest;
+import com.source.bundleboard.auth.dto.*;
 import com.source.bundleboard.auth.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.graphql.data.method.annotation.Argument;
@@ -35,6 +32,11 @@ public class AuthController {
     @MutationMapping
     public Mono<Boolean> logout(@Argument RefreshTokenRequest input){
         return authService.logout(input);
+    }
+
+    @MutationMapping
+    public Mono<AuthResponse> socialLogin (@Argument SocialAuthRequest input){
+        return authService.socialLogin(input);
     }
 
 }

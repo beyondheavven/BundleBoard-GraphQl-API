@@ -80,11 +80,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Mono<User> saveUser(User user) {
-        return userRepository.save(user).switchIfEmpty(Mono.error(new UserNotFoundException()));
-    }
-
-    @Override
     public Mono<User> getUserByEmail(String email) {
         return userRepository.findByEmail(email).switchIfEmpty(Mono.error(new UserNotFoundException()));
     }
@@ -116,6 +111,21 @@ public class UserServiceImpl implements UserService {
                 .map(savedUser -> new UpdateUserRoleResponse("User role update successfully", true))
                 .switchIfEmpty(Mono.error(new UserNotFoundException()));
 
+    }
+
+    @Override
+    public Mono<User> findByUsername(String username) {
+        return userRepository.findByUsername(username).switchIfEmpty(Mono.error(new UserNotFoundException()));
+    }
+
+    @Override
+    public Mono<User> save(User user) {
+        return userRepository.save(user).switchIfEmpty(Mono.error(new UserNotFoundException()));
+    }
+
+    @Override
+    public Mono<Boolean> existsByUsername(String username) {
+        return userRepository.existsByUsername(username).switchIfEmpty(Mono.error(new UserNotFoundException()));
     }
 
 

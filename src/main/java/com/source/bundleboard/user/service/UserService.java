@@ -14,18 +14,21 @@ public interface UserService {
 
     Flux<UserResponseDto> findAllUsers();
 
-
     Mono<UserUpdateResponse> updateMe(UpdateUserRequest request);
 
     Mono<UserResponseDto> findMe();
 
     Mono<User> getUserById(Long id);
 
-    Mono<User> saveUser(User user);
-
     Mono<User> getUserByEmail(String email);
 
     Mono<User> getUserByUsername(String username);
 
     Mono<UpdateUserRoleResponse> updateUserRole(UpdateUserRoleInput input);
+
+    Mono<User> findByUsername(String username);
+
+    Mono<User> save(User user);
+
+    Mono<Boolean> existsByUsername(String username);
 }
