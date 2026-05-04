@@ -6,6 +6,7 @@ extend type Query {
 
 extend type Mutation {
     updateMe(input: UpdateUserRequest!): UserUpdateResponse!
+    updateUserRole(input: UpdateUserRoleInput!): UpdateUserRoleResponse!
 }
 
 type User {
@@ -47,6 +48,16 @@ input UpdateUserRequest {
     id: ID!
     username: String,
     avatarUrl: String
+}
+
+input UpdateUserRoleInput {
+    email: String!
+    role: UserRole!
+}
+
+type UpdateUserRoleResponse {
+    message: String!
+    success: Boolean!
 }
 
 enum UserRole {
