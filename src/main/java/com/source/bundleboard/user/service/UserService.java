@@ -1,9 +1,7 @@
 package com.source.bundleboard.user.service;
 
 
-import com.source.bundleboard.user.dto.UpdateUserRequest;
-import com.source.bundleboard.user.dto.UserResponseDto;
-import com.source.bundleboard.user.dto.UserUpdateResponse;
+import com.source.bundleboard.user.dto.*;
 import com.source.bundleboard.user.model.User;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -28,4 +26,6 @@ public interface UserService {
     Mono<User> getUserByEmail(String email);
 
     Mono<User> getUserByUsername(String username);
+
+    Mono<UpdateUserRoleResponse> updateUserRole(UpdateUserRoleInput input);
 }
