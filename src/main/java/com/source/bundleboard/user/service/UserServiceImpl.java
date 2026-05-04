@@ -1,11 +1,10 @@
 package com.source.bundleboard.user.service;
 
 import com.source.bundleboard.api.exception.UserNotFoundException;
-import com.source.bundleboard.user.dto.UpdateUserRequest;
-import com.source.bundleboard.user.dto.UserResponseDto;
-import com.source.bundleboard.user.dto.UserUpdateResponse;
+import com.source.bundleboard.user.dto.*;
 import com.source.bundleboard.user.mapper.UserMapper;
 import com.source.bundleboard.user.model.User;
+import com.source.bundleboard.user.model.UserRole;
 import com.source.bundleboard.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -14,6 +13,8 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.Set;
 
 
 @Service
@@ -91,6 +92,30 @@ public class UserServiceImpl implements UserService {
     @Override
     public Mono<User> getUserByUsername(String username) {
         return userRepository.findByUsername(username).switchIfEmpty(Mono.error(new UserNotFoundException()));
+    }
+
+    @Override
+    public Mono<UpdateUserRoleResponse> updateUserRole(UpdateUserRoleInput input) {
+        return userRepository.findByEmail(input.email())
+                .flatMap(user -> {
+                    if (input.role() != null){
+                        try{
+                            UserRole newRole = UserRole.valueOf(input.role());
+
+                            Set<UserRole> currentRoles = user.getRoles();
+
+                            currentRoles.add(newRole);
+
+                            user.setRoles(currentRoles);
+                        }catch (IllegalArgumentException e){
+                            return Mono.error(new IllegalArgumentException("Invalid role"));
+                        }
+                    }
+                    return userRepository.save(user);
+                })
+                .map(savedUser -> new UpdateUserRoleResponse("User role update successfully", true))
+                .switchIfEmpty(Mono.error(new UserNotFoundException()));
+
     }
 
 

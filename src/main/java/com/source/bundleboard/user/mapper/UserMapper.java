@@ -1,5 +1,6 @@
 package com.source.bundleboard.user.mapper;
 
+import com.source.bundleboard.user.dto.UpdateUserRoleResponse;
 import com.source.bundleboard.user.dto.UserResponseDto;
 import com.source.bundleboard.user.dto.UserUpdateResponse;
 import com.source.bundleboard.user.model.User;
@@ -21,5 +22,7 @@ public interface UserMapper {
 
     @Mapping(target = "updatedAt", ignore = true)
     UserUpdateResponse toUpdateResponse(User user);
+
+    UpdateUserRoleResponse toUpdateUserRoleResponse(User user);
 
 }
