@@ -1,8 +1,6 @@
 package com.source.bundleboard.user.controller;
 
-import com.source.bundleboard.user.dto.UpdateUserRequest;
-import com.source.bundleboard.user.dto.UserResponseDto;
-import com.source.bundleboard.user.dto.UserUpdateResponse;
+import com.source.bundleboard.user.dto.*;
 import com.source.bundleboard.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.graphql.data.method.annotation.Argument;
@@ -36,6 +34,11 @@ public class UserController {
     @MutationMapping
     public Mono<UserUpdateResponse> updateMe(@Argument UpdateUserRequest input) {
         return userService.updateMe(input);
+    }
+
+    @MutationMapping
+    public Mono<UpdateUserRoleResponse> updateUserRole(@Argument UpdateUserRoleInput input) {
+        return userService.updateUserRole(input);
     }
 
 
