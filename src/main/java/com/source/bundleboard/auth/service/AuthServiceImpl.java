@@ -10,6 +10,7 @@ import com.source.bundleboard.auth.jwt.service.JwtService;
 import com.source.bundleboard.email.service.EmailVerificationTokenService;
 import com.source.bundleboard.refreshtoken.model.RefreshToken;
 import com.source.bundleboard.refreshtoken.repository.RefreshTokenRepository;
+import com.source.bundleboard.user.dto.UserDto;
 import com.source.bundleboard.user.model.User;
 import com.source.bundleboard.user.model.UserRole;
 import com.source.bundleboard.user.model.UserStatus;
@@ -133,6 +134,9 @@ public class AuthServiceImpl implements AuthService {
     private Mono<AuthResponse> generateAuthResponse(User user) {
         String accessToken = jwtService.generateAccessToken(user.getUsername(), UserRole.toAuthorities(user.getRoles()));
         String refreshToken = jwtService.generateRefreshToken(user.getUsername());
+
+        UserDto userDto = new UserDto(user.getId(), user.getUsername(), user.getEmail(), user.getRoles());
+
         RefreshToken refreshTokenEntity = new RefreshToken(
                 null,
                 user.getId(),
@@ -142,6 +146,6 @@ public class AuthServiceImpl implements AuthService {
         );
 
         return refreshTokenRepository.save(refreshTokenEntity)
-                .map(savedRefreshToken -> new AuthResponse(accessToken, savedRefreshToken.getToken(), null));
+                .map(savedRefreshToken -> new AuthResponse(accessToken, savedRefreshToken.getToken(), userDto, null));
     }
 }

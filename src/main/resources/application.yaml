@@ -68,8 +68,8 @@ app:
       reset-password: Reset Password
 
     paths:
-      verification-email: /auth/verify
-      reset-password: /auth/reset-password
+      verification-email: /mail/verify
+      reset-password: /password/reset-password
 
 
   email-verification:
