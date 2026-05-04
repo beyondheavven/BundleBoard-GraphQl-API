@@ -60,6 +60,13 @@ type UpdateUserRoleResponse {
     success: Boolean!
 }
 
+type UserDto {
+    id: ID!
+    username: String!
+    email: String!
+    roles: [UserRole!]!
+}
+
 enum UserRole {
     admin, author, client
 }

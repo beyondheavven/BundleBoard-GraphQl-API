@@ -146,7 +146,7 @@ public class EmailVerificationTokenServiceImpl implements EmailVerificationToken
             user.setEmail(token.getNewEmail());
         }
         user.setStatus(UserStatus.active);
-        return userService.saveUser(user);
+        return userService.save(user);
     }
 
     private Mono<EmailResponse> handleFailedAttempt(EmailVerificationToken token) {

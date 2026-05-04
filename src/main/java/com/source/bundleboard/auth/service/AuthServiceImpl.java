@@ -1,10 +1,7 @@
 package com.source.bundleboard.auth.service;
 
 import com.source.bundleboard.api.exception.*;
-import com.source.bundleboard.auth.dto.AuthRequest;
-import com.source.bundleboard.auth.dto.AuthResponse;
-import com.source.bundleboard.auth.dto.RefreshTokenRequest;
-import com.source.bundleboard.auth.dto.RegisterRequest;
+import com.source.bundleboard.auth.dto.*;
 import com.source.bundleboard.auth.jwt.JwtProperties;
 import com.source.bundleboard.auth.jwt.service.JwtService;
 import com.source.bundleboard.email.service.EmailVerificationTokenService;
@@ -14,7 +11,8 @@ import com.source.bundleboard.user.dto.UserDto;
 import com.source.bundleboard.user.model.User;
 import com.source.bundleboard.user.model.UserRole;
 import com.source.bundleboard.user.model.UserStatus;
-import com.source.bundleboard.user.repository.UserRepository;
+import com.source.bundleboard.user.service.UserService;
+import com.source.bundleboard.utils.PasswordGenerator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -22,13 +20,14 @@ import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
-    private final UserRepository userRepository;
+    private final UserService userService;
 
     private final RefreshTokenRepository refreshTokenRepository;
 
@@ -40,11 +39,13 @@ public class AuthServiceImpl implements AuthService {
 
     private final EmailVerificationTokenService emailVerificationTokenService;
 
+    private final PasswordGenerator passwordGenerator;
 
-    @Transactional
+
     @Override
+    @Transactional
     public Mono<AuthResponse> authenticate(AuthRequest request) {
-        return userRepository.findByUsername(request.username())
+        return userService.findByUsername(request.username())
                 .switchIfEmpty(Mono.error(new UserNotFoundException()))
                 .flatMap(user -> {
 
@@ -66,15 +67,15 @@ public class AuthServiceImpl implements AuthService {
                             Instant.now(), user.getCreatedAt()
                     );
 
-                    return userRepository.save(updatedUser)
+                    return userService.save(updatedUser)
                             .flatMap(this::generateAuthResponse);
                 });
     }
 
-    @Transactional
     @Override
+    @Transactional
     public Mono<AuthResponse> register(RegisterRequest request) {
-        return userRepository.existsByUsername(request.username())
+        return userService.existsByUsername(request.username())
                 .flatMap(exists -> {
                     if (exists){
                         return Mono.error(new UserAlreadyExistsException());
@@ -90,7 +91,7 @@ public class AuthServiceImpl implements AuthService {
                             null,
                             Instant.now()
                     );
-                    return userRepository.save(user);
+                    return userService.save(user);
                 })
                 .flatMap(savedUser ->
                     emailVerificationTokenService.resendVerificationEmail(savedUser.getEmail())
@@ -99,6 +100,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public Mono<AuthResponse> refreshToken(RefreshTokenRequest refreshTokenRequest) {
         String refreshToken = refreshTokenRequest.refreshToken();
         return jwtService.isRefreshToken(refreshToken)
@@ -112,7 +114,7 @@ public class AuthServiceImpl implements AuthService {
                     if (!exists) return Mono.error(new InvalidTokenException());
                     return jwtService.extractUsername(refreshToken);
                 })
-                .flatMap(userRepository::findByUsername)
+                .flatMap(userService::findByUsername)
                 .switchIfEmpty(Mono.error(new UserNotFoundException()))
                 .flatMap(user -> {
                     if (user.getStatus() == UserStatus.banned || user.getStatus() == UserStatus.inactive) {
@@ -129,6 +131,44 @@ public class AuthServiceImpl implements AuthService {
         return refreshTokenRepository.deleteByToken(refreshTokenRequest.refreshToken())
                 .thenReturn(true)
                 .defaultIfEmpty(false);
+    }
+
+    @Override
+    @Transactional
+    public Mono<AuthResponse> socialLogin(SocialAuthRequest input) {
+        return userService.getUserByEmail(input.email())
+                .switchIfEmpty(createNewSocialUser(input))
+                .flatMap(user -> {
+                    if (user.getStatus() == UserStatus.banned) {
+                        return Mono.error(new UserStatusException());
+                    }
+
+                    User updatedUser = new User(
+                            user.getId(), user.getUsername(), user.getEmail(), user.getPasswordHash(),
+                            user.getAvatarUrl(), user.getRoles(), user.getStatus(),
+                            Instant.now(), user.getCreatedAt()
+                    );
+
+                    return userService.save(updatedUser)
+                            .flatMap(this::generateAuthResponse);
+                });
+    }
+
+    private Mono<User> createNewSocialUser(SocialAuthRequest input) {
+        String securePassword = passwordGenerator.generateSocialPassword();
+        User user = new User(
+                null,
+                input.username(),
+                input.email(),
+                passwordEncoder.encode(securePassword),
+                "",
+                Set.of(UserRole.client),
+                UserStatus.inactive,
+                Instant.now(),
+                Instant.now()
+        );
+
+        return userService.save(user);
     }
 
     private Mono<AuthResponse> generateAuthResponse(User user) {

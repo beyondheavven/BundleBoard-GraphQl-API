@@ -1,9 +1,6 @@
 package com.source.bundleboard.auth.service;
 
-import com.source.bundleboard.auth.dto.AuthRequest;
-import com.source.bundleboard.auth.dto.AuthResponse;
-import com.source.bundleboard.auth.dto.RefreshTokenRequest;
-import com.source.bundleboard.auth.dto.RegisterRequest;
+import com.source.bundleboard.auth.dto.*;
 import reactor.core.publisher.Mono;
 
 public interface AuthService {
@@ -16,7 +13,5 @@ public interface AuthService {
 
     Mono<Boolean> logout(RefreshTokenRequest refreshTokenRequest);
 
-
-
-
+    Mono<AuthResponse> socialLogin(SocialAuthRequest input);
 }
