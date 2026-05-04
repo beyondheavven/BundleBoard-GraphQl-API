@@ -75,7 +75,7 @@ public class PasswordServiceImpl implements PasswordService {
                             }
 
                             user.setPasswordHash(token.getNewPasswordHash());
-                            return userService.saveUser(user)
+                            return userService.save(user)
                                     .thenReturn(new PasswordChangeResponse(true, "Password changed successfully", null));
                         })
                         .switchIfEmpty(Mono.error(new InvalidTokenException()))
@@ -116,7 +116,7 @@ public class PasswordServiceImpl implements PasswordService {
                     return userService.getUserById(token.getUserId())
                             .flatMap(user -> {
                                 user.setPasswordHash(passwordEncoder.encode(input.newPassword()));
-                                return userService.saveUser(user)
+                                return userService.save(user)
                                         .thenReturn(new PasswordResetResponse(true, "Password reset successfully", null));
                             });
                 })

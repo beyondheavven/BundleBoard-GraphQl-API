@@ -44,6 +44,9 @@ server:
   port: ${SERVER_PORT}
 
 app:
+  auth:
+    social-password-secret: ${SOCIAL_AUTH_PASSWORD_SECRET}
+
   cors:
         allowed-origins: ${ALLOWED_ORIGINS}
         allowed-methods: ${ALLOWED_METHODS}
