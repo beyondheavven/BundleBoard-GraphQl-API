@@ -1,5 +1,6 @@
 package com.source.bundleboard.utils;
 
+import org.bouncycastle.pqc.crypto.DigestUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -15,11 +16,12 @@ public class PasswordGenerator {
     private static final SecureRandom RANDOM = new SecureRandom();
 
     public String generateSocialPassword() {
-        int length = 32;
+        int length = 20;
         StringBuilder sb = new StringBuilder(length);
         for (int i = 0; i < length; i++) {
             sb.append(CHAR_POOL.charAt(RANDOM.nextInt(CHAR_POOL.length())));
         }
+
         return sb.toString() + socialPasswordSecret;
     }
 }

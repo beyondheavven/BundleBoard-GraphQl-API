@@ -1,0 +1,1 @@
+ALTER TABLE users ADD COLUMN is_setup_completed boolean DEFAULT false;
