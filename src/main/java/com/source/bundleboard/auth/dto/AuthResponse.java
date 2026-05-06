@@ -10,6 +10,8 @@ public record AuthResponse(
 
         UserDto user,
 
-        String error
+        String error,
+
+        Boolean isNew
 ) {
 }
