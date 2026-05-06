@@ -43,4 +43,7 @@ public class User {
 
     @Column("created_at")
     private Instant createdAt;
+
+    @Column("is_setup_completed")
+    private boolean isSetupCompleted;
 }

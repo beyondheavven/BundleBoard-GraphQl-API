@@ -53,22 +53,18 @@ public class AuthServiceImpl implements AuthService {
                         return Mono.error(new IncorrectPasswordException("Incorrect password."));
                     }
 
-                    if (user.getStatus() == UserStatus.banned) {
-                        return Mono.error(new UserStatusException());
-                    }
-
-                    if (user.getStatus() == UserStatus.inactive) {
+                    if (user.getStatus() == UserStatus.banned || user.getStatus() == UserStatus.inactive) {
                         return Mono.error(new UserStatusException());
                     }
 
                     User updatedUser = new User(
                             user.getId(), user.getUsername(), user.getEmail(), user.getPasswordHash(),
                             user.getAvatarUrl(), user.getRoles(), user.getStatus(),
-                            Instant.now(), user.getCreatedAt()
+                            Instant.now(), user.getCreatedAt(), user.isSetupCompleted()
                     );
 
                     return userService.save(updatedUser)
-                            .flatMap(this::generateAuthResponse);
+                            .flatMap(savedUser -> generateAuthResponse(savedUser, !savedUser.isSetupCompleted()));
                 });
     }
 
@@ -89,13 +85,14 @@ public class AuthServiceImpl implements AuthService {
                             Set.of(UserRole.client),
                             UserStatus.inactive,
                             null,
-                            Instant.now()
+                            Instant.now(),
+                            true
                     );
                     return userService.save(user);
                 })
                 .flatMap(savedUser ->
                     emailVerificationTokenService.resendVerificationEmail(savedUser.getEmail())
-                            .then(generateAuthResponse(savedUser))
+                            .then(generateAuthResponse(savedUser, false))
                 );
     }
 
@@ -122,7 +119,7 @@ public class AuthServiceImpl implements AuthService {
                     }
 
                     return refreshTokenRepository.deleteByToken(refreshToken)
-                            .then(generateAuthResponse(user));
+                            .then(generateAuthResponse(user, !user.isSetupCompleted()));
                 });
     }
 
@@ -137,6 +134,7 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public Mono<AuthResponse> socialLogin(SocialAuthRequest input) {
         return userService.getUserByEmail(input.email())
+                .onErrorResume(UserNotFoundException.class, e -> Mono.empty())
                 .switchIfEmpty(createNewSocialUser(input))
                 .flatMap(user -> {
                     if (user.getStatus() == UserStatus.banned) {
@@ -146,11 +144,11 @@ public class AuthServiceImpl implements AuthService {
                     User updatedUser = new User(
                             user.getId(), user.getUsername(), user.getEmail(), user.getPasswordHash(),
                             user.getAvatarUrl(), user.getRoles(), user.getStatus(),
-                            Instant.now(), user.getCreatedAt()
+                            Instant.now(), user.getCreatedAt(), user.isSetupCompleted()
                     );
 
                     return userService.save(updatedUser)
-                            .flatMap(this::generateAuthResponse);
+                            .flatMap(savedUser -> generateAuthResponse(savedUser, !savedUser.isSetupCompleted()));
                 });
     }
 
@@ -163,15 +161,16 @@ public class AuthServiceImpl implements AuthService {
                 passwordEncoder.encode(securePassword),
                 "",
                 Set.of(UserRole.client),
-                UserStatus.inactive,
+                UserStatus.active,
                 Instant.now(),
-                Instant.now()
+                Instant.now(),
+                false
         );
 
         return userService.save(user);
     }
 
-    private Mono<AuthResponse> generateAuthResponse(User user) {
+    private Mono<AuthResponse> generateAuthResponse(User user, boolean isNew) {
         String accessToken = jwtService.generateAccessToken(user.getUsername(), UserRole.toAuthorities(user.getRoles()));
         String refreshToken = jwtService.generateRefreshToken(user.getUsername());
 
@@ -186,6 +185,6 @@ public class AuthServiceImpl implements AuthService {
         );
 
         return refreshTokenRepository.save(refreshTokenEntity)
-                .map(savedRefreshToken -> new AuthResponse(accessToken, savedRefreshToken.getToken(), userDto, null));
+                .map(savedRefreshToken -> new AuthResponse(accessToken, savedRefreshToken.getToken(), userDto, null, isNew));
     }
 }
