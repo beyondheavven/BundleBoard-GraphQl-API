@@ -33,4 +33,5 @@ type AuthResponse {
     refreshToken: String!
     user: UserDto!
     error: String
+    isNew: Boolean
 }
