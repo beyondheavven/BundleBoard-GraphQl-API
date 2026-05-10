@@ -1,0 +1,17 @@
+extend type Query {
+
+}
+
+type MediaResource {
+    id: ID!
+    fileName: String!
+    filePath: String!
+    mimeType: MimeType!
+    provider: Provider!
+    fileSize: Int!
+}
+
+enum Provider {
+    local
+    google_drive
+}

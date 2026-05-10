@@ -1,0 +1,28 @@
+scalar Upload
+
+extend type Mutation {
+    uploadImage(file: Upload!): Image!
+}
+
+extend type Query {
+
+}
+
+type Image {
+    id: ID!
+    fileName: String!
+    mimeType: MimeType!
+    filePath: String!
+    width: Int!
+    height: Int!
+    filesize: Int!
+}
+
+enum MimeType {
+    jpeg
+    png
+    mp4
+    zip
+    rar
+    pdf
+}
