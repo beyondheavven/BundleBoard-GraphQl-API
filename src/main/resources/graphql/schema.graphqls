@@ -6,31 +6,7 @@ type Mutation {
 
 }
 
-type Image {
-    id: ID!
-    fileName: String!
-    mimeType: MimeType!
-    filePath: String!
-    width: Int!
-    height: Int!
-    filesize: Int!
-}
-
 type Tag {
     id: ID!
     name: String!
-}
-
-enum MimeType {
-    jpeg
-    png
-    mp4
-    zip
-    rar
-    pdf
-}
-
-enum Provider {
-    local
-    google_drive
 }
