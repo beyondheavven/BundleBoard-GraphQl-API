@@ -2,7 +2,7 @@ package com.source.bundleboard.image.dto;
 
 import com.source.bundleboard.mediaresource.model.MimeType;
 
-public record PreviewImageResponseDto(
+public record BaseImageResponse(
 
         Long id,
 

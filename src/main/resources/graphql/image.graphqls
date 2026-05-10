@@ -4,10 +4,6 @@ extend type Mutation {
     uploadImage(file: Upload!): Image!
 }
 
-extend type Query {
-
-}
-
 type Image {
     id: ID!
     fileName: String!
@@ -16,6 +12,11 @@ type Image {
     width: Int!
     height: Int!
     filesize: Int!
+}
+
+type ImageShortResponse {
+    filePath: String!
+    fileName: String!
 }
 
 enum MimeType {

@@ -1,6 +1,7 @@
 package com.source.bundleboard.image.mapper;
 
-import com.source.bundleboard.image.dto.PreviewImageResponseDto;
+import com.source.bundleboard.image.dto.BaseImageResponse;
+import com.source.bundleboard.image.dto.ImageShortResponse;
 import com.source.bundleboard.image.model.PreviewImage;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -13,9 +14,9 @@ public interface PreviewImageMapper {
     @Mapping(target = "filePath", source = "filePath")
     @Mapping(target = "width", source = "width")
     @Mapping(target = "height", source = "height")
-    @Mapping(target = "fileSize", source = "fileSize")
-    @Mapping(target = "mimeType", source = "mimeType")
-    PreviewImageResponseDto toDto(PreviewImage previewImage);
+    BaseImageResponse toDto(PreviewImage previewImage);
+
+    ImageShortResponse toShortDto(PreviewImage previewImage);
 
 
 }

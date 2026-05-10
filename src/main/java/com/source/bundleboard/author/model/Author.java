@@ -1,22 +1,28 @@
 package com.source.bundleboard.author.model;
 
 import io.r2dbc.postgresql.codec.Json;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.math.BigDecimal;
 
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Table("authors")
 public class Author {
 
     @Id
+    @Column("id")
+    Long id;
+
     @Column("users_id")
     Long userId;
 

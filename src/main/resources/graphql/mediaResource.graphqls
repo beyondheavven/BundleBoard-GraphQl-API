@@ -1,7 +1,3 @@
-extend type Query {
-
-}
-
 type MediaResource {
     id: ID!
     fileName: String!
