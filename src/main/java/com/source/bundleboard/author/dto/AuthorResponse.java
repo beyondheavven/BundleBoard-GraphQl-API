@@ -2,8 +2,7 @@ package com.source.bundleboard.author.dto;
 
 import java.math.BigDecimal;
 
-public record AuthorResponseDto(
-
+public record AuthorResponse(
         Long id,
 
         String bio,
@@ -12,9 +11,6 @@ public record AuthorResponseDto(
 
         Integer totalSales,
 
-        String socialLinks,
-
-        String stripeAccountId
-
+        String socialLinks
 ) {
 }

@@ -1,7 +1,9 @@
 package com.source.bundleboard.author.service;
 
 import com.source.bundleboard.api.exception.AuthorNotFoundException;
-import com.source.bundleboard.author.dto.AuthorResponseDto;
+import com.source.bundleboard.author.dto.AuthorResponse;
+import com.source.bundleboard.author.dto.AuthorShortResponse;
+import com.source.bundleboard.author.dto.BaseAuthorResponse;
 import com.source.bundleboard.author.mapper.AuthorMapper;
 import com.source.bundleboard.author.repository.AuthorRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,10 +19,17 @@ public class AuthorServiceImpl implements AuthorService {
     private final AuthorMapper authorMapper;
 
     @Override
-    public Mono<AuthorResponseDto> findById(Long id) {
+    public Mono<BaseAuthorResponse> findById(Long id) {
         return authorRepository.findByUserId(id)
                 .map(authorMapper::toDto)
-                .switchIfEmpty(Mono.error(new AuthorNotFoundException("Author not found.")));
+                .switchIfEmpty(Mono.error(new AuthorNotFoundException()));
+    }
+
+    @Override
+    public Mono<AuthorShortResponse> findShortResponseById(Long id) {
+        return authorRepository.findAuthorWithUsernameById(id)
+                .map(authorMapper::toShortDto)
+                .switchIfEmpty(Mono.error(new AuthorNotFoundException()));
     }
 
 

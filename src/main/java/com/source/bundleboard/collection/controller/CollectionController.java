@@ -1,12 +1,17 @@
 package com.source.bundleboard.collection.controller;
 
-import com.source.bundleboard.author.dto.AuthorResponseDto;
+import com.source.bundleboard.author.dto.AuthorResponse;
+import com.source.bundleboard.author.dto.AuthorShortResponse;
+import com.source.bundleboard.author.dto.BaseAuthorResponse;
 import com.source.bundleboard.author.service.AuthorService;
-import com.source.bundleboard.collection.dto.CollectionResponseDto;
+import com.source.bundleboard.collection.dto.CollectionResponse;
+import com.source.bundleboard.collection.dto.GetCollectionResponse;
 import com.source.bundleboard.collection.dto.CreateNewCollectionDto;
 import com.source.bundleboard.collection.dto.UpdateCollectionDto;
 import com.source.bundleboard.collection.service.CollectionService;
-import com.source.bundleboard.image.dto.PreviewImageResponseDto;
+import com.source.bundleboard.image.dto.BaseImageResponse;
+import com.source.bundleboard.image.dto.ImageResponse;
+import com.source.bundleboard.image.dto.ImageShortResponse;
 import com.source.bundleboard.image.service.PreviewImageService;
 import com.source.bundleboard.mediaresource.dto.MediaResourceResponseDto;
 import com.source.bundleboard.mediaresource.service.MediaResourceService;
@@ -34,25 +39,25 @@ public class CollectionController {
 
     @PreAuthorize("permitAll()")
     @QueryMapping
-    public Flux<CollectionResponseDto> getAllCollections() {
+    public Flux<CollectionResponse> getAllCollections() {
         return collectionService.getAllCollections();
     }
 
     @PreAuthorize("permitAll()")
     @QueryMapping
-    public Mono<CollectionResponseDto> getCollectionById(@Argument Long id) {
+    public Mono<GetCollectionResponse> getCollectionById(@Argument Long id) {
         return collectionService.getCollectionById(id);
     }
 
     @PreAuthorize("hasAnyRole('admin', 'author')")
     @MutationMapping
-    public Mono<CollectionResponseDto> createCollection(@Argument(name = "input") CreateNewCollectionDto collection) {
+    public Mono<GetCollectionResponse> createCollection(@Argument(name = "input") CreateNewCollectionDto collection) {
         return collectionService.createCollection(collection);
     }
 
     @PreAuthorize("hasAnyRole('admin', 'author')")
     @MutationMapping
-    public Mono<CollectionResponseDto> updateCollection(@Argument Long id, @Argument(name = "input") UpdateCollectionDto collection) {
+    public Mono<GetCollectionResponse> updateCollection(@Argument Long id, @Argument(name = "input") UpdateCollectionDto collection) {
         return collectionService.updateCollection(id, collection);
     }
 
@@ -63,19 +68,29 @@ public class CollectionController {
     }
 
 
-    @SchemaMapping(typeName = "Collection", field = "author")
-    public Mono<AuthorResponseDto> getAuthorFromResponse(CollectionResponseDto collection){
+    @SchemaMapping(typeName = "Collection", field = "mediaResource")
+    public Mono<MediaResourceResponseDto> getMediaResource(GetCollectionResponse collection){
+        return mediaResourceService.findById(collection.mediaResourceId());
+    }
+
+    @SchemaMapping(typeName = "CollectionResponse", field = "author")
+    public Mono<BaseAuthorResponse> getAuthorForResponse(CollectionResponse collection) {
         return authorService.findById(collection.authorId());
     }
 
-    @SchemaMapping(typeName = "Collection", field = "previewImage")
-    public Mono<PreviewImageResponseDto> getPreviewImage(CollectionResponseDto collection){
+    @SchemaMapping(typeName = "CollectionResponse", field = "previewImage")
+    public Mono<BaseImageResponse> getPreviewImageForResponse(CollectionResponse collection) {
         return imageService.findByImageId(collection.previewImageId());
     }
 
-    @SchemaMapping(typeName = "Collection", field = "mediaResource")
-    public Mono<MediaResourceResponseDto> getMediaResource(CollectionResponseDto collection){
-        return mediaResourceService.findById(collection.mediaResourceId());
+    @SchemaMapping(typeName = "CollectionResponse", field = "author")
+    public Mono<AuthorShortResponse> getAuthor(CollectionResponse collection) {
+        return authorService.findShortResponseById(collection.authorId());
+    }
+
+    @SchemaMapping(typeName = "CollectionResponse", field = "previewImage")
+    public Mono<ImageShortResponse> getPreviewImage(CollectionResponse collection) {
+        return imageService.findShortResponseById(collection.previewImageId());
     }
 
 

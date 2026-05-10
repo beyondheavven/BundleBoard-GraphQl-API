@@ -14,6 +14,15 @@ type Image {
     filesize: Int!
 }
 
+type ImageResponse {
+    id: ID!
+    fileName: String!
+    filePath: String!
+    mimeType: String!
+    width: Int
+    height: Int
+}
+
 enum MimeType {
     jpeg
     png

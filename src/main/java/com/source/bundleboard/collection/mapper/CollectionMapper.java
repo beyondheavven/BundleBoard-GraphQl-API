@@ -1,7 +1,8 @@
 package com.source.bundleboard.collection.mapper;
 
-import com.source.bundleboard.collection.dto.CollectionResponseDto;
+import com.source.bundleboard.collection.dto.CollectionResponse;
 import com.source.bundleboard.collection.dto.CreateNewCollectionDto;
+import com.source.bundleboard.collection.dto.GetCollectionResponse;
 import com.source.bundleboard.collection.dto.UpdateCollectionDto;
 import com.source.bundleboard.collection.model.Collection;
 import org.mapstruct.Mapper;
@@ -13,7 +14,11 @@ public interface CollectionMapper {
 
     @Mapping(target = "authorId", source = "authorId")
     @Mapping(target = "previewImageId", source = "previewImageId")
-    CollectionResponseDto toDto(Collection collection);
+    CollectionResponse toDto(Collection collection);
+
+    @Mapping(target = "authorId", source = "authorId")
+    @Mapping(target = "previewImageId", source = "previewImageId")
+    GetCollectionResponse toGetDto(Collection collection);
 
     @Mapping(target = "authorId", source = "authorId")
     @Mapping(target = "mediaResourceId", source = "mediaResourceId")

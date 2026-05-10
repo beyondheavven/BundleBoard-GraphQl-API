@@ -1,6 +1,6 @@
 extend type Query {
-    getAllCollections: [Collection]!
-    getCollectionById(id: ID!): Collection
+    getAllCollections: [CollectionResponse]!
+    getCollectionById(id: ID!): CollectionResponse
 }
 
 extend type Mutation {
@@ -21,6 +21,14 @@ type Collection {
     mediaResource: MediaResource!
 }
 
+type CollectionResponse {
+    id: ID!
+    name: String!
+    description: String!
+    price: Float!
+    author: AuthorResponse!
+    previewImage: ImageResponse!
+}
 
 input CollectionInput {
     name: String!
