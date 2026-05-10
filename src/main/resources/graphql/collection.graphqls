@@ -26,8 +26,8 @@ type CollectionResponse {
     name: String!
     description: String!
     price: Float!
-    author: AuthorResponse!
-    previewImage: ImageResponse!
+    author: AuthorShortResponse!
+    previewImage: ImageShortResponse!
 }
 
 input CollectionInput {

@@ -1,9 +1,10 @@
 package com.source.bundleboard.author.dto;
 
 public record AuthorShortResponse(
+
         Long id,
 
-        Double rating,
+        java.math.BigDecimal rating,
 
         Integer totalSales,
 

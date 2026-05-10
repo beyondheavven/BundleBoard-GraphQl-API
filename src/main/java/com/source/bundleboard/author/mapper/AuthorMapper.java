@@ -19,8 +19,6 @@ public interface AuthorMapper {
     @Mapping(target = "stripeAccountId", source = "stripeAccountId")
     BaseAuthorResponse toDto(Author author);
 
-    AuthorShortResponse toShortDto(Author author);
-
     default String mapJsonToString(Json json) {
         return json != null ? json.asString() : "";
     }

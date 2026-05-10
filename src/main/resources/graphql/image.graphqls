@@ -14,13 +14,9 @@ type Image {
     filesize: Int!
 }
 
-type ImageResponse {
-    id: ID!
-    fileName: String!
+type ImageShortResponse {
     filePath: String!
-    mimeType: String!
-    width: Int
-    height: Int
+    fileName: String!
 }
 
 enum MimeType {

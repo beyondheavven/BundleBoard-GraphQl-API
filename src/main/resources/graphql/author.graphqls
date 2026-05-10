@@ -8,10 +8,9 @@ type Author {
     stripeAccountId: String!
 }
 
-type AuthorResponse {
+type AuthorShortResponse {
     id: ID!
-    bio: String
     rating: Float
     totalSales: Int
-    socialLinks: String
+    username: String!
 }

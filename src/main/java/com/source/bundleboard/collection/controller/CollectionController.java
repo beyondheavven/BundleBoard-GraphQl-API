@@ -74,16 +74,6 @@ public class CollectionController {
     }
 
     @SchemaMapping(typeName = "CollectionResponse", field = "author")
-    public Mono<BaseAuthorResponse> getAuthorForResponse(CollectionResponse collection) {
-        return authorService.findById(collection.authorId());
-    }
-
-    @SchemaMapping(typeName = "CollectionResponse", field = "previewImage")
-    public Mono<BaseImageResponse> getPreviewImageForResponse(CollectionResponse collection) {
-        return imageService.findByImageId(collection.previewImageId());
-    }
-
-    @SchemaMapping(typeName = "CollectionResponse", field = "author")
     public Mono<AuthorShortResponse> getAuthor(CollectionResponse collection) {
         return authorService.findShortResponseById(collection.authorId());
     }
