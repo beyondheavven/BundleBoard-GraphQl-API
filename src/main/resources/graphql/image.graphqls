@@ -4,10 +4,6 @@ extend type Mutation {
     uploadImage(file: Upload!): Image!
 }
 
-extend type Query {
-
-}
-
 type Image {
     id: ID!
     fileName: String!
