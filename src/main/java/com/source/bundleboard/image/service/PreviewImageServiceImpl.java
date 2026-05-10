@@ -1,7 +1,8 @@
 package com.source.bundleboard.image.service;
 
 import com.source.bundleboard.api.exception.ImageNotFoundException;
-import com.source.bundleboard.image.dto.PreviewImageResponseDto;
+import com.source.bundleboard.image.dto.BaseImageResponse;
+import com.source.bundleboard.image.dto.ImageShortResponse;
 import com.source.bundleboard.image.mapper.PreviewImageMapper;
 import com.source.bundleboard.image.model.PreviewImage;
 import com.source.bundleboard.image.repository.PreviewImageRepository;
@@ -18,7 +19,7 @@ public class PreviewImageServiceImpl implements PreviewImageService {
     private final PreviewImageMapper previewImageMapper;
 
     @Override
-    public Mono<PreviewImageResponseDto> findByImageId(Long id) {
+    public Mono<BaseImageResponse> findByImageId(Long id) {
         return previewImageRepository.findById(id)
                         .map(previewImageMapper::toDto)
                                 .switchIfEmpty(Mono.error(new ImageNotFoundException()));
@@ -27,6 +28,13 @@ public class PreviewImageServiceImpl implements PreviewImageService {
     @Override
     public Mono<PreviewImage> save(PreviewImage image) {
         return previewImageRepository.save(image).switchIfEmpty(Mono.error(new ImageNotFoundException()));
+    }
+
+    @Override
+    public Mono<ImageShortResponse> findShortResponseById(Long id) {
+        return previewImageRepository.findById(id)
+                .map(previewImageMapper::toShortDto)
+                .switchIfEmpty(Mono.error(new ImageNotFoundException()));
     }
 
 }

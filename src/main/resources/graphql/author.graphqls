@@ -1,0 +1,17 @@
+type Author {
+    id: ID!
+    user: User!
+    bio: String!
+    rating: Float!
+    totalSales: Int!
+    socialLinks: String!
+    stripeAccountId: String!
+}
+
+type AuthorResponse {
+    id: ID!
+    bio: String
+    rating: Float
+    totalSales: Int
+    socialLinks: String
+}

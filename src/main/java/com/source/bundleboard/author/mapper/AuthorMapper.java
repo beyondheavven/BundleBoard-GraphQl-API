@@ -1,6 +1,8 @@
 package com.source.bundleboard.author.mapper;
 
-import com.source.bundleboard.author.dto.AuthorResponseDto;
+import com.source.bundleboard.author.dto.AuthorResponse;
+import com.source.bundleboard.author.dto.AuthorShortResponse;
+import com.source.bundleboard.author.dto.BaseAuthorResponse;
 import com.source.bundleboard.author.model.Author;
 import io.r2dbc.postgresql.codec.Json;
 import org.mapstruct.Mapper;
@@ -15,7 +17,9 @@ public interface AuthorMapper {
     @Mapping(target = "totalSales", source = "totalSales")
     @Mapping(target = "socialLinks", expression = "java(mapJsonToString(author.getSocialLinks()))")
     @Mapping(target = "stripeAccountId", source = "stripeAccountId")
-    AuthorResponseDto toDto(Author author);
+    BaseAuthorResponse toDto(Author author);
+
+    AuthorShortResponse toShortDto(Author author);
 
     default String mapJsonToString(Json json) {
         return json != null ? json.asString() : "";
