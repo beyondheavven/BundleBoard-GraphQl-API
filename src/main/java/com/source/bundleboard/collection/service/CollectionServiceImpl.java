@@ -4,7 +4,8 @@ import com.source.bundleboard.api.exception.CollectionNotFoundException;
 import com.source.bundleboard.api.exception.DescriptionException;
 import com.source.bundleboard.api.exception.MinimalPriceException;
 import com.source.bundleboard.author.service.AuthorService;
-import com.source.bundleboard.collection.dto.CollectionResponseDto;
+import com.source.bundleboard.collection.dto.CollectionResponse;
+import com.source.bundleboard.collection.dto.GetCollectionResponse;
 import com.source.bundleboard.collection.dto.CreateNewCollectionDto;
 import com.source.bundleboard.collection.dto.UpdateCollectionDto;
 import com.source.bundleboard.collection.mapper.CollectionMapper;
@@ -30,14 +31,14 @@ public class CollectionServiceImpl implements CollectionService {
     private static final BigDecimal MIN_PRICE = new BigDecimal("5.00");
 
     @Override
-    public Mono<CollectionResponseDto> getCollectionById(Long id) {
+    public Mono<GetCollectionResponse> getCollectionById(Long id) {
         return collectionRepository.findCollectionById(id)
-                .map(collectionMapper::toDto)
+                .map(collectionMapper::toGetDto)
                 .switchIfEmpty(Mono.error(new CollectionNotFoundException("Collection not found.")));
     }
 
     @Override
-    public Flux<CollectionResponseDto> getAllCollections() {
+    public Flux<CollectionResponse> getAllCollections() {
         return collectionRepository.findAll()
                 .map(collectionMapper::toDto)
                 .switchIfEmpty(Flux.error(new CollectionNotFoundException("No collections found.")));
@@ -45,7 +46,7 @@ public class CollectionServiceImpl implements CollectionService {
 
     @Transactional
     @Override
-    public Mono<CollectionResponseDto> createCollection(CreateNewCollectionDto collection) {
+    public Mono<GetCollectionResponse> createCollection(CreateNewCollectionDto collection) {
         return Mono.just(collection)
                 .filter(d -> d.price() >= 5.0)
                 .switchIfEmpty(Mono.error(new MinimalPriceException("Validation failed: Minimal price is 5 USD")))
@@ -54,11 +55,11 @@ public class CollectionServiceImpl implements CollectionService {
                 .flatMap(dto -> authorService.findById(dto.authorId()).thenReturn(dto))
                 .map(collectionMapper::toEntity)
                 .flatMap(collectionRepository::save)
-                .map(collectionMapper::toDto);
+                .map(collectionMapper::toGetDto);
     }
 
     @Override
-    public Mono<CollectionResponseDto> updateCollection(Long id, UpdateCollectionDto collection) {
+    public Mono<GetCollectionResponse> updateCollection(Long id, UpdateCollectionDto collection) {
         return collectionRepository.findCollectionById(id)
                 .switchIfEmpty(Mono.error(new CollectionNotFoundException("Collection not found")))
                 .flatMap(entity -> {
@@ -73,7 +74,7 @@ public class CollectionServiceImpl implements CollectionService {
                     collectionMapper.updateEntityFromDto(collection, entity);
                     return collectionRepository.save(entity);
                 })
-                .map(collectionMapper::toDto);
+                .map(collectionMapper::toGetDto);
     }
 
     @Override

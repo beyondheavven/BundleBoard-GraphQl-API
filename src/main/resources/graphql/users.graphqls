@@ -18,16 +18,6 @@ type User {
     status: UserStatus!
 }
 
-type Author {
-    id: ID!
-    user: User!
-    bio: String!
-    rating: Float!
-    totalSales: Int!
-    socialLinks: String!
-    stripeAccountId: String!
-}
-
 type UserResponseDto {
     id: ID!
     username: String!

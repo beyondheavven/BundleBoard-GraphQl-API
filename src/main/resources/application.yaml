@@ -13,9 +13,9 @@ spring:
       max-size: ${DB_MAX_POOL_SIZE}
 
   graphql:
+    show-exceptions: true
     graphiql:
       enabled: true
-      show-exceptions: true
     schema:
       inspection:
         enabled: true

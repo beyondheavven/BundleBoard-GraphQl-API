@@ -18,11 +18,8 @@ public interface UserMapper {
     @Mapping(target = "status", source = "status")
     UserResponseDto toDto(User user);
 
-    User toEntity(UserResponseDto userResponseDto);
-
     @Mapping(target = "updatedAt", ignore = true)
     UserUpdateResponse toUpdateResponse(User user);
 
-    UpdateUserRoleResponse toUpdateUserRoleResponse(User user);
 
 }
