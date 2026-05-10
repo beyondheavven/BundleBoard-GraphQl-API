@@ -12,12 +12,4 @@ public interface AuthorRepository extends R2dbcRepository<Author, Long> {
     @Query("SELECT * FROM authors WHERE users_id = :userId")
     Mono<Author> findByUserId(Long userId);
 
-    @Query("""
-        SELECT a.*, u.username 
-        FROM authors a 
-        JOIN users u ON a.users_id = u.id 
-        WHERE a.id = :id
-    """)
-    Mono<Author> findAuthorWithUsernameById(Long id);
-
 }
