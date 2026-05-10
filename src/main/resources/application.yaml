@@ -88,3 +88,11 @@ app:
   password-verification:
     max-attempts: ${MAX_ATTEMPTS}
     block-duration-seconds: ${BLOCK_DURATION_SECONDS}
+
+  s3:
+    endpoint: ${S3_ENDPOINT}
+    access-key: ${S3_ACCESS_KEY}
+    secret-key: ${S3_SECRET_KEY}
+    bucket: ${S3_BUCKET}
+    public-url-prefix: ${S3_PUBLIC_URL_PREFIX}
+    region: ${S3_REGION}

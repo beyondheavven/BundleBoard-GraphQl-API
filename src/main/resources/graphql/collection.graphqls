@@ -21,14 +21,6 @@ type Collection {
     mediaResource: MediaResource!
 }
 
-type MediaResource {
-    id: ID!
-    fileName: String!
-    filePath: String!
-    mimeType: MimeType!
-    provider: Provider!
-    fileSize: Int!
-}
 
 input CollectionInput {
     name: String!
