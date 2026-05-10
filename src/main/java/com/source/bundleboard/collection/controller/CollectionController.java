@@ -32,33 +32,36 @@ public class CollectionController {
 
     private final MediaResourceService mediaResourceService;
 
+    @PreAuthorize("permitAll()")
     @QueryMapping
     public Flux<CollectionResponseDto> getAllCollections() {
         return collectionService.getAllCollections();
     }
 
+    @PreAuthorize("permitAll()")
     @QueryMapping
     public Mono<CollectionResponseDto> getCollectionById(@Argument Long id) {
         return collectionService.getCollectionById(id);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'AUTHOR')")
+    @PreAuthorize("hasAnyRole('admin', 'author')")
     @MutationMapping
     public Mono<CollectionResponseDto> createCollection(@Argument(name = "input") CreateNewCollectionDto collection) {
         return collectionService.createCollection(collection);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'AUTHOR')")
+    @PreAuthorize("hasAnyRole('admin', 'author')")
     @MutationMapping
     public Mono<CollectionResponseDto> updateCollection(@Argument Long id, @Argument(name = "input") UpdateCollectionDto collection) {
         return collectionService.updateCollection(id, collection);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'AUTHOR')")
+    @PreAuthorize("hasAnyRole('admin', 'author')")
     @MutationMapping
     public Mono<Boolean> deleteCollection(@Argument Long id) {
         return collectionService.deleteCollection(id);
     }
+
 
     @SchemaMapping(typeName = "Collection", field = "author")
     public Mono<AuthorResponseDto> getAuthorFromResponse(CollectionResponseDto collection){
