@@ -1,4 +1,4 @@
-package com.source.bundleboard.api.storage;
+package com.source.bundleboard.storage;
 
 import com.source.bundleboard.image.dto.BulkImageResponse;
 import com.source.bundleboard.image.dto.UploadImageResponse;
