@@ -3,6 +3,7 @@ package com.source.bundleboard.image.service;
 import com.source.bundleboard.api.exception.ImageNotFoundException;
 import com.source.bundleboard.image.dto.PreviewImageResponseDto;
 import com.source.bundleboard.image.mapper.PreviewImageMapper;
+import com.source.bundleboard.image.model.PreviewImage;
 import com.source.bundleboard.image.repository.PreviewImageRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,7 +21,12 @@ public class PreviewImageServiceImpl implements PreviewImageService {
     public Mono<PreviewImageResponseDto> findByImageId(Long id) {
         return previewImageRepository.findById(id)
                         .map(previewImageMapper::toDto)
-                                .switchIfEmpty(Mono.error(new ImageNotFoundException("Image not found.")));
+                                .switchIfEmpty(Mono.error(new ImageNotFoundException()));
+    }
+
+    @Override
+    public Mono<PreviewImage> save(PreviewImage image) {
+        return previewImageRepository.save(image).switchIfEmpty(Mono.error(new ImageNotFoundException()));
     }
 
 }
