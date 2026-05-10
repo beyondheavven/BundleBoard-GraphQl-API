@@ -2,7 +2,7 @@ package com.source.bundleboard.api.exception;
 
 
 public class ImageNotFoundException extends RuntimeException{
-    public ImageNotFoundException(String message){
-        super(message);
+    public ImageNotFoundException(){
+        super("Image not found.");
     }
 }
