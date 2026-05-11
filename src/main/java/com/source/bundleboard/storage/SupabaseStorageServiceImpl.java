@@ -80,6 +80,11 @@ public class SupabaseStorageServiceImpl implements SupabaseStorageService {
         return null;
     }
 
+    @Override
+    public Mono<String> getImageUrl(String fileName) {
+        return Mono.just(s3Properties.getPublicUrlPrefix() + fileName);
+    }
+
     private Mono<UploadImageResponse> uploadSingleImage(FilePart filePart) {
         String fileName = filePart.filename();
         String extension = fileName.substring(fileName.lastIndexOf("."));

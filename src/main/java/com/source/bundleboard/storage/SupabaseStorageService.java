@@ -13,4 +13,6 @@ public interface SupabaseStorageService {
     Mono<UploadImageResponse> uploadImage(FilePart filePart);
 
     Mono<Void> deleteFiles(String fileNames);
+
+    Mono<String> getImageUrl(String fileName);
 }
