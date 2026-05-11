@@ -4,13 +4,30 @@ type Author {
     bio: String!
     rating: Float!
     totalSales: Int!
-    socialLinks: String!
+    socialLinks: [SocialLink!]!
     stripeAccountId: String!
 }
+
+type AuthorResponse{
+    id: ID!
+    bio: String
+    rating: Float
+    totalSales: Int
+    socialLinks: [SocialLink!]!
+    username: String!
+    email: String!
+    avatarUrl: String
+}
+
 
 type AuthorShortResponse {
     id: ID!
     rating: Float
     totalSales: Int
     username: String!
+}
+
+type SocialLink {
+    platform: String!
+    url: String!
 }

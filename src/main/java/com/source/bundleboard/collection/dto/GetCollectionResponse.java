@@ -10,11 +10,11 @@ public record GetCollectionResponse(
 
         String description,
 
-        Long authorId,
-
         BigDecimal price,
 
         String videoTutorialUrl,
+
+        Long authorId,
 
         Long previewImageId,
 

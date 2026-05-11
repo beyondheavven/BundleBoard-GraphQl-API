@@ -7,6 +7,14 @@ type MediaResource {
     fileSize: Int!
 }
 
+type GetMediaResourceByIdResponse {
+    id: ID!
+    fileName: String!
+    fileSize: Int!
+    mimeType: MimeType!
+    provider: Provider!
+}
+
 enum Provider {
     local
     google_drive
