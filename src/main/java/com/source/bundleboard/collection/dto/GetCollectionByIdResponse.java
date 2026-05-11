@@ -2,7 +2,7 @@ package com.source.bundleboard.collection.dto;
 
 import java.math.BigDecimal;
 
-public record GetCollectionResponse(
+public record GetCollectionByIdResponse(
 
         Long id,
 
