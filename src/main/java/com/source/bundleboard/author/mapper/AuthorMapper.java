@@ -1,7 +1,5 @@
 package com.source.bundleboard.author.mapper;
 
-import com.source.bundleboard.author.dto.AuthorResponse;
-import com.source.bundleboard.author.dto.AuthorShortResponse;
 import com.source.bundleboard.author.dto.BaseAuthorResponse;
 import com.source.bundleboard.author.model.Author;
 import io.r2dbc.postgresql.codec.Json;

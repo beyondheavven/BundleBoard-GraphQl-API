@@ -2,7 +2,7 @@ package com.source.bundleboard.collection.dto;
 
 import java.math.BigDecimal;
 
-public record GetCollectionResponse(
+public record GetCollectionByIdResponse(
 
         Long id,
 
@@ -10,11 +10,11 @@ public record GetCollectionResponse(
 
         String description,
 
-        Long authorId,
-
         BigDecimal price,
 
         String videoTutorialUrl,
+
+        Long authorId,
 
         Long previewImageId,
 

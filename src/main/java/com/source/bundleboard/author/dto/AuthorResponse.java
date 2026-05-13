@@ -1,6 +1,7 @@
 package com.source.bundleboard.author.dto;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public record AuthorResponse(
         Long id,
@@ -11,6 +12,12 @@ public record AuthorResponse(
 
         Integer totalSales,
 
-        String socialLinks
+        List<SocialLink> socialLinks,
+
+        String username,
+
+        String email,
+
+        String avatarUrl
 ) {
 }

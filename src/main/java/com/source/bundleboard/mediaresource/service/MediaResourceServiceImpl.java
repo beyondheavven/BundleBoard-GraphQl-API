@@ -1,6 +1,7 @@
 package com.source.bundleboard.mediaresource.service;
 
-import com.source.bundleboard.mediaresource.dto.MediaResourceResponseDto;
+import com.source.bundleboard.api.exception.MediaResourceNotFoundException;
+import com.source.bundleboard.mediaresource.dto.GetMediaResourceByIdResponse;
 import com.source.bundleboard.mediaresource.mapper.MediaResourceMapper;
 import com.source.bundleboard.mediaresource.repository.MediaResourceRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,10 +16,11 @@ public class MediaResourceServiceImpl implements MediaResourceService {
 
     private final MediaResourceMapper mediaResourceMapper;
 
+
     @Override
-    public Mono<MediaResourceResponseDto> findById(Long id) {
+    public Mono<GetMediaResourceByIdResponse> findGetMediaResourceById(Long id) {
         return mediaResourceRepository.findById(id)
                 .map(mediaResourceMapper::toDto)
-                .switchIfEmpty(Mono.error(new RuntimeException("Media resource not found")));
+                .switchIfEmpty(Mono.error(new MediaResourceNotFoundException(id)));
     }
 }
