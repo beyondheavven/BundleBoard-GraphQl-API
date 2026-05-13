@@ -128,5 +128,10 @@ public class UserServiceImpl implements UserService {
         return userRepository.existsByUsername(username).switchIfEmpty(Mono.error(new UserNotFoundException()));
     }
 
+    @Override
+    public Mono<UserProfileResponse> getUserProfile(String email) {
+        return null;
+    }
+
 
 }
