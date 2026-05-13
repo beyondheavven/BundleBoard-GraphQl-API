@@ -36,7 +36,7 @@ public class UserController {
     }
 
     @MutationMapping
-    @PreAuthorize("hasAnyRole('user', 'author', 'admin')")
+    @PreAuthorize("hasAnyRole('client', 'author', 'admin')")
     public Mono<UserUpdateResponse> updateMe(@Argument UpdateUserRequest input) {
         return userService.updateMe(input);
     }
@@ -45,6 +45,12 @@ public class UserController {
     @PreAuthorize("permitAll()")
     public Mono<UpdateUserRoleResponse> updateUserRole(@Argument UpdateUserRoleInput input) {
         return userService.updateUserRole(input);
+    }
+
+    @QueryMapping
+    @PreAuthorize("hasAnyRole('client, author')")
+    public Mono<UserProfileResponse> getUserProfile(@Argument String email){
+        return userService.getUserProfile(email);
     }
 
 
