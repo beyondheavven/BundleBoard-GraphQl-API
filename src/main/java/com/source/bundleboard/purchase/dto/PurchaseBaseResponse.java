@@ -1,5 +1,6 @@
 package com.source.bundleboard.purchase.dto;
 
+import com.source.bundleboard.collection.dto.CollectionShortResponse;
 import com.source.bundleboard.purchase.model.PurchaseStatus;
 
 import java.time.Instant;
@@ -18,6 +19,6 @@ public record PurchaseBaseResponse(
 
         Instant createdAt,
 
-        CollectionMinResponse asset
+        CollectionShortResponse asset
 ) {
 }

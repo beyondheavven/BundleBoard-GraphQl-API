@@ -41,7 +41,7 @@ type GetCollectionByIdResponse {
     mediaResource: GetMediaResourceByIdResponse!
 }
 
-type CollectionMinResponse{
+type CollectionShortResponse{
     id: ID!
     name: String!
     previewImage: ImageShortResponse!

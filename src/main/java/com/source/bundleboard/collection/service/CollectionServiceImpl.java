@@ -4,12 +4,10 @@ import com.source.bundleboard.api.exception.CollectionNotFoundException;
 import com.source.bundleboard.api.exception.DescriptionException;
 import com.source.bundleboard.api.exception.MinimalPriceException;
 import com.source.bundleboard.author.service.AuthorService;
-import com.source.bundleboard.collection.dto.CollectionResponse;
-import com.source.bundleboard.collection.dto.GetCollectionByIdResponse;
-import com.source.bundleboard.collection.dto.CreateNewCollectionDto;
-import com.source.bundleboard.collection.dto.UpdateCollectionDto;
+import com.source.bundleboard.collection.dto.*;
 import com.source.bundleboard.collection.mapper.CollectionMapper;
 import com.source.bundleboard.collection.repository.CollectionRepository;
+import com.source.bundleboard.image.service.PreviewImageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,19 +27,20 @@ public class CollectionServiceImpl implements CollectionService {
     private final CollectionMapper collectionMapper;
 
     private static final BigDecimal MIN_PRICE = new BigDecimal("5.00");
+    private final PreviewImageService previewImageService;
 
     @Override
     public Mono<GetCollectionByIdResponse> getCollectionById(Long id) {
         return collectionRepository.findCollectionById(id)
                 .map(collectionMapper::toGetDto)
-                .switchIfEmpty(Mono.error(new CollectionNotFoundException("Collection not found.")));
+                .switchIfEmpty(Mono.error(new CollectionNotFoundException()));
     }
 
     @Override
     public Flux<CollectionResponse> getAllCollections() {
         return collectionRepository.findAll()
                 .map(collectionMapper::toDto)
-                .switchIfEmpty(Flux.error(new CollectionNotFoundException("No collections found.")));
+                .switchIfEmpty(Flux.error(new CollectionNotFoundException()));
     }
 
     @Transactional
@@ -61,7 +60,7 @@ public class CollectionServiceImpl implements CollectionService {
     @Override
     public Mono<GetCollectionByIdResponse> updateCollection(Long id, UpdateCollectionDto collection) {
         return collectionRepository.findCollectionById(id)
-                .switchIfEmpty(Mono.error(new CollectionNotFoundException("Collection not found")))
+                .switchIfEmpty(Mono.error(new CollectionNotFoundException()))
                 .flatMap(entity -> {
                     if(entity.getPrice().compareTo(MIN_PRICE) < 0){
                         return Mono.error(new MinimalPriceException("Minimal price is 5 USD"));
@@ -80,6 +79,16 @@ public class CollectionServiceImpl implements CollectionService {
     @Override
     public Mono<Boolean> deleteCollection(Long id) {
         return collectionRepository.deleteById(id).thenReturn(true).defaultIfEmpty(false);
+    }
+
+    @Override
+    public Mono<CollectionShortResponse> findShortResponseById(Long collectionId) {
+        return collectionRepository.findById(collectionId)
+                .switchIfEmpty(Mono.error(new CollectionNotFoundException()))
+                .flatMap(collection ->
+                    previewImageService.findShortResponseById(collection.getPreviewImageId())
+                            .map(imageDto -> collectionMapper.mapToShortResponse(collection, imageDto))
+                );
     }
 
 

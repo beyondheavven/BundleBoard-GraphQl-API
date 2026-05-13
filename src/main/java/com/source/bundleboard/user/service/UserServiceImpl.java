@@ -1,6 +1,7 @@
 package com.source.bundleboard.user.service;
 
 import com.source.bundleboard.api.exception.UserNotFoundException;
+import com.source.bundleboard.purchase.service.PurchaseService;
 import com.source.bundleboard.user.dto.*;
 import com.source.bundleboard.user.mapper.UserMapper;
 import com.source.bundleboard.user.model.User;
@@ -24,6 +25,8 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
 
     private final UserMapper userMapper;
+
+    private final PurchaseService purchaseService;
 
     @Override
     public Mono<UserResponseDto> findUserByUsername(String username) {
@@ -130,7 +133,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Mono<UserProfileResponse> getUserProfile(String email) {
-        return null;
+        return userRepository.findByEmail(email)
+                .switchIfEmpty(Mono.error(new UserNotFoundException()))
+                .flatMap(user -> purchaseService.findAllByClientId(user.getId())
+                        .flatMap(purchase -> purchaseService.fetch(purchase))
+                        .coll);
     }
 
 
