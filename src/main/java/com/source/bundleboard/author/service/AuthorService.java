@@ -11,4 +11,6 @@ public interface AuthorService {
     Mono<BaseAuthorResponse> findById(Long id);
 
     Mono<AuthorShortResponse> findShortResponseById(Long id);
+
+    Mono<AuthorResponse> findFullAuthorById(Long id);
 }

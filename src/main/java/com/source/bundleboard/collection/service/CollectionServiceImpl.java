@@ -5,7 +5,7 @@ import com.source.bundleboard.api.exception.DescriptionException;
 import com.source.bundleboard.api.exception.MinimalPriceException;
 import com.source.bundleboard.author.service.AuthorService;
 import com.source.bundleboard.collection.dto.CollectionResponse;
-import com.source.bundleboard.collection.dto.GetCollectionResponse;
+import com.source.bundleboard.collection.dto.GetCollectionByIdResponse;
 import com.source.bundleboard.collection.dto.CreateNewCollectionDto;
 import com.source.bundleboard.collection.dto.UpdateCollectionDto;
 import com.source.bundleboard.collection.mapper.CollectionMapper;
@@ -31,7 +31,7 @@ public class CollectionServiceImpl implements CollectionService {
     private static final BigDecimal MIN_PRICE = new BigDecimal("5.00");
 
     @Override
-    public Mono<GetCollectionResponse> getCollectionById(Long id) {
+    public Mono<GetCollectionByIdResponse> getCollectionById(Long id) {
         return collectionRepository.findCollectionById(id)
                 .map(collectionMapper::toGetDto)
                 .switchIfEmpty(Mono.error(new CollectionNotFoundException("Collection not found.")));
@@ -46,7 +46,7 @@ public class CollectionServiceImpl implements CollectionService {
 
     @Transactional
     @Override
-    public Mono<GetCollectionResponse> createCollection(CreateNewCollectionDto collection) {
+    public Mono<GetCollectionByIdResponse> createCollection(CreateNewCollectionDto collection) {
         return Mono.just(collection)
                 .filter(d -> d.price() >= 5.0)
                 .switchIfEmpty(Mono.error(new MinimalPriceException("Validation failed: Minimal price is 5 USD")))
@@ -59,7 +59,7 @@ public class CollectionServiceImpl implements CollectionService {
     }
 
     @Override
-    public Mono<GetCollectionResponse> updateCollection(Long id, UpdateCollectionDto collection) {
+    public Mono<GetCollectionByIdResponse> updateCollection(Long id, UpdateCollectionDto collection) {
         return collectionRepository.findCollectionById(id)
                 .switchIfEmpty(Mono.error(new CollectionNotFoundException("Collection not found")))
                 .flatMap(entity -> {
