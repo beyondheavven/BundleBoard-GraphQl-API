@@ -1,0 +1,16 @@
+type Purchase {
+    id: ID!
+    amount: Float!
+    currency: String!
+    status: PurchaseStatus!
+    snapShotPrice: Float!
+    createAt: String!
+    asset: CollectionMinResponse!
+}
+
+enum PurchaseStatus {
+    pending,
+    succeeded,
+    failed,
+    refunded
+}
