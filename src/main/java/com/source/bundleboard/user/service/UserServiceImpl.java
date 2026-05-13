@@ -136,8 +136,15 @@ public class UserServiceImpl implements UserService {
         return userRepository.findByEmail(email)
                 .switchIfEmpty(Mono.error(new UserNotFoundException()))
                 .flatMap(user -> purchaseService.findAllByClientId(user.getId())
-                        .flatMap(purchase -> purchaseService.fetch(purchase))
-                        .coll);
+                        .map(purchases -> new UserProfileResponse(
+                                user.getId(),
+                                user.getUsername(),
+                                user.getEmail(),
+                                user.getAvatarUrl(),
+                                user.getStatus(),
+                                purchases
+                        ))
+                );
     }
 
 

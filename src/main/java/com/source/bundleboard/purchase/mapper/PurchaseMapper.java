@@ -9,6 +9,7 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface PurchaseMapper {
 
+    @Mapping(target = "id", source = "purchase.id")
     @Mapping(target = "asset", source = "collection")
     @Mapping(target = "snapshotPrice", source = "purchase.snapshotPrice")
     @Mapping(target = "createdAt", source = "purchase.createdAt")
