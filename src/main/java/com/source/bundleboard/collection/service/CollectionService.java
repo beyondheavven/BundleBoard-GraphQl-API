@@ -1,9 +1,7 @@
 package com.source.bundleboard.collection.service;
 
-import com.source.bundleboard.collection.dto.CollectionResponse;
-import com.source.bundleboard.collection.dto.GetCollectionByIdResponse;
-import com.source.bundleboard.collection.dto.CreateNewCollectionDto;
-import com.source.bundleboard.collection.dto.UpdateCollectionDto;
+import com.source.bundleboard.collection.dto.*;
+import org.springframework.security.config.annotation.web.PortMapperDsl;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -21,5 +19,5 @@ public interface CollectionService {
 
     Mono<Boolean> deleteCollection(Long id);
 
-
+    Mono<CollectionShortResponse> findShortResponseById(Long collectionId);
 }
