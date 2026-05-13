@@ -3,8 +3,12 @@ package com.source.bundleboard.collection.service;
 import com.source.bundleboard.api.exception.CollectionNotFoundException;
 import com.source.bundleboard.api.exception.DescriptionException;
 import com.source.bundleboard.api.exception.MinimalPriceException;
-import com.source.bundleboard.author.service.AuthorService;
-import com.source.bundleboard.collection.dto.*;
+import com.source.bundleboard.author.repository.AuthorRepository;
+import com.source.bundleboard.collection.dto.CollectionShortResponse;
+import com.source.bundleboard.collection.dto.CollectionResponse;
+import com.source.bundleboard.collection.dto.CreateNewCollectionDto;
+import com.source.bundleboard.collection.dto.GetCollectionByIdResponse;
+import com.source.bundleboard.collection.dto.UpdateCollectionDto;
 import com.source.bundleboard.collection.mapper.CollectionMapper;
 import com.source.bundleboard.collection.repository.CollectionRepository;
 import com.source.bundleboard.image.service.PreviewImageService;
@@ -22,7 +26,7 @@ public class CollectionServiceImpl implements CollectionService {
 
     private final CollectionRepository collectionRepository;
 
-    private final AuthorService authorService;
+    private final AuthorRepository authorRepository;
 
     private final CollectionMapper collectionMapper;
 
@@ -51,7 +55,7 @@ public class CollectionServiceImpl implements CollectionService {
                 .switchIfEmpty(Mono.error(new MinimalPriceException("Validation failed: Minimal price is 5 USD")))
                 .filter(c -> c.description().length() >= 5 && c.description().length() <= 1000)
                 .switchIfEmpty(Mono.error(new DescriptionException("Validation failed: Description 200-1000 chars")))
-                .flatMap(dto -> authorService.findById(dto.authorId()).thenReturn(dto))
+                .flatMap(dto -> authorRepository.findById(dto.authorId()).thenReturn(dto))
                 .map(collectionMapper::toEntity)
                 .flatMap(collectionRepository::save)
                 .map(collectionMapper::toGetDto);

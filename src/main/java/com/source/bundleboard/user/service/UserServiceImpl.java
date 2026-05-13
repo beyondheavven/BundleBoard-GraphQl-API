@@ -8,6 +8,7 @@ import com.source.bundleboard.user.model.User;
 import com.source.bundleboard.user.model.UserRole;
 import com.source.bundleboard.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
@@ -26,6 +27,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserMapper userMapper;
 
+    @Lazy
     private final PurchaseService purchaseService;
 
     @Override
