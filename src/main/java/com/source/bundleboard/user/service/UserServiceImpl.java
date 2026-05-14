@@ -2,7 +2,12 @@ package com.source.bundleboard.user.service;
 
 import com.source.bundleboard.api.exception.UserNotFoundException;
 import com.source.bundleboard.purchase.service.PurchaseService;
-import com.source.bundleboard.user.dto.*;
+import com.source.bundleboard.user.dto.UserResponseDto;
+import com.source.bundleboard.user.dto.UserUpdateResponse;
+import com.source.bundleboard.user.dto.UserProfileResponse;
+import com.source.bundleboard.user.dto.UpdateUserRequest;
+import com.source.bundleboard.user.dto.UpdateUserRoleInput;
+import com.source.bundleboard.user.dto.UpdateUserRoleResponse;
 import com.source.bundleboard.user.mapper.UserMapper;
 import com.source.bundleboard.user.model.User;
 import com.source.bundleboard.user.model.UserRole;
@@ -73,6 +78,7 @@ public class UserServiceImpl implements UserService {
     public Mono<UserResponseDto> findMe() {
         return ReactiveSecurityContextHolder.getContext()
                 .map(SecurityContext::getAuthentication)
+                .doOnNext(auth -> System.out.println("Principal Name from Token: " + auth.getName()))
                 .filter(Authentication::isAuthenticated)
                 .flatMap(authentication -> userRepository.findByUsername(authentication.getName()))
                 .switchIfEmpty(Mono.error(new UserNotFoundException()))

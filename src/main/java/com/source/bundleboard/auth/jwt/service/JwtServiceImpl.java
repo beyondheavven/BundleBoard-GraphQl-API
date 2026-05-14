@@ -95,7 +95,7 @@ public class JwtServiceImpl implements JwtService {
                 return List.of();
             }
             return roles.stream()
-                    .map(SimpleGrantedAuthority::new)
+                    .map(role -> new SimpleGrantedAuthority(role))
                     .collect(Collectors.toList());
         });
     }

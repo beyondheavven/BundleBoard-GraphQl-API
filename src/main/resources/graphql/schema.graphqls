@@ -1,5 +1,5 @@
 type Query {
-
+    debugSecurity: String!
 }
 
 type Mutation {
