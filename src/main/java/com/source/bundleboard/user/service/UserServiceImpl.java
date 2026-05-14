@@ -1,6 +1,7 @@
 package com.source.bundleboard.user.service;
 
 import com.source.bundleboard.api.exception.UserNotFoundException;
+import com.source.bundleboard.client.service.ClientService;
 import com.source.bundleboard.purchase.service.PurchaseService;
 import com.source.bundleboard.user.dto.UserResponseDto;
 import com.source.bundleboard.user.dto.UserUpdateResponse;
@@ -13,7 +14,6 @@ import com.source.bundleboard.user.model.User;
 import com.source.bundleboard.user.model.UserRole;
 import com.source.bundleboard.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Collections;
 import java.util.Set;
 
 
@@ -32,8 +33,9 @@ public class UserServiceImpl implements UserService {
 
     private final UserMapper userMapper;
 
-    @Lazy
     private final PurchaseService purchaseService;
+
+    private final ClientService clientService;
 
     @Override
     public Mono<UserResponseDto> findUserByUsername(String username) {
@@ -78,7 +80,6 @@ public class UserServiceImpl implements UserService {
     public Mono<UserResponseDto> findMe() {
         return ReactiveSecurityContextHolder.getContext()
                 .map(SecurityContext::getAuthentication)
-                .doOnNext(auth -> System.out.println("Principal Name from Token: " + auth.getName()))
                 .filter(Authentication::isAuthenticated)
                 .flatMap(authentication -> userRepository.findByUsername(authentication.getName()))
                 .switchIfEmpty(Mono.error(new UserNotFoundException()))
@@ -140,18 +141,27 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Mono<UserProfileResponse> getUserProfile(String email) {
-        return userRepository.findByEmail(email)
+    public Mono<UserProfileResponse> getUserProfile() {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(SecurityContext::getAuthentication)
+                .filter(Authentication::isAuthenticated)
+                .flatMap(auth -> userRepository.findByUsername(auth.getName()))
                 .switchIfEmpty(Mono.error(new UserNotFoundException()))
-                .flatMap(user -> purchaseService.findAllByClientId(user.getId())
-                        .map(purchases -> new UserProfileResponse(
-                                user.getId(),
-                                user.getUsername(),
-                                user.getEmail(),
-                                user.getAvatarUrl(),
-                                user.getStatus(),
-                                purchases
-                        ))
+                .flatMap(user ->
+                        clientService.findByUserId(user.getId())
+                                .flatMap(client ->
+                                        purchaseService.findAllByClientId(client.getId())
+                                                .defaultIfEmpty(Collections.emptyList()
+                                                )
+                                ).defaultIfEmpty(Collections.emptyList())
+                                .map(purchase -> new UserProfileResponse(
+                                        user.getId(),
+                                        user.getUsername(),
+                                        user.getEmail(),
+                                        user.getAvatarUrl(),
+                                        user.getStatus(),
+                                        purchase
+                                ))
                 );
     }
 

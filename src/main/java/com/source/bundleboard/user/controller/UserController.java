@@ -54,9 +54,9 @@ public class UserController {
     }
 
     @QueryMapping
-    @PreAuthorize("hasAnyRole('CLIENT, AUTHOR')")
-    public Mono<UserProfileResponse> getUserProfile(@Argument String email){
-        return userService.getUserProfile(email);
+    @PreAuthorize("hasAnyRole('CLIENT', 'AUTHOR')")
+    public Mono<UserProfileResponse> getUserProfile(){
+        return userService.getUserProfile();
     }
 
     @QueryMapping
