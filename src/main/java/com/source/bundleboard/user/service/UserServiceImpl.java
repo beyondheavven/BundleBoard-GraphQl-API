@@ -1,8 +1,13 @@
 package com.source.bundleboard.user.service;
 
 import com.source.bundleboard.api.exception.UserNotFoundException;
+import com.source.bundleboard.auth.jwt.JwtProperties;
+import com.source.bundleboard.auth.jwt.service.JwtService;
 import com.source.bundleboard.client.service.ClientService;
 import com.source.bundleboard.purchase.service.PurchaseService;
+import com.source.bundleboard.refreshtoken.model.RefreshToken;
+import com.source.bundleboard.refreshtoken.repository.RefreshTokenRepository;
+import com.source.bundleboard.refreshtoken.service.RefreshTokenService;
 import com.source.bundleboard.user.dto.UserResponseDto;
 import com.source.bundleboard.user.dto.UserUpdateResponse;
 import com.source.bundleboard.user.dto.UserProfileResponse;
@@ -18,9 +23,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Instant;
 import java.util.Collections;
 import java.util.Set;
 
@@ -36,6 +43,12 @@ public class UserServiceImpl implements UserService {
     private final PurchaseService purchaseService;
 
     private final ClientService clientService;
+
+    private final JwtService jwtService;
+
+    private final RefreshTokenService refreshTokenService;
+
+    private final JwtProperties jwtProperties;
 
     @Override
     public Mono<UserResponseDto> findUserByUsername(String username) {
@@ -102,27 +115,43 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public Mono<UpdateUserRoleResponse> updateUserRole(UpdateUserRoleInput input) {
         return userRepository.findByEmail(input.email())
+                .switchIfEmpty(Mono.error(new UserNotFoundException()))
                 .flatMap(user -> {
-                    if (input.role() != null){
-                        try{
-                            UserRole newRole = UserRole.valueOf(input.role());
-
-                            Set<UserRole> currentRoles = user.getRoles();
-
-                            currentRoles.add(newRole);
-
-                            user.setRoles(currentRoles);
-                        }catch (IllegalArgumentException e){
-                            return Mono.error(new IllegalArgumentException("Invalid role"));
+                    if (input.role() != null) {
+                        try {
+                            UserRole newRole = UserRole.valueOf(input.role().toLowerCase());
+                            user.getRoles().add(newRole);
+                        } catch (IllegalArgumentException e) {
+                            return Mono.error(new IllegalArgumentException("Invalid role: " + input.role()));
                         }
                     }
                     return userRepository.save(user);
                 })
-                .map(savedUser -> new UpdateUserRoleResponse("User role update successfully", true))
-                .switchIfEmpty(Mono.error(new UserNotFoundException()));
+                .flatMap(savedUser -> {
+                    String newAccessToken = jwtService.generateAccessToken(
+                            savedUser.getUsername(),
+                            UserRole.toAuthorities(savedUser.getRoles())
+                    );
+                    String newRefreshTokenString = jwtService.generateRefreshToken(savedUser.getUsername());
 
+                    return refreshTokenService.deleteByUserId(savedUser.getId())
+                            .then(refreshTokenService.save(new RefreshToken(
+                                    null,
+                                    savedUser.getId(),
+                                    newRefreshTokenString,
+                                    Instant.now(),
+                                    Instant.now().plusMillis(jwtProperties.getRefreshTokenExpirationMs())
+                            )))
+                            .map(savedRefreshToken -> new UpdateUserRoleResponse(
+                                    "User role updated successfully",
+                                    true,
+                                    newAccessToken,
+                                    savedRefreshToken.getToken()
+                            ));
+                });
     }
 
     @Override
