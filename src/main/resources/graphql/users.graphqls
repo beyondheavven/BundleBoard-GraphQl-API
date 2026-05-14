@@ -25,14 +25,14 @@ type UserProfileResponse {
     email: String!
     avatarUrl: String
     status: UserStatus!
-    purchases: [PurchaseBaseResponse!]
+    purchases: [PurchaseBaseResponse]
 }
 
 type UserResponseDto {
     id: ID!
     username: String!
     email: String!
-    avatarUrl: String!
+    avatarUrl: String
     roles: [UserRole!]
     status: UserStatus!
 }

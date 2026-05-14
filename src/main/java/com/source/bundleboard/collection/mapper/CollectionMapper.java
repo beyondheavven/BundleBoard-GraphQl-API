@@ -1,6 +1,10 @@
 package com.source.bundleboard.collection.mapper;
 
-import com.source.bundleboard.collection.dto.*;
+import com.source.bundleboard.collection.dto.CollectionShortResponse;
+import com.source.bundleboard.collection.dto.CollectionResponse;
+import com.source.bundleboard.collection.dto.CreateNewCollectionDto;
+import com.source.bundleboard.collection.dto.GetCollectionByIdResponse;
+import com.source.bundleboard.collection.dto.UpdateCollectionDto;
 import com.source.bundleboard.collection.model.Collection;
 import com.source.bundleboard.image.dto.ImageShortResponse;
 import org.mapstruct.Mapper;

@@ -1,6 +1,10 @@
 package com.source.bundleboard.password.controller;
 
-import com.source.bundleboard.password.dto.*;
+import com.source.bundleboard.password.dto.PasswordConfirmResetInput;
+import com.source.bundleboard.password.dto.PasswordChangeInput;
+import com.source.bundleboard.password.dto.PasswordResetInput;
+import com.source.bundleboard.password.dto.PasswordChangeResponse;
+import com.source.bundleboard.password.dto.PasswordResetResponse;
 import com.source.bundleboard.password.service.PasswordService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.graphql.data.method.annotation.Argument;
