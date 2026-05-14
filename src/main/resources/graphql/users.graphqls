@@ -2,7 +2,7 @@ extend type Query {
     getUserById(id: ID!): User
     getAllUsers: [UserResponseDto!]!
     me: UserResponseDto!
-    getUserProfile(email: String!): UserProfileResponse!
+    getUserProfile: UserProfileResponse!
 }
 
 extend type Mutation {

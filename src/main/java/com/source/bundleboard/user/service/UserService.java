@@ -32,5 +32,5 @@ public interface UserService {
 
     Mono<Boolean> existsByUsername(String username);
 
-    Mono<UserProfileResponse> getUserProfile(String email);
+    Mono<UserProfileResponse> getUserProfile();
 }

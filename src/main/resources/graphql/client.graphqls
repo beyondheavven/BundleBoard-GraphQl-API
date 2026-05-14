@@ -1,0 +1,6 @@
+type Client {
+    id: ID!
+    userId: ID!
+    newsLetterSubscription: Boolean!
+    preferredLanguage: String
+}
