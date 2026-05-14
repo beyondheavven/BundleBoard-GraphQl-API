@@ -2,6 +2,7 @@ extend type Query {
     getUserById(id: ID!): User
     getAllUsers: [UserResponseDto!]!
     me: UserResponseDto!
+    getUserProfile: UserProfileResponse!
 }
 
 extend type Mutation {
@@ -18,11 +19,20 @@ type User {
     status: UserStatus!
 }
 
+type UserProfileResponse {
+    id: ID!
+    username: String!
+    email: String!
+    avatarUrl: String
+    status: UserStatus!
+    purchases: [PurchaseBaseResponse]
+}
+
 type UserResponseDto {
     id: ID!
     username: String!
     email: String!
-    avatarUrl: String!
+    avatarUrl: String
     roles: [UserRole!]
     status: UserStatus!
 }

@@ -11,6 +11,7 @@ public enum ErrorCode {
     COLLECTION_NOT_FOUND(404, "Collection not found"),
     AUTHOR_NOT_FOUND(404, "Author not found"),
     IMAGE_NOT_FOUND(404, "Image not found"),
+    CLIENT_NOT_FOUND(404, "Client not found"),
 
     UNAUTHORIZED(401, "Authentication failed"),
     FORBIDDEN(403, "Access denied"),

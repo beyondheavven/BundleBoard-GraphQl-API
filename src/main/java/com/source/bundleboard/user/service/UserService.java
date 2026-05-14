@@ -31,4 +31,6 @@ public interface UserService {
     Mono<User> save(User user);
 
     Mono<Boolean> existsByUsername(String username);
+
+    Mono<UserProfileResponse> getUserProfile();
 }

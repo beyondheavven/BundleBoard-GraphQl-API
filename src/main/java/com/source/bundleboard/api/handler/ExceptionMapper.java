@@ -1,6 +1,8 @@
 package com.source.bundleboard.api.handler;
 
 import com.source.bundleboard.api.exception.*;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -24,6 +26,9 @@ public class ExceptionMapper {
         MAPPER.put(UnmatchedPasswordsException.class, ErrorCode.USER_ALREADY_EXISTS);
         MAPPER.put(MinimalPriceException.class, ErrorCode.INTERNAL_SERVER_ERROR);
         MAPPER.put(DescriptionException.class, ErrorCode.INTERNAL_SERVER_ERROR);
+        MAPPER.put(AccessDeniedException.class, ErrorCode.FORBIDDEN);
+        MAPPER.put(AuthenticationException.class, ErrorCode.UNAUTHORIZED);
+        MAPPER.put(ClientNotFoundException.class, ErrorCode.CLIENT_NOT_FOUND);
     }
 
     public ErrorCode getCode(Throwable ex) {
