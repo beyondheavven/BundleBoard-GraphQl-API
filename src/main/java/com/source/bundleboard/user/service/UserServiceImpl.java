@@ -1,7 +1,14 @@
 package com.source.bundleboard.user.service;
 
 import com.source.bundleboard.api.exception.UserNotFoundException;
-import com.source.bundleboard.user.dto.*;
+import com.source.bundleboard.client.service.ClientService;
+import com.source.bundleboard.purchase.service.PurchaseService;
+import com.source.bundleboard.user.dto.UserResponseDto;
+import com.source.bundleboard.user.dto.UserUpdateResponse;
+import com.source.bundleboard.user.dto.UserProfileResponse;
+import com.source.bundleboard.user.dto.UpdateUserRequest;
+import com.source.bundleboard.user.dto.UpdateUserRoleInput;
+import com.source.bundleboard.user.dto.UpdateUserRoleResponse;
 import com.source.bundleboard.user.mapper.UserMapper;
 import com.source.bundleboard.user.model.User;
 import com.source.bundleboard.user.model.UserRole;
@@ -14,6 +21,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Collections;
 import java.util.Set;
 
 
@@ -24,6 +32,10 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
 
     private final UserMapper userMapper;
+
+    private final PurchaseService purchaseService;
+
+    private final ClientService clientService;
 
     @Override
     public Mono<UserResponseDto> findUserByUsername(String username) {
@@ -126,6 +138,31 @@ public class UserServiceImpl implements UserService {
     @Override
     public Mono<Boolean> existsByUsername(String username) {
         return userRepository.existsByUsername(username).switchIfEmpty(Mono.error(new UserNotFoundException()));
+    }
+
+    @Override
+    public Mono<UserProfileResponse> getUserProfile() {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(SecurityContext::getAuthentication)
+                .filter(Authentication::isAuthenticated)
+                .flatMap(auth -> userRepository.findByUsername(auth.getName()))
+                .switchIfEmpty(Mono.error(new UserNotFoundException()))
+                .flatMap(user ->
+                        clientService.findByUserId(user.getId())
+                                .flatMap(client ->
+                                        purchaseService.findAllByClientId(client.getId())
+                                                .defaultIfEmpty(Collections.emptyList()
+                                                )
+                                ).defaultIfEmpty(Collections.emptyList())
+                                .map(purchase -> new UserProfileResponse(
+                                        user.getId(),
+                                        user.getUsername(),
+                                        user.getEmail(),
+                                        user.getAvatarUrl(),
+                                        user.getStatus(),
+                                        purchase
+                                ))
+                );
     }
 
 

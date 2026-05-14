@@ -1,10 +1,12 @@
 package com.source.bundleboard.collection.mapper;
 
+import com.source.bundleboard.collection.dto.CollectionShortResponse;
 import com.source.bundleboard.collection.dto.CollectionResponse;
 import com.source.bundleboard.collection.dto.CreateNewCollectionDto;
 import com.source.bundleboard.collection.dto.GetCollectionByIdResponse;
 import com.source.bundleboard.collection.dto.UpdateCollectionDto;
 import com.source.bundleboard.collection.model.Collection;
+import com.source.bundleboard.image.dto.ImageShortResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
@@ -30,4 +32,10 @@ public interface CollectionMapper {
     @Mapping(target = "mediaResourceId", ignore = true)
     @Mapping(target = "id", ignore = true)
     void updateEntityFromDto(UpdateCollectionDto dto, @MappingTarget Collection entity);
+
+
+    @Mapping(target = "id", source = "collection.id")
+    @Mapping(target = "name", source = "collection.name")
+    @Mapping(target = "previewImage", source = "image")
+    CollectionShortResponse mapToShortResponse(Collection collection, ImageShortResponse image);
 }
