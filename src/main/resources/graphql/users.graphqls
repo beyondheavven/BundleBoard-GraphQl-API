@@ -58,6 +58,8 @@ input UpdateUserRoleInput {
 type UpdateUserRoleResponse {
     message: String!
     success: Boolean!
+    accessToken: String!
+    refreshToken: String!
 }
 
 type UserDto {

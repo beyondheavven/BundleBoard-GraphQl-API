@@ -4,6 +4,10 @@ public record UpdateUserRoleResponse(
 
         String message,
 
-        Boolean success
+        Boolean success,
+
+        String accessToken,
+
+        String refreshToken
 ) {
 }
