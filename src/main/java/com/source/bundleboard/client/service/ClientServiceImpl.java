@@ -18,4 +18,18 @@ public class ClientServiceImpl implements ClientService {
         return clientRepository.findByUserId(id)
                 .switchIfEmpty(Mono.error(() -> (new ClientNotFoundException(id))));
     }
+
+    @Override
+    public Mono<Void> createClientByUserId(Long id) {
+        return clientRepository.findByUserId(id)
+                .flatMap(existingClient -> Mono.empty())
+                .switchIfEmpty(Mono.defer(() -> {
+                    Client client = new Client();
+                    client.setUserId(id);
+                    client.setNewsLetterSubscription(false);
+                    client.setPreferredLanguage("en");
+                    return clientRepository.save(client);
+                }))
+                .then();
+    }
 }

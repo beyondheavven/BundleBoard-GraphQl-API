@@ -8,6 +8,7 @@ extend type Query {
 extend type Mutation {
     updateMe(input: UpdateUserRequest!): UserUpdateResponse!
     updateUserRole(input: UpdateUserRoleInput!): UpdateUserRoleResponse!
+    updateAvatar(input: UpdateAvatarRequest!): UpdateAvatarResponse!
 }
 
 type User {
@@ -42,6 +43,17 @@ type UserUpdateResponse {
     username: String!
     avatarUrl: String!
     updatedAt: String!
+}
+
+type UpdateAvatarResponse {
+    id: ID!
+    avatarUrl: String!
+    updatedAt: String!
+}
+
+input UpdateAvatarRequest {
+    id: ID!
+    avatarUrl: String!
 }
 
 input UpdateUserRequest {
