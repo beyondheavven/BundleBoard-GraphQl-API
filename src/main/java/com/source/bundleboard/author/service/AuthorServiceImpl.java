@@ -6,6 +6,7 @@ import com.source.bundleboard.author.dto.AuthorShortResponse;
 import com.source.bundleboard.author.dto.BaseAuthorResponse;
 import com.source.bundleboard.author.dto.SocialLink;
 import com.source.bundleboard.author.mapper.AuthorMapper;
+import com.source.bundleboard.author.model.Author;
 import com.source.bundleboard.author.repository.AuthorRepository;
 import com.source.bundleboard.user.service.UserService;
 import io.r2dbc.postgresql.codec.Json;
@@ -16,6 +17,7 @@ import reactor.core.publisher.Mono;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 

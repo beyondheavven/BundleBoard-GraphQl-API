@@ -33,4 +33,6 @@ public interface UserService {
     Mono<Boolean> existsByUsername(String username);
 
     Mono<UserProfileResponse> getUserProfile();
+
+    Mono<UpdateAvatarResponse> updateUserAvatar(UpdateAvatarRequest input);
 }

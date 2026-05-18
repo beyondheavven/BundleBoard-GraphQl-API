@@ -6,4 +6,6 @@ import reactor.core.publisher.Mono;
 public interface ClientService {
 
     Mono<Client> findByUserId(Long id);
+
+    Mono<Void> createClientByUserId(Long id);
 }

@@ -1,11 +1,6 @@
 package com.source.bundleboard.user.controller;
 
-import com.source.bundleboard.user.dto.UserResponseDto;
-import com.source.bundleboard.user.dto.UserUpdateResponse;
-import com.source.bundleboard.user.dto.UserProfileResponse;
-import com.source.bundleboard.user.dto.UpdateUserRequest;
-import com.source.bundleboard.user.dto.UpdateUserRoleInput;
-import com.source.bundleboard.user.dto.UpdateUserRoleResponse;
+import com.source.bundleboard.user.dto.*;
 import com.source.bundleboard.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.graphql.data.method.annotation.Argument;
@@ -57,6 +52,12 @@ public class UserController {
     @PreAuthorize("hasAnyRole('CLIENT', 'AUTHOR')")
     public Mono<UserProfileResponse> getUserProfile(){
         return userService.getUserProfile();
+    }
+
+    @MutationMapping
+    @PreAuthorize("hasAnyRole('CLIENT', 'AUTHOR')")
+    public Mono<UpdateAvatarResponse> updateAvatar(@Argument UpdateAvatarRequest input){
+        return userService.updateUserAvatar(input);
     }
 
     @QueryMapping
