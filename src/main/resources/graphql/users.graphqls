@@ -48,7 +48,7 @@ type UserUpdateResponse {
 type UpdateAvatarResponse {
     id: ID!
     avatarUrl: String!
-    updateAt: String!
+    updatedAt: String!
 }
 
 input UpdateAvatarRequest {
