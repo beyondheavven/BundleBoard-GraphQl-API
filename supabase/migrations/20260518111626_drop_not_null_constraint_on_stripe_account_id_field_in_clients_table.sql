@@ -1,0 +1,1 @@
+ALTER TABLE authors ALTER COLUMN stripe_account_id DROP NOT NULL;

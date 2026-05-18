@@ -26,6 +26,8 @@ public class ClientServiceImpl implements ClientService {
                 .switchIfEmpty(Mono.defer(() -> {
                     Client client = new Client();
                     client.setUserId(id);
+                    client.setNewsLetterSubscription(false);
+                    client.setPreferredLanguage("en");
                     return clientRepository.save(client);
                 }))
                 .then();

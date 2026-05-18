@@ -15,6 +15,7 @@ import com.source.bundleboard.user.mapper.UserMapper;
 import com.source.bundleboard.user.model.User;
 import com.source.bundleboard.user.model.UserRole;
 import com.source.bundleboard.user.repository.UserRepository;
+import io.r2dbc.postgresql.codec.Json;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -24,8 +25,11 @@ import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 
 @Service
@@ -141,20 +145,29 @@ public class UserServiceImpl implements UserService {
         boolean isClient = user.getRoles().contains(UserRole.client);
         boolean isAuthor = user.getRoles().contains(UserRole.author);
 
-        Mono<Void> initData = Mono.empty();
+        List<Mono<Void>> steps = new ArrayList<>();
+
         if (isClient) {
-            initData = clientService.createClientByUserId(user.getId()).then();
-        } else if (isAuthor) {
-            initData = authorRepository.findByUserId(user.getId())
+            steps.add(clientService.createClientByUserId(user.getId()).then());
+        }
+
+        if (isAuthor) {
+            Mono<Void> authorStep = authorRepository.findByUserId(user.getId())
                     .flatMap(existing -> Mono.empty())
                     .switchIfEmpty(Mono.defer(() -> {
                         Author newAuthor = new Author();
                         newAuthor.setUserId(user.getId());
+                        newAuthor.setBio("SYSTEM: Биография узла не заполнена.");
+                        newAuthor.setSocialLinks(Json.of("{}"));
+                        newAuthor.setRating(BigDecimal.ZERO);
+                        newAuthor.setTotalSales(0);
                         return authorRepository.save(newAuthor);
                     })).then();
-        }
 
-        return initData.then(Mono.just(user));
+            steps.add(authorStep);
+        }
+        return Mono.when(steps)
+                .then(Mono.just(user));
     }
 
     private Mono<UpdateUserRoleResponse> generateTokensAndResponse(User user) {
