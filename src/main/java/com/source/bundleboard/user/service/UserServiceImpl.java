@@ -3,17 +3,14 @@ package com.source.bundleboard.user.service;
 import com.source.bundleboard.api.exception.UserNotFoundException;
 import com.source.bundleboard.auth.jwt.JwtProperties;
 import com.source.bundleboard.auth.jwt.service.JwtService;
+import com.source.bundleboard.author.model.Author;
+import com.source.bundleboard.author.repository.AuthorRepository;
+import com.source.bundleboard.author.service.AuthorService;
 import com.source.bundleboard.client.service.ClientService;
 import com.source.bundleboard.purchase.service.PurchaseService;
 import com.source.bundleboard.refreshtoken.model.RefreshToken;
-import com.source.bundleboard.refreshtoken.repository.RefreshTokenRepository;
 import com.source.bundleboard.refreshtoken.service.RefreshTokenService;
-import com.source.bundleboard.user.dto.UserResponseDto;
-import com.source.bundleboard.user.dto.UserUpdateResponse;
-import com.source.bundleboard.user.dto.UserProfileResponse;
-import com.source.bundleboard.user.dto.UpdateUserRequest;
-import com.source.bundleboard.user.dto.UpdateUserRoleInput;
-import com.source.bundleboard.user.dto.UpdateUserRoleResponse;
+import com.source.bundleboard.user.dto.*;
 import com.source.bundleboard.user.mapper.UserMapper;
 import com.source.bundleboard.user.model.User;
 import com.source.bundleboard.user.model.UserRole;
@@ -29,7 +26,6 @@ import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 import java.util.Collections;
-import java.util.Set;
 
 
 @Service
@@ -43,6 +39,8 @@ public class UserServiceImpl implements UserService {
     private final PurchaseService purchaseService;
 
     private final ClientService clientService;
+
+    private final AuthorRepository authorRepository;
 
     private final JwtService jwtService;
 
@@ -68,6 +66,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public Mono<UserUpdateResponse> updateMe(UpdateUserRequest request) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> securityContext.getAuthentication())
@@ -119,39 +118,66 @@ public class UserServiceImpl implements UserService {
     public Mono<UpdateUserRoleResponse> updateUserRole(UpdateUserRoleInput input) {
         return userRepository.findByEmail(input.email())
                 .switchIfEmpty(Mono.error(new UserNotFoundException()))
-                .flatMap(user -> {
-                    if (input.role() != null) {
-                        try {
-                            UserRole newRole = UserRole.valueOf(input.role().toLowerCase());
-                            user.getRoles().add(newRole);
-                        } catch (IllegalArgumentException e) {
-                            return Mono.error(new IllegalArgumentException("Invalid role: " + input.role()));
-                        }
-                    }
-                    return userRepository.save(user);
-                })
-                .flatMap(savedUser -> {
-                    String newAccessToken = jwtService.generateAccessToken(
-                            savedUser.getUsername(),
-                            UserRole.toAuthorities(savedUser.getRoles())
-                    );
-                    String newRefreshTokenString = jwtService.generateRefreshToken(savedUser.getUsername());
+                .flatMap(user -> assignRole(user, input.role()))
+                .flatMap(userRepository::save)
+                .flatMap(this::initializeRoleProfile)
+                .flatMap(this::generateTokensAndResponse);
+    }
 
-                    return refreshTokenService.deleteByUserId(savedUser.getId())
-                            .then(refreshTokenService.save(new RefreshToken(
-                                    null,
-                                    savedUser.getId(),
-                                    newRefreshTokenString,
-                                    Instant.now(),
-                                    Instant.now().plusMillis(jwtProperties.getRefreshTokenExpirationMs())
-                            )))
-                            .map(savedRefreshToken -> new UpdateUserRoleResponse(
-                                    "User role updated successfully",
-                                    true,
-                                    newAccessToken,
-                                    savedRefreshToken.getToken()
-                            ));
-                });
+    private Mono<User> assignRole(User user, String roleStr) {
+        if (roleStr == null) return Mono.just(user);
+        try {
+            UserRole newRole = UserRole.valueOf(roleStr.toLowerCase());
+            if (!user.getRoles().contains(newRole)) {
+                user.getRoles().add(newRole);
+            }
+            return Mono.just(user);
+        } catch (IllegalArgumentException e) {
+            return Mono.error(new IllegalArgumentException("Invalid role: " + roleStr));
+        }
+    }
+
+    private Mono<User> initializeRoleProfile(User user) {
+        boolean isClient = user.getRoles().contains(UserRole.client);
+        boolean isAuthor = user.getRoles().contains(UserRole.author);
+
+        Mono<Void> initData = Mono.empty();
+        if (isClient) {
+            initData = clientService.createClientByUserId(user.getId()).then();
+        } else if (isAuthor) {
+            initData = authorRepository.findByUserId(user.getId())
+                    .flatMap(existing -> Mono.empty())
+                    .switchIfEmpty(Mono.defer(() -> {
+                        Author newAuthor = new Author();
+                        newAuthor.setUserId(user.getId());
+                        return authorRepository.save(newAuthor);
+                    })).then();
+        }
+
+        return initData.then(Mono.just(user));
+    }
+
+    private Mono<UpdateUserRoleResponse> generateTokensAndResponse(User user) {
+        String newAccessToken = jwtService.generateAccessToken(
+                user.getUsername(),
+                UserRole.toAuthorities(user.getRoles())
+        );
+        String newRefreshTokenString = jwtService.generateRefreshToken(user.getUsername());
+
+        return refreshTokenService.deleteByUserId(user.getId())
+                .then(refreshTokenService.save(new RefreshToken(
+                        null,
+                        user.getId(),
+                        newRefreshTokenString,
+                        Instant.now(),
+                        Instant.now().plusMillis(jwtProperties.getRefreshTokenExpirationMs())
+                )))
+                .map(savedToken -> new UpdateUserRoleResponse(
+                        "User role updated and profile initialized successfully",
+                        true,
+                        newAccessToken,
+                        savedToken.getToken()
+                ));
     }
 
     @Override
@@ -192,6 +218,22 @@ public class UserServiceImpl implements UserService {
                                         purchase
                                 ))
                 );
+    }
+
+    @Override
+    @Transactional
+    public Mono<UpdateAvatarResponse> updateUserAvatar(UpdateAvatarRequest input) {
+        return userRepository.findById(input.id())
+                .switchIfEmpty(Mono.error(new UserNotFoundException()))
+                .flatMap(user -> {
+                    user.setAvatarUrl(input.avatarUrl());
+                    return userRepository.save(user);
+                })
+                .map(updatedUser -> new UpdateAvatarResponse(
+                        updatedUser.getId(),
+                        updatedUser.getAvatarUrl(),
+                        Instant.now()
+                ));
     }
 
 
