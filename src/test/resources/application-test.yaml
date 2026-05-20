@@ -1,4 +1,6 @@
 spring:
+
+
   flyway:
     enabled: true
     locations: classpath:db/migration
@@ -20,7 +22,7 @@ app:
   jwt:
     access-token-expiration-ms: 60000
     refresh-token-expiration-ms: 120000
-    secret: "super-secret-test-key-must-be-long-enough-for-hs512"
+    secret: super-secret-test-key-must-be-long-enough-for-hs512
 
   s3:
     endpoint: http://localhost:4566
