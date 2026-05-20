@@ -1,5 +1,4 @@
 package com.source.bundleboard.config;
-
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -14,7 +13,7 @@ public class PostgresTestContainersConfig {
 
     private static final String POSTGRES_PASSWORD = "test";
 
-    private static final String POSTGRES_DB = "bundleboard";
+    private static final String POSTGRES_DB = "bundleboard_test";
 
     @Bean
     @ServiceConnection
@@ -24,5 +23,6 @@ public class PostgresTestContainersConfig {
                 .withPassword(POSTGRES_PASSWORD)
                 .withDatabaseName(POSTGRES_DB)
                 .withUrlParam("stringtype", "unspecified");
+
     }
 }

@@ -12,6 +12,7 @@ import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -49,10 +50,5 @@ public abstract class AbstractIntegrationTest {
         return databaseClient.sql("TRUNCATE TABLE users, refresh_tokens RESTART IDENTITY CASCADE")
                 .then();
     }
-
-
-
-
-
 
 }
