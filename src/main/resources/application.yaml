@@ -4,13 +4,13 @@ spring:
   application:
     name: bundleboard
   r2dbc:
-    url: r2dbc:postgresql://${POSTGRES_URL}:${POSTGRES_PORT:6543}/${POSTGRES_DB:postgres}?options=-c%20search_path%3D${POSTGRES_SCHEMA:public}
-    username: ${POSTGRES_USER}
-    password: ${POSTGRES_PASSWORD}
+    url: r2dbc:postgresql://${POSTGRES_URL:localhost}:${POSTGRES_PORT:6543}/${POSTGRES_DB:postgres}?options=-c%20search_path%3D${POSTGRES_SCHEMA:public}
+    username: ${POSTGRES_USER:bundleboard_user}
+    password: ${POSTGRES_PASSWORD:bundleboard_password}
     pool:
       enabled: true
-      initial-size: ${DB_POOL_SIZE}
-      max-size: ${DB_MAX_POOL_SIZE}
+      initial-size: ${DB_POOL_SIZE:5}
+      max-size: ${DB_MAX_POOL_SIZE:10}
 
   graphql:
     show-exceptions: true
@@ -23,16 +23,16 @@ spring:
         enabled: true
 
   mail:
-    host: ${MAIL_HOST}
-    port: ${MAIL_PORT}
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:25}
+    username: ${MAIL_USERNAME:bundleboard@localhost}
+    password: ${MAIL_PASSWORD:bundleboard}
     properties:
       mail:
         smtp:
-          auth: ${MAIL_SMTP_AUTH}
+          auth: ${MAIL_SMTP_AUTH:false}
           starttls:
-            enable: ${MAIL_SMTP_STARTTLS_ENABLE}
+            enable: ${MAIL_SMTP_STARTTLS_ENABLE:false}
 
 logging:
   level:
@@ -41,27 +41,27 @@ logging:
     io.r2dbc.postgresql: DEBUG
 
 server:
-  port: ${SERVER_PORT}
+  port: ${SERVER_PORT:8080}
 
 app:
   auth:
-    social-password-secret: ${SOCIAL_AUTH_PASSWORD_SECRET}
+    social-password-secret: ${SOCIAL_AUTH_PASSWORD_SECRET:default-secret-change-me}
 
   cors:
-        allowed-origins: ${ALLOWED_ORIGINS}
-        allowed-methods: ${ALLOWED_METHODS}
-        allowed-headers: ${ALLOWED_HEADERS}
-        allowed-credentials: ${ALLOWED_CREDENTIALS}
-        exposed-headers: ${EXPOSED_HEADERS}
-        max-age: ${MAX_AGE}
+    allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000}
+    allowed-methods: ${ALLOWED_METHODS:GET,POST,PUT,DELETE}
+    allowed-headers: ${ALLOWED_HEADERS:*}
+    allowed-credentials: ${ALLOWED_CREDENTIALS:true}
+    exposed-headers: ${EXPOSED_HEADERS:Authorization}
+    max-age: ${MAX_AGE:3600}
 
   jwt:
-    access-token-expiration-ms: ${JWT_ACCESS_EXPIRY}
-    refresh-token-expiration-ms: ${JWT_REFRESH_EXPIRY}
-    secret: ${JWT_SECRET}
+    access-token-expiration-ms: ${JWT_ACCESS_EXPIRY:3600000}
+    refresh-token-expiration-ms: ${JWT_REFRESH_EXPIRY:86400000}
+    secret: ${JWT_SECRET:very-long-secret-key-that-is-at-least-512-bits-long-for-security-purposes}
 
   mail:
-    from: ${spring.mail.username}
+    from: ${spring.mail.username:noreply@bundleboard.com}
     templates:
       verification-email: mail/verify-email
       reset-password: mail/reset-password
@@ -74,25 +74,24 @@ app:
       verification-email: /mail/verify
       reset-password: /password/reset-password
 
-
   email-verification:
-    ttl-ms: ${EMAIL_VERIFICATION_TTL_MS}
-    verify-email-url: ${VERIFY_EMAIL_URL}
-    hash-algorithm: ${EMAIL_HASH_ALGORITHM}
-    hex-format: ${EMAIL_HEX_FORMAT}
-    hash-length: ${EMAIL_HASH_LENGTH}
-    byte-length: ${EMAIL_BYTE_LENGTH}
-    max-attempts: ${MAX_ATTEMPTS}
-    block-duration-seconds: ${BLOCK_DURATION_SECONDS}
+    ttl-ms: ${EMAIL_VERIFICATION_TTL_MS:3600000}
+    verify-email-url: ${VERIFY_EMAIL_URL:http://localhost:8080/verify}
+    hash-algorithm: ${EMAIL_HASH_ALGORITHM:SHA-256}
+    hex-format: ${EMAIL_HEX_FORMAT:true}
+    hash-length: ${EMAIL_HASH_LENGTH:64}
+    byte-length: ${EMAIL_BYTE_LENGTH:32}
+    max-attempts: ${MAX_ATTEMPTS:3}
+    block-duration-seconds: ${BLOCK_DURATION_SECONDS:300}
 
   password-verification:
-    max-attempts: ${MAX_ATTEMPTS}
-    block-duration-seconds: ${BLOCK_DURATION_SECONDS}
+    max-attempts: ${MAX_ATTEMPTS:3}
+    block-duration-seconds: ${BLOCK_DURATION_SECONDS:300}
 
   s3:
-    endpoint: ${S3_ENDPOINT}
-    access-key: ${S3_ACCESS_KEY}
-    secret-key: ${S3_SECRET_KEY}
-    bucket: ${S3_BUCKET}
-    public-url-prefix: ${S3_PUBLIC_URL_PREFIX}
-    region: ${S3_REGION}
+    endpoint: ${S3_ENDPOINT:http://localhost:4566}
+    access-key: ${S3_ACCESS_KEY:test}
+    secret-key: ${S3_SECRET_KEY:test}
+    bucket: ${S3_BUCKET:test-bucket}
+    public-url-prefix: ${S3_PUBLIC_URL_PREFIX:http://localhost:4566}
+    region: ${S3_REGION:us-east-1}
