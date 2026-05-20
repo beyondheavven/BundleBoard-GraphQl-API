@@ -6,9 +6,8 @@ import com.source.bundleboard.author.dto.AuthorShortResponse;
 import com.source.bundleboard.author.dto.BaseAuthorResponse;
 import com.source.bundleboard.author.dto.SocialLink;
 import com.source.bundleboard.author.mapper.AuthorMapper;
-import com.source.bundleboard.author.model.Author;
 import com.source.bundleboard.author.repository.AuthorRepository;
-import com.source.bundleboard.user.service.UserService;
+import com.source.bundleboard.user.repository.UserRepository;
 import io.r2dbc.postgresql.codec.Json;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +16,6 @@ import reactor.core.publisher.Mono;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 
@@ -28,7 +26,7 @@ public class AuthorServiceImpl implements AuthorService {
 
     private final AuthorRepository authorRepository;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
     private final AuthorMapper authorMapper;
 
@@ -44,7 +42,7 @@ public class AuthorServiceImpl implements AuthorService {
     @Override
     public Mono<AuthorShortResponse> findShortResponseById(Long id) {
         return authorRepository.findById(id)
-                .flatMap(author -> userService.getUserById(author.getUserId())
+                .flatMap(author -> userRepository.findById(author.getUserId())
                         .map(user -> new AuthorShortResponse(
                                 author.getId(),
                                 author.getRating(),
@@ -58,7 +56,7 @@ public class AuthorServiceImpl implements AuthorService {
     @Override
     public Mono<AuthorResponse> findFullAuthorById(Long id) {
         return authorRepository.findById(id)
-                .flatMap(author -> userService.getUserById(author.getUserId())
+                .flatMap(author -> userRepository.findById(author.getUserId())
                         .map(user -> new AuthorResponse(
                                 author.getId(),
                                 author.getBio(),

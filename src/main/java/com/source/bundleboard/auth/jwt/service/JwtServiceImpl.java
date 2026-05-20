@@ -2,8 +2,10 @@ package com.source.bundleboard.auth.jwt.service;
 
 import com.source.bundleboard.auth.jwt.JwtProperties;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 
+@Slf4j
 @Service
 public class JwtServiceImpl implements JwtService {
 
@@ -73,10 +76,16 @@ public class JwtServiceImpl implements JwtService {
                         .build()
                         .parseSignedClaims(token)
                         .getPayload();
-            } catch (Exception e) {
-                throw new RuntimeException("Invalid JWT token: " + e.getMessage());
+            } catch (ExpiredJwtException e) {
+                log.warn("JWT token has expired: {}", e.getMessage());
+                return null;
             }
-        });
+            catch (Exception e) {
+                log.warn("Invalid JWT token: {}", e.getMessage());
+                return null;
+            }
+        })
+                .filter(claims -> claims != null);
     }
 
     // Extract username from token claims

@@ -5,11 +5,7 @@ import com.source.bundleboard.api.exception.UserNotFoundException;
 import com.source.bundleboard.api.exception.IncorrectPasswordException;
 import com.source.bundleboard.api.exception.InvalidTokenException;
 import com.source.bundleboard.api.exception.UserStatusException;
-import com.source.bundleboard.auth.dto.RefreshTokenRequest;
-import com.source.bundleboard.auth.dto.AuthRequest;
-import com.source.bundleboard.auth.dto.AuthResponse;
-import com.source.bundleboard.auth.dto.RegisterRequest;
-import com.source.bundleboard.auth.dto.SocialAuthRequest;
+import com.source.bundleboard.auth.dto.*;
 import com.source.bundleboard.auth.jwt.JwtProperties;
 import com.source.bundleboard.auth.jwt.service.JwtService;
 import com.source.bundleboard.email.service.EmailVerificationTokenService;
@@ -105,7 +101,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public Mono<AuthResponse> refreshToken(RefreshTokenRequest refreshTokenRequest) {
+    public Mono<RefreshResponse> refreshToken(RefreshTokenRequest refreshTokenRequest) {
         String refreshToken = refreshTokenRequest.refreshToken();
         return jwtService.isRefreshToken(refreshToken)
                 .flatMap(isRefresh -> {
@@ -126,7 +122,7 @@ public class AuthServiceImpl implements AuthService {
                     }
 
                     return refreshTokenRepository.deleteByToken(refreshToken)
-                            .then(generateAuthResponse(user, !user.isSetupCompleted()));
+                            .then(generateRefreshResponse(user));
                 });
     }
 
@@ -193,5 +189,21 @@ public class AuthServiceImpl implements AuthService {
 
         return refreshTokenRepository.save(refreshTokenEntity)
                 .map(savedRefreshToken -> new AuthResponse(accessToken, savedRefreshToken.getToken(), userDto, null, isNew));
+    }
+
+    private Mono<RefreshResponse> generateRefreshResponse(User user) {
+        String accessToken = jwtService.generateAccessToken(user.getUsername(), UserRole.toAuthorities(user.getRoles()));
+        String refreshToken = jwtService.generateRefreshToken(user.getUsername());
+
+        RefreshToken refreshTokenEntity = new RefreshToken(
+                null,
+                user.getId(),
+                refreshToken,
+                Instant.now(),
+                Instant.now().plusMillis(jwtProperties.getRefreshTokenExpirationMs())
+        );
+
+        return refreshTokenRepository.save(refreshTokenEntity)
+                .map(saved -> new RefreshResponse(accessToken, saved.getToken()));
     }
 }
