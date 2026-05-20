@@ -1,7 +1,7 @@
 extend type Mutation {
     login (input: AuthRequest!): AuthResponse!
     register (input: RegisterRequest!): AuthResponse!
-    refreshToken (input: RefreshTokenRequest!): AuthResponse!
+    refreshToken (input: RefreshTokenRequest!): RefreshResponse!
     logout (input: RefreshTokenRequest!): Boolean!
     socialLogin(input: SocialAuthRequest!): AuthResponse!
 }
@@ -34,4 +34,9 @@ type AuthResponse {
     user: UserDto!
     error: String
     isNew: Boolean
+}
+
+type RefreshResponse {
+    accessToken: String!
+    refreshToken: String!
 }

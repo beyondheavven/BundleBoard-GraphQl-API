@@ -9,7 +9,7 @@ public interface AuthService {
 
     Mono<AuthResponse> register(RegisterRequest request);
 
-    Mono<AuthResponse> refreshToken(RefreshTokenRequest refreshTokenRequest);
+    Mono<RefreshResponse> refreshToken(RefreshTokenRequest refreshTokenRequest);
 
     Mono<Boolean> logout(RefreshTokenRequest refreshTokenRequest);
 
