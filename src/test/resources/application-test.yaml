@@ -7,6 +7,9 @@ spring:
     baseline-on-migrate: true
 
   r2dbc:
+    url: r2dbc:postgresql://localhost:5432/stub_db
+    username: stub_user
+    password: stub_password
     pool:
       enabled: true
       initial-size: 5

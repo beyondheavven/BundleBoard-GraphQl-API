@@ -36,8 +36,6 @@ public abstract class AbstractIntegrationTest {
     void setUp() {
         this.graphQlTester = HttpGraphQlTester.builder(webTestClient.mutate())
                 .build();
-
-        cleanDatabase().block();
     }
 
     protected HttpGraphQlTester authorizedGraphQlTester(String token) {
