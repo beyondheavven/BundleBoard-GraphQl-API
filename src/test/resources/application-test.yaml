@@ -55,6 +55,8 @@ app:
 
 logging:
   level:
+    org.springframework.security: TRACE
+    org.springframework.web.reactive.result.method: DEBUG
     org.springframework.r2dbc: DEBUG
     io.r2dbc.postgresql: DEBUG
 
