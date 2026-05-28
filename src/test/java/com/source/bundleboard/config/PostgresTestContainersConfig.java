@@ -1,12 +1,13 @@
 package com.source.bundleboard.config;
 
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.env.MapPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 
-@TestConfiguration
-public class PostgresTestContainersConfig {
+import java.util.Map;
+
+public class PostgresTestContainersConfig implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
     private static final String REUSE_PROPERTY = "${testcontainers.reuse.enable}";
 
@@ -18,22 +19,36 @@ public class PostgresTestContainersConfig {
 
     private static final String DB_NAME = "bundleboard_db";
 
-    static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(POSTGRES_IMAGE)
+    private static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(POSTGRES_IMAGE)
             .withDatabaseName(DB_NAME)
             .withUsername(DB_USERNAME)
             .withPassword(DB_PASSWORD)
             .withReuse(Boolean.parseBoolean(System.getProperty(REUSE_PROPERTY, "true")));
 
-    static {
-        postgres.start();
-    }
 
-    @DynamicPropertySource
-    static void configureProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.r2dbc.url", () ->
-                "r2dbc:postgresql://" + postgres.getHost() + ":" + postgres.getFirstMappedPort() + "/" + postgres.getDatabaseName()
+    @Override
+    public void initialize(ConfigurableApplicationContext applicationContext) {
+        if (!postgres.isRunning()) {
+            postgres.start();
+        }
+
+        String r2dbcUrl = String.format("r2dbc:postgresql://%s:%d/%s",
+                postgres.getHost(),
+                postgres.getFirstMappedPort(),
+                postgres.getDatabaseName());
+
+        Map<String, Object> testProperties = Map.of(
+                "spring.r2dbc.url", r2dbcUrl,
+                "spring.r2dbc.username", postgres.getUsername(),
+                "spring.r2dbc.password", postgres.getPassword(),
+                "POSTGRES_PORT", postgres.getFirstMappedPort(),
+                "POSTGRES_URL", postgres.getHost(),
+                "POSTGRES_DB", postgres.getDatabaseName()
         );
-        registry.add("spring.r2dbc.username", postgres::getUsername);
-        registry.add("spring.r2dbc.password", postgres::getPassword);
+
+        applicationContext.getEnvironment().getPropertySources().addFirst(
+                new MapPropertySource("testcontainers-properties", testProperties)
+        );
+
     }
 }
