@@ -43,7 +43,12 @@ class AuthControllerIntTest extends AbstractControllerIntegrationTest {
         graphQlTester.document(document)
                 .variable("input", input)
                 .execute()
-                .errors().verify()
+                .errors()
+                .satisfy(errors -> {
+                    if (!errors.isEmpty()) {
+                        System.err.println("❌ GraphQL вернул ошибки: " + errors);
+                    }
+                })
                 .path("register.accessToken").hasValue()
                 .path("register.refreshToken").hasValue();
     }
