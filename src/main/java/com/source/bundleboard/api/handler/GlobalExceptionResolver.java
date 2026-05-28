@@ -4,12 +4,14 @@ import graphql.GraphQLError;
 import graphql.GraphqlErrorBuilder;
 import graphql.schema.DataFetchingEnvironment;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.graphql.execution.DataFetcherExceptionResolverAdapter;
 import org.springframework.graphql.execution.ErrorType;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class GlobalExceptionResolver extends DataFetcherExceptionResolverAdapter {
@@ -19,6 +21,10 @@ public class GlobalExceptionResolver extends DataFetcherExceptionResolverAdapter
     @Override
     protected GraphQLError resolveToSingleError(Throwable ex, DataFetchingEnvironment env) {
         ErrorCode errorCode = exceptionMapper.getCode(ex);
+
+        if (errorCode == ErrorCode.INTERNAL_SERVER_ERROR) {
+            log.error("Internal server error", ex);
+        }
 
         return GraphqlErrorBuilder.newError()
                 .message(errorCode.getMessage())
