@@ -130,7 +130,6 @@ class UserServiceTest {
                 .verifyComplete();
     }
 
-    // --- ТЕСТЫ НА ИЗМЕНЕНИЕ ДАННЫХ (Mutations) ---
 
     @Test
     void updateMe_Success() {
@@ -159,7 +158,6 @@ class UserServiceTest {
                 .expectNext(expectedResponse)
                 .verifyComplete();
 
-        // Проверяем мутацию объекта перед сохранением в БД
         verify(userRepository).save(argThat(user ->
                 "new_username".equals(user.getUsername()) &&
                         "http://avatar.com/new.png".equals(user.getAvatarUrl())
@@ -168,16 +166,13 @@ class UserServiceTest {
 
     @Test
     void updateAvatar_Success() {
-        // Соответствует: input UpdateAvatarRequest { id: ID!, avatarUrl: String! }
         UpdateAvatarRequest request = new UpdateAvatarRequest(1L, "http://avatar.com/avatar3.png");
 
         when(userRepository.findById(1L)).thenReturn(Mono.just(sampleUser));
         when(userRepository.save(any(User.class))).thenReturn(Mono.just(sampleUser));
 
-        // Тестируем метод updateUserAvatar напрямую
         StepVerifier.create(userService.updateUserAvatar(request))
                 .assertNext(response -> {
-                    // Проверяем тип UpdateAvatarResponse { id, avatarUrl, updatedAt }
                     org.junit.jupiter.api.Assertions.assertEquals(1L, response.id());
                     org.junit.jupiter.api.Assertions.assertEquals("http://avatar.com/avatar3.png", response.avatarUrl());
                     org.junit.jupiter.api.Assertions.assertNotNull(response.updatedAt());
