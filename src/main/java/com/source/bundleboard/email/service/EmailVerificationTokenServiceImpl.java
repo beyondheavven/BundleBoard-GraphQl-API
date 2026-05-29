@@ -46,7 +46,6 @@ public class EmailVerificationTokenServiceImpl implements EmailVerificationToken
     @Transactional
     public Mono<EmailResponse> verifyEmail(String tokenValue) {
         String hashedToken = sha256Hex(tokenValue);
-        log.debug("Attempting to verify email with token hash: {}", hashedToken);
         return emailVerificationTokenRepository.findByToken(hashedToken)
                 .flatMap(token -> {
                     if (token.getBlockedUntil() != null && token.getBlockedUntil().isAfter(Instant.now())) {
@@ -77,9 +76,6 @@ public class EmailVerificationTokenServiceImpl implements EmailVerificationToken
                 .flatMap(user -> {
                     TokenEntity tokenEntity = createTokenEntity(user.getId(), EmailTokenType.change_email);
                     tokenEntity.token().setNewEmail(newEmail);
-
-                    log.info("Sending change email token for user: {}", tokenEntity.rawToken());
-
                     return emailVerificationTokenRepository.save(tokenEntity.token())
                             .flatMap(token -> mailService.sendVerificationEmail(newEmail, tokenEntity.rawToken()))
                             .thenReturn(new EmailResponse(true, "Email verification link sent to " + newEmail, null));
@@ -93,9 +89,6 @@ public class EmailVerificationTokenServiceImpl implements EmailVerificationToken
                 .switchIfEmpty(Mono.error(new UserNotFoundException()))
                 .flatMap(user -> {
                     TokenEntity tokenEntity = createTokenEntity(user.getId(), EmailTokenType.verify_email);
-
-                    log.info("GENERATE VERIFICATION TOKEN: {}", tokenEntity.rawToken());
-
                     return emailVerificationTokenRepository.save(tokenEntity.token())
                             .flatMap(token -> mailService.sendVerificationEmail(email, tokenEntity.rawToken()))
                             .thenReturn(new EmailResponse(true, "Email verification link sent to " + email, null));
