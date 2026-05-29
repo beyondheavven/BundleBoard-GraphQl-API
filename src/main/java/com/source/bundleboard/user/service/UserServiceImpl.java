@@ -7,6 +7,9 @@ import com.source.bundleboard.author.model.Author;
 import com.source.bundleboard.author.repository.AuthorRepository;
 import com.source.bundleboard.author.service.AuthorService;
 import com.source.bundleboard.client.service.ClientService;
+import com.source.bundleboard.collection.dto.AuthoredCollectionResponse;
+import com.source.bundleboard.collection.service.CollectionService;
+import com.source.bundleboard.purchase.dto.PurchaseBaseResponse;
 import com.source.bundleboard.purchase.service.PurchaseService;
 import com.source.bundleboard.refreshtoken.model.RefreshToken;
 import com.source.bundleboard.refreshtoken.service.RefreshTokenService;
@@ -51,6 +54,8 @@ public class UserServiceImpl implements UserService {
     private final RefreshTokenService refreshTokenService;
 
     private final JwtProperties jwtProperties;
+
+    private final CollectionService collectionService;
 
     @Override
     public Mono<UserResponseDto> findUserByUsername(String username) {
@@ -215,22 +220,36 @@ public class UserServiceImpl implements UserService {
                 .filter(Authentication::isAuthenticated)
                 .flatMap(auth -> userRepository.findByUsername(auth.getName()))
                 .switchIfEmpty(Mono.error(new UserNotFoundException()))
-                .flatMap(user ->
-                        clientService.findByUserId(user.getId())
-                                .flatMap(client ->
-                                        purchaseService.findAllByClientId(client.getId())
-                                                .defaultIfEmpty(Collections.emptyList()
-                                                )
-                                ).defaultIfEmpty(Collections.emptyList())
-                                .map(purchase -> new UserProfileResponse(
-                                        user.getId(),
-                                        user.getUsername(),
-                                        user.getEmail(),
-                                        user.getAvatarUrl(),
-                                        user.getStatus(),
-                                        purchase
-                                ))
-                );
+                .flatMap(user -> {
+                            Mono<List<PurchaseBaseResponse>> purchasesMono = clientService.findByUserId(user.getId())
+                                    .flatMap(client -> purchaseService.findAllByClientId(client.getId()))
+                                    .defaultIfEmpty(Collections.emptyList())
+                                    .onErrorReturn(Collections.emptyList());
+
+                            Mono<List<AuthoredCollectionResponse>> authoredCollectionsMono = Mono.just(user.getRoles())
+                            .flatMap(roles -> {
+                                if (roles.contains(UserRole.author)) {
+                                    return authorRepository.findByUserId(user.getId())
+                                            .flatMapMany(author -> collectionService.findAllByAuthorId(author.getId()))
+                                            .collectList()
+                                            .defaultIfEmpty(Collections.emptyList());
+                                }
+                                return Mono.just(Collections.<AuthoredCollectionResponse>emptyList());
+                            })
+                            .onErrorReturn(Collections.emptyList());
+
+                    return Mono.zip(purchasesMono, authoredCollectionsMono)
+                            .map(tuple -> new UserProfileResponse(
+                                    user.getId(),
+                                    user.getUsername(),
+                                    user.getEmail(),
+                                    user.getAvatarUrl(),
+                                    user.getStatus(),
+                                    user.getRoles(),
+                                    tuple.getT2(),
+                                    tuple.getT1()
+                            ));
+                });
     }
 
     @Override

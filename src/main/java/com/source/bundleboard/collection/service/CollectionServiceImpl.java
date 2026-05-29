@@ -4,13 +4,10 @@ import com.source.bundleboard.api.exception.CollectionNotFoundException;
 import com.source.bundleboard.api.exception.DescriptionException;
 import com.source.bundleboard.api.exception.MinimalPriceException;
 import com.source.bundleboard.author.repository.AuthorRepository;
-import com.source.bundleboard.collection.dto.CollectionShortResponse;
-import com.source.bundleboard.collection.dto.CollectionResponse;
-import com.source.bundleboard.collection.dto.CreateNewCollectionDto;
-import com.source.bundleboard.collection.dto.GetCollectionByIdResponse;
-import com.source.bundleboard.collection.dto.UpdateCollectionDto;
+import com.source.bundleboard.collection.dto.*;
 import com.source.bundleboard.collection.mapper.CollectionMapper;
 import com.source.bundleboard.collection.repository.CollectionRepository;
+import com.source.bundleboard.image.dto.ImageShortResponse;
 import com.source.bundleboard.image.service.PreviewImageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -93,6 +90,18 @@ public class CollectionServiceImpl implements CollectionService {
                     previewImageService.findShortResponseById(collection.getPreviewImageId())
                             .map(imageDto -> collectionMapper.mapToShortResponse(collection, imageDto))
                 );
+    }
+
+    @Override
+    public Flux<AuthoredCollectionResponse> findAllByAuthorId(Long authorId) {
+        return collectionRepository.findAllByAuthorId(authorId)
+                .map(row -> new AuthoredCollectionResponse(
+                        row.id(),
+                        row.name(),
+                        row.price(),
+                        row.description(),
+                        new ImageShortResponse(row.previewFilePath(), row.previewFileName())
+                ));
     }
 
 
