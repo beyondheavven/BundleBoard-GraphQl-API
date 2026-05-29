@@ -164,7 +164,6 @@ public class AuthServiceTest {
         when(passwordEncoder.encode("randomPass")).thenReturn("encoded");
         when(userService.save(any(User.class))).thenReturn(Mono.just(testUser));
 
-        // Mock response generation
         when(jwtService.generateAccessToken(any(), any())).thenReturn("a");
         when(jwtService.generateRefreshToken(any())).thenReturn("r");
         when(jwtProperties.getRefreshTokenExpirationMs()).thenReturn(1000L);

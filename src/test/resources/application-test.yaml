@@ -1,29 +1,65 @@
 spring:
+  config:
+    activate:
+      on-profile: test
 
-
-  flyway:
-    enabled: true
-    locations: classpath:db/migration
-    baseline-on-migrate: true
+  main:
+    allow-bean-definition-overriding: true
 
   r2dbc:
     pool:
       enabled: true
-      initial-size: 5
+      initial-size: 2
       max-size: 10
 
   mail:
-    test-connection: false
+    host: localhost
+    port: 3025
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+
+r2dbc-migrate:
+  resources-paths: file:supabase/migrations/*.sql
 
 app:
   auth:
-    social-password-secret: test-secret-key
-  
+    social-password-secret: test-social-secret-12345
+
+  cors:
+    allowed-origins: "*"
+
   jwt:
     access-token-expiration-ms: 60000
     refresh-token-expiration-ms: 120000
-    secret: super-secret-test-key-must-be-long-enough-for-hs512
+    secret: super-secret-test-key-must-be-long-enough-for-hs512-test-env
+
+  email-verification:
+    ttl-ms: 60000
+    verify-email-url: http://localhost:8080/verify
+    block-duration-seconds: 1
+
+  password-verification:
+    block-duration-seconds: 1
 
   s3:
     endpoint: http://localhost:4566
-    bucket: test-bucket
+    access-key: test-access-key
+    secret-key: test-secret-key
+    bucket: bundleboard-test-bucket
+    public-url-prefix: http://localhost:4566/bundleboard-test-bucket
+    region: us-east-1
+
+logging:
+  level:
+    org.springframework.security: TRACE
+    org.springframework.web.reactive.result.method: DEBUG
+    org.springframework.r2dbc: DEBUG
+    io.r2dbc.postgresql: DEBUG
+
+testcontainers:
+  reuse:
+    enable: false

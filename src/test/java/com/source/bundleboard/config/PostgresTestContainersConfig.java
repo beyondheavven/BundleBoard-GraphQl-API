@@ -1,28 +1,54 @@
 package com.source.bundleboard.config;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.springframework.context.annotation.Bean;
 
-@TestConfiguration(proxyBeanMethods = false)
-public class PostgresTestContainersConfig {
+import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.env.MapPropertySource;
+import org.testcontainers.containers.PostgreSQLContainer;
+
+import java.util.Map;
+
+public class PostgresTestContainersConfig implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+
+    private static final String REUSE_PROPERTY = "${testcontainers.reuse.enable}";
 
     private static final String POSTGRES_IMAGE = "postgres:15-alpine";
 
-    private static final String POSTGRES_USER = "postgres";
+    private static final String DB_USERNAME = "bundleboard_user";
 
-    private static final String POSTGRES_PASSWORD = "test";
+    private static final String DB_PASSWORD = "bundleboard_password";
 
-    private static final String POSTGRES_DB = "bundleboard_test";
+    private static final String DB_NAME = "bundleboard_db";
 
-    @Bean
-    @ServiceConnection
-    public PostgreSQLContainer<?> postgreSQLContainer() {
-        return new PostgreSQLContainer<>(POSTGRES_IMAGE)
-                .withUsername(POSTGRES_USER)
-                .withPassword(POSTGRES_PASSWORD)
-                .withDatabaseName(POSTGRES_DB)
-                .withUrlParam("stringtype", "unspecified");
+    private static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(POSTGRES_IMAGE)
+            .withDatabaseName(DB_NAME)
+            .withUsername(DB_USERNAME)
+            .withPassword(DB_PASSWORD)
+            .withReuse(Boolean.parseBoolean(System.getProperty(REUSE_PROPERTY, "true")));
+
+
+    @Override
+    public void initialize(ConfigurableApplicationContext applicationContext) {
+        if (!postgres.isRunning()) {
+            postgres.start();
+        }
+
+        String r2dbcUrl = String.format("r2dbc:postgresql://%s:%d/%s",
+                postgres.getHost(),
+                postgres.getFirstMappedPort(),
+                postgres.getDatabaseName());
+
+        Map<String, Object> testProperties = Map.of(
+                "spring.r2dbc.url", r2dbcUrl,
+                "spring.r2dbc.username", postgres.getUsername(),
+                "spring.r2dbc.password", postgres.getPassword(),
+                "POSTGRES_PORT", postgres.getFirstMappedPort(),
+                "POSTGRES_URL", postgres.getHost(),
+                "POSTGRES_DB", postgres.getDatabaseName()
+        );
+
+        applicationContext.getEnvironment().getPropertySources().addFirst(
+                new MapPropertySource("testcontainers-properties", testProperties)
+        );
 
     }
 }
