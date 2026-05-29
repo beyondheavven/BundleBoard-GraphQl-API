@@ -47,6 +47,14 @@ type CollectionShortResponse{
     previewImage: ImageShortResponse!
 }
 
+type AuthoredCollectionResponse {
+    id: ID!
+    name: String!
+    price: Float!
+    description: String!
+    previewImage: ImageShortResponse!
+}
+
 
 input CollectionInput {
     name: String!

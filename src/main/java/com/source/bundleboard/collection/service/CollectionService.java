@@ -20,4 +20,6 @@ public interface CollectionService {
     Mono<Boolean> deleteCollection(Long id);
 
     Mono<CollectionShortResponse> findShortResponseById(Long collectionId);
+
+    Flux<AuthoredCollectionResponse> findAllByAuthorId(Long authorId);
 }
