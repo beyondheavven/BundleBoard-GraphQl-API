@@ -28,6 +28,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -114,12 +117,14 @@ public class CollectionServiceTest {
 
     @Test
     void getAllCollections_Success() {
+        int page = 0;
+        int size = 9;
+        Pageable expectedPageable = PageRequest.of(page, size, Sort.by("id").ascending());
+
         CollectionResponse responseDto = new CollectionResponse(1L, "Java Bundle", "Desc", 10.0, null, null);
-
-        when(collectionRepository.findAll()).thenReturn(Flux.just(sampleCollection));
+        when(collectionRepository.findAllBy(expectedPageable)).thenReturn(Flux.just(sampleCollection));
         when(collectionMapper.toDto(sampleCollection)).thenReturn(responseDto);
-
-        StepVerifier.create(collectionService.getAllCollections())
+        StepVerifier.create(collectionService.getAllCollections(page, size))
                 .expectNext(responseDto)
                 .verifyComplete();
     }
