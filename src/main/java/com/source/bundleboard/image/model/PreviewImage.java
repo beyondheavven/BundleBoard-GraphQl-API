@@ -37,4 +37,7 @@ public class PreviewImage {
 
     @Column("file_size")
     Long fileSize;
+
+    @Column("collections_id")
+    Long collectionsId;
 }

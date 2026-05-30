@@ -19,9 +19,15 @@ type ImageShortResponse {
     fileName: String!
 }
 
+input ImageShortInput {
+    filePath: String!
+    fileName: String!
+}
+
 enum MimeType {
     jpeg
     png
+    webp
     mp4
     zip
     rar

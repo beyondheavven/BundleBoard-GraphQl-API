@@ -4,7 +4,7 @@ extend type Query {
 }
 
 extend type Mutation {
-    createCollection(input: CollectionInput!): Collection!
+    createCollection(input: CreateNewCollectionInput!): CreateCollectionResponse!
     updateCollection(id: ID!, input: UpdateCollectionInput!): Collection!
     deleteCollection(id: ID!): Boolean!
 }
@@ -15,7 +15,7 @@ type Collection {
     description: String!
     price: Float!
     author: Author!
-    tags: [Tag]
+    tags: [Tag!]!
     videoTutorialUrl: String!
     previewImage: Image!
     mediaResource: MediaResource!
@@ -55,15 +55,21 @@ type AuthoredCollectionResponse {
     previewImage: ImageShortResponse!
 }
 
+type CreateCollectionResponse {
+    id: ID!
+    name: String!
+    success: Boolean!
+}
 
-input CollectionInput {
+
+input CreateNewCollectionInput {
     name: String!
     description: String!
     price: Float!
-    authorId: ID!
-    previewImageId: ID!
-    mediaResourceId: ID!
     videoTutorialUrl: String
+    tagIds: [ID!]!
+    galleryImages: [ImageShortInput!]!
+    mediaResource: MediaResourceInput!
 }
 
 input UpdateCollectionInput {
