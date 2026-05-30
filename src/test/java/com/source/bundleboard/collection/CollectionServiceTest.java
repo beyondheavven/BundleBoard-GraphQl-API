@@ -1,17 +1,28 @@
 package com.source.bundleboard.collection;
 
+import com.source.bundleboard.api.exception.AuthorNotFoundException;
 import com.source.bundleboard.api.exception.CollectionNotFoundException;
 import com.source.bundleboard.api.exception.DescriptionException;
 import com.source.bundleboard.api.exception.MinimalPriceException;
 import com.source.bundleboard.author.model.Author;
 import com.source.bundleboard.author.repository.AuthorRepository;
+import com.source.bundleboard.author.service.AuthorService;
 import com.source.bundleboard.collection.dto.*;
 import com.source.bundleboard.collection.mapper.CollectionMapper;
 import com.source.bundleboard.collection.model.Collection;
 import com.source.bundleboard.collection.repository.CollectionRepository;
 import com.source.bundleboard.collection.service.CollectionServiceImpl;
+import com.source.bundleboard.image.dto.ImageShortInput;
 import com.source.bundleboard.image.dto.ImageShortResponse;
+import com.source.bundleboard.image.model.PreviewImage;
 import com.source.bundleboard.image.service.PreviewImageService;
+import com.source.bundleboard.mediaresource.dto.MediaResourceInput;
+import com.source.bundleboard.mediaresource.model.MediaResource;
+import com.source.bundleboard.mediaresource.model.MimeType;
+import com.source.bundleboard.mediaresource.model.Provider;
+import com.source.bundleboard.mediaresource.repository.MediaResourceRepository;
+import com.source.bundleboard.tag.collectiontag.repository.CollectionTagRepository;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,6 +34,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import static org.mockito.Mockito.*;
 
@@ -33,7 +45,7 @@ public class CollectionServiceTest {
     private CollectionRepository collectionRepository;
 
     @Mock
-    private AuthorRepository authorRepository;
+    private AuthorService authorService;
 
     @Mock
     private CollectionMapper collectionMapper;
@@ -41,14 +53,27 @@ public class CollectionServiceTest {
     @Mock
     private PreviewImageService previewImageService;
 
+    @Mock
+    private MediaResourceRepository mediaResourceRepository;
+
+    @Mock
+    private CollectionTagRepository collectionTagRepository;
+
     @InjectMocks
     private CollectionServiceImpl collectionService;
 
     private Collection sampleCollection;
     private GetCollectionByIdResponse sampleGetDto;
+    private Author sampleAuthor;
+    private String username = "test_author";
+
+
 
     @BeforeEach
     void setUp() {
+        sampleAuthor = new Author();
+        sampleAuthor.setId(42L);
+
         sampleCollection = new Collection();
         sampleCollection.setId(1L);
         sampleCollection.setName("Java Bundle");
@@ -103,63 +128,80 @@ public class CollectionServiceTest {
 
     @Test
     void createCollection_Success() {
-        CreateNewCollectionDto inputDto = new CreateNewCollectionDto(
-                "New Pack",
-                "Valid description that is longer than 5 chars",
-                42L,
-                15.0,
-                "http://url",
-                200L,
-                100L
-        );
+        CreateNewCollectionInput inputDto = getCreateNewCollectionInput();
 
-        when(authorRepository.findById(42L)).thenReturn(Mono.just(new Author()));
-        when(collectionMapper.toEntity(inputDto)).thenReturn(sampleCollection);
-        when(collectionRepository.save(sampleCollection)).thenReturn(Mono.just(sampleCollection));
-        when(collectionMapper.toGetDto(sampleCollection)).thenReturn(sampleGetDto);
+        MediaResource mockMedia = new MediaResource();
+        mockMedia.setId(200L);
 
-        StepVerifier.create(collectionService.createCollection(inputDto))
-                .expectNext(sampleGetDto)
+        PreviewImage mockImage = new PreviewImage();
+        mockImage.setId(100L);
+
+        when(authorService.findByUsername(username)).thenReturn(Mono.just(sampleAuthor));
+        when(mediaResourceRepository.save(any(MediaResource.class))).thenReturn(Mono.just(mockMedia));
+        when(collectionRepository.save(any(Collection.class))).thenReturn(Mono.just(sampleCollection));
+        when(previewImageService.saveAll(anyList())).thenReturn(Mono.just(List.of(mockImage)));
+        when(collectionTagRepository.saveAll(anyList())).thenReturn(Flux.empty());
+
+        StepVerifier.create(collectionService.createCollection(inputDto, username))
+                .assertNext(response -> {
+                    org.junit.jupiter.api.Assertions.assertTrue(response.success());
+                    org.junit.jupiter.api.Assertions.assertEquals("Java Bundle", response.name());
+                })
                 .verifyComplete();
+    }
+
+    private static @NotNull CreateNewCollectionInput getCreateNewCollectionInput() {
+        MediaResourceInput mediaInput = new MediaResourceInput("file.zip", "/path", MimeType.zip, Provider.local, 1000L);
+        ImageShortInput imageInput = new ImageShortInput("img.png", "/path/img", MimeType.png);
+
+        CreateNewCollectionInput inputDto = new CreateNewCollectionInput(
+                "New Pack",
+                "Valid description",
+                new BigDecimal("15.00"),
+                "http://url",
+                List.of(1L, 2L),
+                List.of(imageInput),
+                mediaInput
+        );
+        return inputDto;
     }
 
     @Test
     void createCollection_LowPrice_ThrowsMinimalPriceException() {
-        CreateNewCollectionDto inputDto = new CreateNewCollectionDto(
+        CreateNewCollectionInput inputDto = new CreateNewCollectionInput(
                 "Cheap Pack",
-                "Valid description",
-                42L,
-                4.99,
+                "Desc",
+                new BigDecimal("4.99"),
                 null,
-                200L,
-                100L
+                List.of(),
+                List.of(),
+                null
         );
 
-        StepVerifier.create(collectionService.createCollection(inputDto))
+        StepVerifier.create(collectionService.createCollection(inputDto, username))
                 .expectErrorMatches(throwable -> throwable instanceof MinimalPriceException
                         && throwable.getMessage().contains("Minimal price is 5 USD"))
                 .verify();
 
-        verifyNoInteractions(authorRepository, collectionRepository, collectionMapper);
+        verifyNoInteractions(authorService, collectionRepository, mediaResourceRepository, previewImageService);
     }
 
     @Test
-    void createCollection_ShortDescription_ThrowsDescriptionException() {
-        CreateNewCollectionDto inputDto = new CreateNewCollectionDto(
+    void createCollection_AuthorNotFound_ThrowsAuthorNotFoundException() {
+        CreateNewCollectionInput inputDto = new CreateNewCollectionInput(
                 "Pack",
-                "123",
-                42L,
-                10.0,
+                "Desc",
+                new BigDecimal("10.00"),
                 null,
-                200L,
-                100L
+                List.of(),
+                List.of(),
+                null
         );
 
-        lenient().when(authorRepository.findById(anyLong())).thenReturn(Mono.empty());
+        when(authorService.findByUsername(username)).thenReturn(Mono.empty());
 
-        StepVerifier.create(collectionService.createCollection(inputDto))
-                .expectErrorMatches(throwable -> throwable instanceof DescriptionException
-                        && throwable.getMessage().contains("Validation failed: Description 200-1000 chars"))
+        StepVerifier.create(collectionService.createCollection(inputDto, username))
+                .expectError(AuthorNotFoundException.class)
                 .verify();
     }
 

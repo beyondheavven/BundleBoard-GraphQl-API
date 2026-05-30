@@ -13,7 +13,7 @@ public interface CollectionService {
 
     Flux<CollectionResponse> getAllCollections();
 
-    Mono<GetCollectionByIdResponse> createCollection(CreateNewCollectionDto collection);
+    Mono<CreateCollectionResponse> createCollection(CreateNewCollectionInput input, String username);
 
     Mono<GetCollectionByIdResponse> updateCollection(Long id, UpdateCollectionDto collection);
 

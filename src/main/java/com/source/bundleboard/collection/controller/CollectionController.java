@@ -3,24 +3,25 @@ package com.source.bundleboard.collection.controller;
 import com.source.bundleboard.author.dto.AuthorResponse;
 import com.source.bundleboard.author.dto.AuthorShortResponse;
 import com.source.bundleboard.author.service.AuthorService;
-import com.source.bundleboard.collection.dto.CollectionResponse;
-import com.source.bundleboard.collection.dto.GetCollectionByIdResponse;
-import com.source.bundleboard.collection.dto.CreateNewCollectionDto;
-import com.source.bundleboard.collection.dto.UpdateCollectionDto;
+import com.source.bundleboard.collection.dto.*;
 import com.source.bundleboard.collection.service.CollectionService;
 import com.source.bundleboard.image.dto.ImageShortResponse;
 import com.source.bundleboard.image.service.PreviewImageService;
 import com.source.bundleboard.mediaresource.dto.GetMediaResourceByIdResponse;
 import com.source.bundleboard.mediaresource.service.MediaResourceService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.graphql.data.method.annotation.SchemaMapping;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.security.Principal;
 
 @Controller
 @RequiredArgsConstructor
@@ -48,8 +49,8 @@ public class CollectionController {
 
     @PreAuthorize("hasAnyRole('admin', 'author')")
     @MutationMapping
-    public Mono<GetCollectionByIdResponse> createCollection(@Argument(name = "input") CreateNewCollectionDto collection) {
-        return collectionService.createCollection(collection);
+    public Mono<CreateCollectionResponse> createCollection(@Argument @Valid CreateNewCollectionInput input, @AuthenticationPrincipal Principal principal) {
+        return collectionService.createCollection(input, principal.getName());
     }
 
     @PreAuthorize("hasAnyRole('admin', 'author')")

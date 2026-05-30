@@ -1,0 +1,39 @@
+package com.source.bundleboard.collection.dto;
+
+import com.source.bundleboard.image.dto.ImageShortInput;
+import com.source.bundleboard.mediaresource.dto.MediaResourceInput;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+public record CreateNewCollectionInput(
+        @NotBlank(message = "asset title required")
+        @Size(min = 3, max = 100, message = "asset title must be between 3 and 100 symbols")
+        String name,
+
+        @NotBlank(message = "de")
+        @Size(min = 100, max = 1000, message = "description is required")
+        String description,
+
+        @NotNull(message = "price required")
+        @DecimalMin(value = "0.00", message = "price can not be negative")
+        @Digits(integer = 6, fraction = 2, message = "invalid price format")
+        BigDecimal price,
+
+        @Pattern(regexp = "^(https?://.*)?$", message = "invalid video tutorial format")
+        String videoTutorialUrl,
+
+        @NotEmpty(message = "at least one tag required")
+        List<Long> tagIds,
+
+        @NotEmpty(message = "at least one image required")
+        @Valid
+        List<ImageShortInput> galleryImages,
+
+        @NotNull(message = "metadata is required")
+        @Valid
+        MediaResourceInput mediaResource
+) {
+}
