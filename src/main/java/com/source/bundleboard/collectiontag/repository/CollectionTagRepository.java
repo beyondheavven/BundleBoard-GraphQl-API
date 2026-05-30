@@ -1,6 +1,6 @@
-package com.source.bundleboard.tag.collectiontag.repository;
+package com.source.bundleboard.collectiontag.repository;
 
-import com.source.bundleboard.tag.collectiontag.model.CollectionTag;
+import com.source.bundleboard.collectiontag.model.CollectionTag;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.stereotype.Repository;
 

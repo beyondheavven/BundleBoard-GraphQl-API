@@ -11,7 +11,7 @@ public interface CollectionService {
 
     Mono<GetCollectionByIdResponse> getCollectionById(Long id);
 
-    Flux<CollectionResponse> getAllCollections();
+    Flux<CollectionResponse> getAllCollections(int page, int size);
 
     Mono<CreateCollectionResponse> createCollection(CreateNewCollectionInput input, String username);
 

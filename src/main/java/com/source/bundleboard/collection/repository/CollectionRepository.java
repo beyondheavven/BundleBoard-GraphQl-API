@@ -2,6 +2,7 @@ package com.source.bundleboard.collection.repository;
 
 import com.source.bundleboard.collection.dto.CollectionWithImageRow;
 import com.source.bundleboard.collection.model.Collection;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.stereotype.Repository;
@@ -27,4 +28,6 @@ public interface CollectionRepository extends R2dbcRepository<Collection, Long> 
         WHERE c.authors_id = :authorId
     """)
     Flux<CollectionWithImageRow> findAllByAuthorId(Long authorId);
+
+    Flux<Collection> findAllBy(Pageable pageable);
 }
