@@ -11,13 +11,15 @@ public interface CollectionService {
 
     Mono<GetCollectionByIdResponse> getCollectionById(Long id);
 
-    Flux<CollectionResponse> getAllCollections();
+    Flux<CollectionResponse> getAllCollections(int page, int size);
 
-    Mono<GetCollectionByIdResponse> createCollection(CreateNewCollectionDto collection);
+    Mono<CreateCollectionResponse> createCollection(CreateNewCollectionInput input, String username);
 
     Mono<GetCollectionByIdResponse> updateCollection(Long id, UpdateCollectionDto collection);
 
     Mono<Boolean> deleteCollection(Long id);
 
     Mono<CollectionShortResponse> findShortResponseById(Long collectionId);
+
+    Flux<AuthoredCollectionResponse> findAllByAuthorId(Long authorId);
 }

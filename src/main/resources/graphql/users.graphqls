@@ -26,6 +26,8 @@ type UserProfileResponse {
     email: String!
     avatarUrl: String
     status: UserStatus!
+    roles: [UserRole!]
+    authoredCollections: [AuthoredCollectionResponse!]
     purchases: [PurchaseBaseResponse]
 }
 

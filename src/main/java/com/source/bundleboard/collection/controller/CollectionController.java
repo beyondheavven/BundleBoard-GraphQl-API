@@ -3,24 +3,26 @@ package com.source.bundleboard.collection.controller;
 import com.source.bundleboard.author.dto.AuthorResponse;
 import com.source.bundleboard.author.dto.AuthorShortResponse;
 import com.source.bundleboard.author.service.AuthorService;
-import com.source.bundleboard.collection.dto.CollectionResponse;
-import com.source.bundleboard.collection.dto.GetCollectionByIdResponse;
-import com.source.bundleboard.collection.dto.CreateNewCollectionDto;
-import com.source.bundleboard.collection.dto.UpdateCollectionDto;
+import com.source.bundleboard.collection.dto.*;
 import com.source.bundleboard.collection.service.CollectionService;
 import com.source.bundleboard.image.dto.ImageShortResponse;
 import com.source.bundleboard.image.service.PreviewImageService;
 import com.source.bundleboard.mediaresource.dto.GetMediaResourceByIdResponse;
 import com.source.bundleboard.mediaresource.service.MediaResourceService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.graphql.data.method.annotation.SchemaMapping;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.security.Principal;
 
 @Controller
 @RequiredArgsConstructor
@@ -36,8 +38,8 @@ public class CollectionController {
 
     @PreAuthorize("permitAll()")
     @QueryMapping
-    public Flux<CollectionResponse> getAllCollections() {
-        return collectionService.getAllCollections();
+    public Flux<CollectionResponse> getAllCollections(@Argument int page, @Argument int size) {
+        return collectionService.getAllCollections(page,size);
     }
 
     @PreAuthorize("permitAll()")
@@ -46,19 +48,21 @@ public class CollectionController {
         return collectionService.getCollectionById(id);
     }
 
-    @PreAuthorize("hasAnyRole('admin', 'author')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'AUTHOR')")
     @MutationMapping
-    public Mono<GetCollectionByIdResponse> createCollection(@Argument(name = "input") CreateNewCollectionDto collection) {
-        return collectionService.createCollection(collection);
+    public Mono<CreateCollectionResponse> createCollection(@Argument @Valid CreateNewCollectionInput input) {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(securityContext -> securityContext.getAuthentication().getName())
+                .flatMap(username -> collectionService.createCollection(input, username));
     }
 
-    @PreAuthorize("hasAnyRole('admin', 'author')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'AUTHOR')")
     @MutationMapping
     public Mono<GetCollectionByIdResponse> updateCollection(@Argument Long id, @Argument(name = "input") UpdateCollectionDto collection) {
         return collectionService.updateCollection(id, collection);
     }
 
-    @PreAuthorize("hasAnyRole('admin', 'author')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'AUTHOR')")
     @MutationMapping
     public Mono<Boolean> deleteCollection(@Argument Long id) {
         return collectionService.deleteCollection(id);

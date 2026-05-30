@@ -25,6 +25,9 @@ public class MediaResource {
     @Column("file_path")
     String filePath;
 
+    @Column("file_type")
+    MediaFileType fileType;
+
     @Column("mime_type")
     MimeType mimeType;
 

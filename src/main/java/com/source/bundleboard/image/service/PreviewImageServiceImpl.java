@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class PreviewImageServiceImpl implements PreviewImageService {
@@ -35,6 +37,14 @@ public class PreviewImageServiceImpl implements PreviewImageService {
         return previewImageRepository.findById(id)
                 .map(previewImageMapper::toShortDto)
                 .switchIfEmpty(Mono.error(new ImageNotFoundException()));
+    }
+
+    @Override
+    public Mono<List<PreviewImage>> saveAll(List<PreviewImage> newImages) {
+        if (newImages == null || newImages.isEmpty()) {
+            return Mono.empty();
+        }
+        return previewImageRepository.saveAll(newImages).collectList();
     }
 
 }

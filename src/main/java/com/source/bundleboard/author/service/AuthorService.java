@@ -4,6 +4,7 @@ package com.source.bundleboard.author.service;
 import com.source.bundleboard.author.dto.AuthorResponse;
 import com.source.bundleboard.author.dto.AuthorShortResponse;
 import com.source.bundleboard.author.dto.BaseAuthorResponse;
+import com.source.bundleboard.author.model.Author;
 import reactor.core.publisher.Mono;
 
 public interface AuthorService {
@@ -13,4 +14,6 @@ public interface AuthorService {
     Mono<AuthorShortResponse> findShortResponseById(Long id);
 
     Mono<AuthorResponse> findFullAuthorById(Long id);
+
+    Mono<Author> findByUsername(String username);
 }

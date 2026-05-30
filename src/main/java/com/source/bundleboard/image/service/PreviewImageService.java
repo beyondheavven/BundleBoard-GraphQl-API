@@ -1,9 +1,12 @@
 package com.source.bundleboard.image.service;
 
+import com.source.bundleboard.collection.dto.CreateCollectionResponse;
 import com.source.bundleboard.image.dto.BaseImageResponse;
 import com.source.bundleboard.image.dto.ImageShortResponse;
 import com.source.bundleboard.image.model.PreviewImage;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 public interface PreviewImageService {
 
@@ -12,4 +15,6 @@ public interface PreviewImageService {
     Mono<PreviewImage> save(PreviewImage image);
 
     Mono<ImageShortResponse> findShortResponseById(Long id);
+
+    Mono<List<PreviewImage>> saveAll(List<PreviewImage> newImages);
 }

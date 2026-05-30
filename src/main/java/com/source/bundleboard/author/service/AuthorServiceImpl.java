@@ -6,6 +6,7 @@ import com.source.bundleboard.author.dto.AuthorShortResponse;
 import com.source.bundleboard.author.dto.BaseAuthorResponse;
 import com.source.bundleboard.author.dto.SocialLink;
 import com.source.bundleboard.author.mapper.AuthorMapper;
+import com.source.bundleboard.author.model.Author;
 import com.source.bundleboard.author.repository.AuthorRepository;
 import com.source.bundleboard.user.repository.UserRepository;
 import io.r2dbc.postgresql.codec.Json;
@@ -67,6 +68,13 @@ public class AuthorServiceImpl implements AuthorService {
                                 user.getEmail(),
                                 user.getAvatarUrl()
                         )))
+                .switchIfEmpty(Mono.error(new AuthorNotFoundException()));
+    }
+
+    @Override
+    public Mono<Author> findByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .flatMap(user -> authorRepository.findByUserId(user.getId()))
                 .switchIfEmpty(Mono.error(new AuthorNotFoundException()));
     }
 
