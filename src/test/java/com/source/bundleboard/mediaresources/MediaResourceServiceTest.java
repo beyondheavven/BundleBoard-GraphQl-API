@@ -3,6 +3,7 @@ package com.source.bundleboard.mediaresources;
 import com.source.bundleboard.api.exception.MediaResourceNotFoundException;
 import com.source.bundleboard.mediaresource.dto.GetMediaResourceByIdResponse;
 import com.source.bundleboard.mediaresource.mapper.MediaResourceMapper;
+import com.source.bundleboard.mediaresource.model.MediaFileType;
 import com.source.bundleboard.mediaresource.model.MediaResource;
 import com.source.bundleboard.mediaresource.model.MimeType;
 import com.source.bundleboard.mediaresource.model.Provider;
@@ -39,12 +40,14 @@ public class MediaResourceServiceTest {
     @BeforeEach
     void setUp() {
         MimeType mockMimeType = MimeType.png;
-        Provider mockProvider = Provider.local;
+        MediaFileType mockFileType = MediaFileType.image;
+        Provider mockProvider = Provider.google_drive;
 
         sampleMediaResource = new MediaResource(
                 1L,
                 "avatar.png",
                 "/uploads/images/avatar.png",
+                mockFileType,
                 mockMimeType,
                 mockProvider,
                 1024L

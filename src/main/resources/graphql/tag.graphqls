@@ -1,6 +1,6 @@
 extend type Query {
     getAllTags:[Tag!]!
-    getTagById(id: ID): Tag!
+    getTagById(id: ID!): Tag!
 }
 
 extend type Mutation {

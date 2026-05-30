@@ -2,6 +2,7 @@ type MediaResource {
     id: ID!
     fileName: String!
     filePath: String!
+    fileType: MediaFileType!
     mimeType: MimeType!
     provider: Provider!
     fileSize: Int!
@@ -15,7 +16,23 @@ type GetMediaResourceByIdResponse {
     provider: Provider!
 }
 
+input MediaResourceInput {
+    fileName: String!
+    filePath: String!
+    mimeType: MimeType!
+    provider: Provider!
+    fileSize: Int!
+}
+
 enum Provider {
     local
     google_drive
+    supabase
+}
+
+enum MediaFileType {
+    video
+    image
+    archive
+    document
 }

@@ -1,0 +1,1 @@
+ALTER TABLE collections ALTER COLUMN preview_image_id DROP NOT NULL;

@@ -11,7 +11,7 @@ type Image {
     filePath: String!
     width: Int!
     height: Int!
-    filesize: Int!
+    fileSize: Int!
 }
 
 type ImageShortResponse {
@@ -19,9 +19,19 @@ type ImageShortResponse {
     fileName: String!
 }
 
+input ImageShortInput {
+    filePath: String!
+    fileName: String!
+    mimeType: MimeType!
+    width: Int!
+    height: Int!
+    fileSize: Int!
+}
+
 enum MimeType {
     jpeg
     png
+    webp
     mp4
     zip
     rar

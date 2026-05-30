@@ -29,9 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class AuthorServiceTest {
@@ -158,16 +156,18 @@ public class AuthorServiceTest {
 
 
     @Test
+    @SuppressWarnings("unchecked")
     void findFullAuthorById_Success_WithParsedSocialLinks() throws Exception {
         List<SocialLink> expectedLinks = List.of(new SocialLink("github", "https://github.com"));
 
         when(authorRepository.findById(authorId)).thenReturn(Mono.just(sampleAuthor));
         when(userRepository.findById(userId)).thenReturn(Mono.just(sampleUser));
 
-        when(objectMapper.readValue(
-                eq(sampleAuthor.getSocialLinks().asString()),
-                any(TypeReference.class))
-        ).thenReturn(expectedLinks);
+        doReturn(expectedLinks)
+                .when(objectMapper).readValue(
+                        eq(sampleAuthor.getSocialLinks().asString()),
+                        any(TypeReference.class)
+                );
 
         StepVerifier.create(authorService.findFullAuthorById(authorId))
                 .assertNext(response -> {
@@ -182,12 +182,16 @@ public class AuthorServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void findFullAuthorById_Success_WhenSocialLinksJsonIsInvalid() throws Exception {
         when(authorRepository.findById(authorId)).thenReturn(Mono.just(sampleAuthor));
         when(userRepository.findById(userId)).thenReturn(Mono.just(sampleUser));
 
-        when(objectMapper.readValue(any(String.class), any(TypeReference.class)))
-                .thenThrow(new RuntimeException("Jackson error"));
+        doThrow(new RuntimeException("Jackson error"))
+                .when(objectMapper).readValue(
+                        any(String.class),
+                        any(TypeReference.class)
+                );
 
         StepVerifier.create(authorService.findFullAuthorById(authorId))
                 .assertNext(response -> {
