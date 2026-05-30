@@ -17,6 +17,7 @@ import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.graphql.data.method.annotation.SchemaMapping;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -47,19 +48,21 @@ public class CollectionController {
         return collectionService.getCollectionById(id);
     }
 
-    @PreAuthorize("hasAnyRole('admin', 'author')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'AUTHOR')")
     @MutationMapping
-    public Mono<CreateCollectionResponse> createCollection(@Argument @Valid CreateNewCollectionInput input, @AuthenticationPrincipal Principal principal) {
-        return collectionService.createCollection(input, principal.getName());
+    public Mono<CreateCollectionResponse> createCollection(@Argument @Valid CreateNewCollectionInput input) {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(securityContext -> securityContext.getAuthentication().getName())
+                .flatMap(username -> collectionService.createCollection(input, username));
     }
 
-    @PreAuthorize("hasAnyRole('admin', 'author')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'AUTHOR')")
     @MutationMapping
     public Mono<GetCollectionByIdResponse> updateCollection(@Argument Long id, @Argument(name = "input") UpdateCollectionDto collection) {
         return collectionService.updateCollection(id, collection);
     }
 
-    @PreAuthorize("hasAnyRole('admin', 'author')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'AUTHOR')")
     @MutationMapping
     public Mono<Boolean> deleteCollection(@Argument Long id) {
         return collectionService.deleteCollection(id);

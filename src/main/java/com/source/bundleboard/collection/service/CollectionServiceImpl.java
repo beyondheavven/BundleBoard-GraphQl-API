@@ -100,6 +100,9 @@ public class CollectionServiceImpl implements CollectionService {
                                                             img.setFileName(imgDto.fileName());
                                                             img.setFilePath(imgDto.filePath());
                                                             img.setMimeType(imgDto.mimeType());
+                                                            img.setWidth(imgDto.width());
+                                                            img.setHeight(imgDto.height());
+                                                            img.setFileSize(imgDto.fileSize());
                                                             img.setCollectionsId(savedCollection.getId());
                                                             return img;
                                                         })

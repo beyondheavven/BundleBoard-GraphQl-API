@@ -11,7 +11,7 @@ type Image {
     filePath: String!
     width: Int!
     height: Int!
-    filesize: Int!
+    fileSize: Int!
 }
 
 type ImageShortResponse {
@@ -22,6 +22,10 @@ type ImageShortResponse {
 input ImageShortInput {
     filePath: String!
     fileName: String!
+    mimeType: MimeType!
+    width: Int!
+    height: Int!
+    fileSize: Int!
 }
 
 enum MimeType {
