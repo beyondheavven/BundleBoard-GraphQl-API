@@ -152,7 +152,7 @@ public class CollectionServiceTest {
 
     private static @NotNull CreateNewCollectionInput getCreateNewCollectionInput() {
         MediaResourceInput mediaInput = new MediaResourceInput("file.zip", "/path", MimeType.zip, Provider.local, 1000L);
-        ImageShortInput imageInput = new ImageShortInput("img.png", "/path/img", MimeType.png);
+        ImageShortInput imageInput = new ImageShortInput("img.png", "/path/img", MimeType.png, 1920, 1080, 204857L);
 
         CreateNewCollectionInput inputDto = new CreateNewCollectionInput(
                 "New Pack",

@@ -12,6 +12,15 @@ public record ImageShortInput(
         String fileName,
 
         @NotNull(message = "image mime type is required")
-        MimeType mimeType
+        MimeType mimeType,
+
+        @NotNull(message = "image width is required")
+        Integer width,
+
+        @NotNull(message = "image height is required")
+        Integer height,
+
+        @NotNull(message = "image file size is required")
+        Long fileSize
 ) {
 }
