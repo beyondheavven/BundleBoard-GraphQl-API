@@ -4,7 +4,6 @@ import com.source.bundleboard.api.exception.AuthorNotFoundException;
 import com.source.bundleboard.api.exception.CollectionNotFoundException;
 import com.source.bundleboard.api.exception.DescriptionException;
 import com.source.bundleboard.api.exception.MinimalPriceException;
-import com.source.bundleboard.author.repository.AuthorRepository;
 import com.source.bundleboard.author.service.AuthorService;
 import com.source.bundleboard.collection.dto.*;
 import com.source.bundleboard.collection.mapper.CollectionMapper;
@@ -16,10 +15,12 @@ import com.source.bundleboard.image.service.PreviewImageService;
 import com.source.bundleboard.mediaresource.model.MediaFileType;
 import com.source.bundleboard.mediaresource.model.MediaResource;
 import com.source.bundleboard.mediaresource.repository.MediaResourceRepository;
-import com.source.bundleboard.tag.collectiontag.model.CollectionTag;
-import com.source.bundleboard.tag.collectiontag.repository.CollectionTagRepository;
-import com.source.bundleboard.tag.model.Tag;
+import com.source.bundleboard.collectiontag.model.CollectionTag;
+import com.source.bundleboard.collectiontag.repository.CollectionTagRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
@@ -54,8 +55,9 @@ public class CollectionServiceImpl implements CollectionService {
     }
 
     @Override
-    public Flux<CollectionResponse> getAllCollections() {
-        return collectionRepository.findAll()
+    public Flux<CollectionResponse> getAllCollections(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+            return collectionRepository.findAllBy(pageable)
                 .map(collectionMapper::toDto)
                 .switchIfEmpty(Flux.error(new CollectionNotFoundException()));
     }

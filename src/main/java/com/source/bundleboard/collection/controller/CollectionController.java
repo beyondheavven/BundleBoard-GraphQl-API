@@ -38,8 +38,8 @@ public class CollectionController {
 
     @PreAuthorize("permitAll()")
     @QueryMapping
-    public Flux<CollectionResponse> getAllCollections() {
-        return collectionService.getAllCollections();
+    public Flux<CollectionResponse> getAllCollections(@Argument int page, @Argument int size) {
+        return collectionService.getAllCollections(page,size);
     }
 
     @PreAuthorize("permitAll()")

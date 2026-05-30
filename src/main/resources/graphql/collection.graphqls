@@ -1,5 +1,5 @@
 extend type Query {
-    getAllCollections: [CollectionResponse]!
+    getAllCollections(page: Int!, size: Int!): [CollectionResponse]!
     getCollectionById(id: ID!): GetCollectionByIdResponse!
 }
 
