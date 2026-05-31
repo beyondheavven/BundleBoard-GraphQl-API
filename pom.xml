@@ -19,7 +19,7 @@
         <mapstruct.version>1.6.3</mapstruct.version>
         <jacoco.version>0.8.14</jacoco.version>
         <jjwt.version>0.12.6</jjwt.version>
-        <liquibase.version>5.0.3</liquibase.version>
+        <logstash.logback.encoder.version>8.1</logstash.logback.encoder.version>
 	</properties>
 	<dependencies>
 
@@ -213,6 +213,13 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis-reactive</artifactId>
+        </dependency>
+
+        <!-- Logging -->
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>${logstash.logback.encoder.version}</version>
         </dependency>
 
 

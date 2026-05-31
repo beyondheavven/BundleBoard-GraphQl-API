@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <springProperty scope="context" name="springAppName" source="spring.application.name" defaultValue="bundleboard_api"/>
+    <springProperty scope="context" name="springAppVersion" source="spring.application.version" defaultValue="1.0.0"/>
+    <springProperty scope="context" name="springActiveProfile" source="spring.profiles.active" defaultValue="dev"/>
+
+    <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+
+            <jsonGeneratorDecorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
+                <valueMasker class="com.source.bundleboard.config.logging.CustomDataMasker">
+                    <maskPattern>password\s*[:=]\s*[\"']?([^\"'\s,]+)</maskPattern>
+                    <maskPattern>(?:access|refresh)?Token\s*[:=]\s*[\"']?([^\"'\s,]+)</maskPattern>
+                </valueMasker>
+            </jsonGeneratorDecorator>
+
+            <providers>
+                <timestamp>
+                    <fieldName>timestamp_utc</fieldName>
+                    <timeZone>UTC</timeZone>
+                </timestamp>
+                <pattern>
+                    <pattern>
+                        {
+                        "service": "${springAppName}",
+                        "version": "${springAppVersion}",
+                        "env": "${springActiveProfile}"
+                        }
+                    </pattern>
+                </pattern>
+                <logLevel><fieldName>Level</fieldName></logLevel>
+                <threadName><fieldName>Thread</fieldName></threadName>
+                <loggerName><fieldName>Logger</fieldName></loggerName>
+                <contextName><fieldName>ServiceName</fieldName></contextName>
+                <arguments><includeNonStructuredArguments>false</includeNonStructuredArguments></arguments>
+                <callerData>
+                    <classFieldName>Class</classFieldName>
+                    <methodFieldName>Method</methodFieldName>
+                    <fileFieldName>File</fileFieldName>
+                    <lineFieldName>Line</lineFieldName>
+                </callerData>
+                <message><fieldName>Message</fieldName></message>
+                <throwableClassName><fieldName>ExceptionClass</fieldName></throwableClassName>
+                <stackTrace>
+                    <fieldName>StackTrace</fieldName>
+                    <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                        <maxDepthPerThrowable>30</maxDepthPerThrowable>
+                        <maxLength>2048</maxLength>
+                        <rootCauseFirst>true</rootCauseFirst>
+                    </throwableConverter>
+                </stackTrace>
+            </providers>
+        </encoder>
+    </appender>
+
+    <springProfile name="dev">
+        <logger name="com.source.bundleboard" level="DEBUG"/>
+        <logger name="org.springframework.web" level="DEBUG"/>
+        <logger name="org.springframework.security" level="DEBUG"/>
+        <logger name="org.springframework.r2dbc" level="DEBUG"/>
+        <logger name="io.r2dbc.postgresql" level="DEBUG"/>
+
+        <root level="INFO">
+            <appender-ref ref="JSON"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="test">
+        <logger name="com.source.bundleboard" level="INFO"/>
+        <logger name="org.springframework.web" level="WARN"/>
+        <logger name="org.springframework.security" level="WARN"/>
+        <logger name="org.springframework.r2dbc" level="WARN"/>
+        <logger name="io.r2dbc.postgresql" level="WARN"/>
+
+        <root level="INFO">
+            <appender-ref ref="JSON"/>
+        </root>
+    </springProfile>
+
+</configuration>
