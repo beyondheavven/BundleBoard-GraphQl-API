@@ -33,10 +33,33 @@ schema_config:
         prefix: index_
         period: 24h
 
+# ОБНОВЛЕНО: Включаем модуль компактора для физического удаления старых файлов с диска
+compactor:
+  working_directory: /loki/compactor
+  compaction_interval: 10m
+  retention_enabled: true             # Включаем автоматическую очистку
+  retention_delete_delay: 2h
+  retention_delete_worker_count: 150
+  delete_request_store: filesystem
+
+# ОБНОВЛЕНО: Настраиваем умные лимиты хранения под твои теги из Promtail
 limits_config:
   reject_old_samples: true
   reject_old_samples_max_age: 168h
 
-table_manager:
-  retention_deletes_enabled: false
-  retention_period: 0s
+  # Глобальный дефолтный срок хранения логов — 7 дней (168 часов)
+  retention_period: 168h
+
+  retention_stream:
+    - selector: '{level="ERROR"}'
+      priority: 1
+      period: 168h
+    - selector: '{level="WARN"}'
+      priority: 1
+      period: 168h
+    - selector: '{level="INFO"}'
+      priority: 1
+      period: 72h
+    - selector: '{level="DEBUG"}'
+      priority: 1
+      period: 48h
