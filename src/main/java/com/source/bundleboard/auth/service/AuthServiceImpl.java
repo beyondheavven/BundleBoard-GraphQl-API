@@ -136,12 +136,15 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public Mono<AuthResponse> socialLogin(SocialAuthRequest input) {
+    public Mono<AuthResponse> socialLogin(SocialLoginRequest input) {
         return userService.getUserByEmail(input.email())
-                .onErrorResume(UserNotFoundException.class, e -> Mono.empty())
-                .switchIfEmpty(createNewSocialUser(input))
+                .switchIfEmpty(Mono.error(new UserNotFoundException()))
                 .flatMap(user -> {
                     if (user.getStatus() == UserStatus.banned) {
+                        return Mono.error(new UserStatusException());
+                    }
+
+                    if (user.getStatus() == UserStatus.inactive) {
                         return Mono.error(new UserStatusException());
                     }
 
@@ -152,26 +155,36 @@ public class AuthServiceImpl implements AuthService {
                     );
 
                     return userService.save(updatedUser)
-                            .flatMap(savedUser -> generateAuthResponse(savedUser, !savedUser.isSetupCompleted()));
+                            .flatMap(savedUser -> generateAuthResponse(savedUser, false));
                 });
     }
 
-    private Mono<User> createNewSocialUser(SocialAuthRequest input) {
-        String securePassword = passwordGenerator.generateSocialPassword();
-        User user = new User(
-                null,
-                input.username(),
-                input.email(),
-                passwordEncoder.encode(securePassword),
-                "",
-                Set.of(UserRole.client),
-                UserStatus.active,
-                Instant.now(),
-                Instant.now(),
-                false
-        );
-
-        return userService.save(user);
+    @Override
+    @Transactional
+    public Mono<AuthResponse> socialRegister(SocialRegisterRequest input) {
+        return userService.getUserByEmail(input.email())
+                .flatMap(existingUser -> Mono.error(new UserAlreadyExistsException()))
+                .onErrorResume(UserNotFoundException.class, e -> Mono.empty())
+                .then(makeUsernameUnique(input.username()))
+                .flatMap(uniqueUsername -> {
+                    User user = new User(
+                            null,
+                            uniqueUsername,
+                            input.email(),
+                            passwordEncoder.encode(input.password()),
+                            "",
+                            Set.of(input.role()),
+                            UserStatus.inactive,
+                            null,
+                            Instant.now(),
+                            true
+                    );
+                    return userService.save(user);
+                })
+                .flatMap(savedUser ->
+                        emailVerificationTokenService.resendVerificationEmail(savedUser.getEmail())
+                                .then(generateAuthResponse(savedUser, true))
+                );
     }
 
     private Mono<AuthResponse> generateAuthResponse(User user, boolean isNew) {
@@ -206,5 +219,17 @@ public class AuthServiceImpl implements AuthService {
 
         return refreshTokenRepository.save(refreshTokenEntity)
                 .map(saved -> new RefreshResponse(accessToken, saved.getToken()));
+    }
+
+    private Mono<String> makeUsernameUnique(String username) {
+        return userService.existsByUsername(username)
+                .flatMap(exists -> {
+                    if (!exists) {
+                        return Mono.just(username);
+                    }
+                    String suffix = "_" + java.util.UUID.randomUUID().toString().substring(0, 4);
+                    String newUsername = username + suffix;
+                    return makeUsernameUnique(newUsername);
+                });
     }
 }
