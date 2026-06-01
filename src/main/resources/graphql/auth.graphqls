@@ -3,13 +3,22 @@ extend type Mutation {
     register (input: RegisterRequest!): AuthResponse!
     refreshToken (input: RefreshTokenRequest!): RefreshResponse!
     logout (input: RefreshTokenRequest!): Boolean!
-    socialLogin(input: SocialAuthRequest!): AuthResponse!
+    socialLogin(input: SocialLoginRequest!): AuthResponse!
+    socialRegister(input: SocialRegisterRequest!): AuthResponse!
 }
 
 input AuthRequest {
     username: String!
     password: String!
 }
+
+input SocialRegisterRequest {
+    username: String!
+    email: String!
+    password: String!
+    role: UserRole!
+}
+
 
 input RegisterRequest {
     username: String!
@@ -22,7 +31,7 @@ input RefreshTokenRequest {
     refreshToken: String!
 }
 
-input SocialAuthRequest {
+input SocialLoginRequest {
     email: String!,
     username: String!,
     provider: String!

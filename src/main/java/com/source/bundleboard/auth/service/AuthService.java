@@ -13,5 +13,7 @@ public interface AuthService {
 
     Mono<Boolean> logout(RefreshTokenRequest refreshTokenRequest);
 
-    Mono<AuthResponse> socialLogin(SocialAuthRequest input);
+    Mono<AuthResponse> socialLogin(SocialLoginRequest input);
+
+    Mono<AuthResponse> socialRegister(SocialRegisterRequest input);
 }
