@@ -8,6 +8,7 @@ import com.source.bundleboard.image.model.PreviewImage;
 import com.source.bundleboard.image.repository.PreviewImageRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -45,6 +46,22 @@ public class PreviewImageServiceImpl implements PreviewImageService {
             return Mono.empty();
         }
         return previewImageRepository.saveAll(newImages).collectList();
+    }
+
+    @Override
+    public Flux<PreviewImage> findAllByCollectionId(Long collectionId) {
+        if (collectionId == null) {
+            return Flux.empty();
+        }
+        return previewImageRepository.findAllByCollectionsId(collectionId);
+    }
+
+    @Override
+    public Mono<Void> deleteById(Long id) {
+        if (id == null) {
+            return Mono.empty();
+        }
+        return previewImageRepository.deleteById(id);
     }
 
 }
