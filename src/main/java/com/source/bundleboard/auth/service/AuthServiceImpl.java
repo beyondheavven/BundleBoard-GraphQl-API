@@ -127,6 +127,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public Mono<Boolean> logout(RefreshTokenRequest refreshTokenRequest) {
         return refreshTokenRepository.deleteByToken(refreshTokenRequest.refreshToken())
                 .thenReturn(true)

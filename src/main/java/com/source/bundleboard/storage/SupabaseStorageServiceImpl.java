@@ -77,7 +77,46 @@ public class SupabaseStorageServiceImpl implements SupabaseStorageService {
 
     @Override
     public Mono<Void> deleteFiles(String fileNames) {
-        return null;
+        if (fileNames == null || fileNames.isBlank()) {
+            return Mono.empty();
+        }
+
+        List<String> keysToDelete = java.util.Arrays.stream(fileNames.split(","))
+                .map(String::trim)
+                .filter(name -> !name.isBlank())
+                .map(this::extractS3Key)
+                .toList();
+
+        return Flux.fromIterable(keysToDelete)
+                .flatMap(key -> {
+                    software.amazon.awssdk.services.s3.model.DeleteObjectRequest deleteRequest =
+                            software.amazon.awssdk.services.s3.model.DeleteObjectRequest.builder()
+                                    .bucket(s3Properties.getBucketName())
+                                    .key(key)
+                                    .build();
+
+                    return Mono.fromFuture(s3AsyncClient.deleteObject(deleteRequest))
+                            .doOnSuccess(response -> System.out.println("S3_NODE_PURGE_SUCCESS: " + key))
+                            .onErrorResume(e -> {
+                                System.err.println("S3_NODE_PURGE_FAILURE for key: " + key + " | Error: " + e.getMessage());
+                                return Mono.empty();
+                            });
+                })
+                .then();
+    }
+
+    private String extractS3Key(String fileNameOrUrl) {
+        String prefix = s3Properties.getPublicUrlPrefix();
+
+        if (fileNameOrUrl != null && fileNameOrUrl.startsWith(prefix)) {
+            return fileNameOrUrl.substring(prefix.length());
+        }
+
+        if (fileNameOrUrl != null && fileNameOrUrl.contains("showcase/")) {
+            return fileNameOrUrl.substring(fileNameOrUrl.indexOf("showcase/"));
+        }
+
+        return fileNameOrUrl;
     }
 
     @Override

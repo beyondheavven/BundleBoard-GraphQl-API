@@ -1,12 +1,19 @@
 extend type Query {
     getAllCollections(page: Int!, size: Int!): [CollectionResponse]!
     getCollectionById(id: ID!): GetCollectionByIdResponse!
+    getCollectionsByTag(input: CollectionFilterInput!): CollectionByTagResponse!
 }
 
 extend type Mutation {
     createCollection(input: CreateNewCollectionInput!): CreateCollectionResponse!
     updateCollection(id: ID!, input: UpdateCollectionInput!): Collection!
     deleteCollection(id: ID!): Boolean!
+}
+
+type CollectionByTagResponse {
+    collections: [CollectionResponse!]!
+    totalPages: Int!
+    totalElements: Int!
 }
 
 type Collection {
@@ -61,6 +68,11 @@ type CreateCollectionResponse {
     success: Boolean!
 }
 
+input CollectionFilterInput {
+    tagName: String!
+    page: Int!
+    size: Int!
+}
 
 input CreateNewCollectionInput {
     name: String!
