@@ -51,7 +51,7 @@ public class CollectionController {
 
     @PreAuthorize("permitAll()")
     @QueryMapping
-    public Mono<CollectionByTagResponse> getCollectionByTag(@Argument @Valid CollectionFilterInput input){
+    public Mono<CollectionByTagResponse> getCollectionsByTag(@Argument @Valid CollectionFilterInput input){
         return collectionService.getCollectionByTagName(input);
     }
 
