@@ -162,7 +162,7 @@ public class UserServiceImpl implements UserService {
                     .switchIfEmpty(Mono.defer(() -> {
                         Author newAuthor = new Author();
                         newAuthor.setUserId(user.getId());
-                        newAuthor.setBio("SYSTEM: Биография узла не заполнена.");
+                        newAuthor.setBio("");
                         newAuthor.setSocialLinks(Json.of("{}"));
                         newAuthor.setRating(BigDecimal.ZERO);
                         newAuthor.setTotalSales(0);

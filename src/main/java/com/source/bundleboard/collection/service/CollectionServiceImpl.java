@@ -9,6 +9,7 @@ import com.source.bundleboard.collection.dto.*;
 import com.source.bundleboard.collection.mapper.CollectionMapper;
 import com.source.bundleboard.collection.model.Collection;
 import com.source.bundleboard.collection.repository.CollectionRepository;
+import com.source.bundleboard.collectiontag.serivce.CollectionTagService;
 import com.source.bundleboard.image.dto.ImageShortResponse;
 import com.source.bundleboard.image.model.PreviewImage;
 import com.source.bundleboard.image.service.PreviewImageService;
@@ -17,6 +18,7 @@ import com.source.bundleboard.mediaresource.model.MediaResource;
 import com.source.bundleboard.mediaresource.repository.MediaResourceRepository;
 import com.source.bundleboard.collectiontag.model.CollectionTag;
 import com.source.bundleboard.collectiontag.repository.CollectionTagRepository;
+import com.source.bundleboard.storage.SupabaseStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -45,7 +47,9 @@ public class CollectionServiceImpl implements CollectionService {
 
     private final MediaResourceRepository mediaResourceRepository;
 
-    private final CollectionTagRepository collectionTagRepository;
+    private final CollectionTagService collectionTagService;
+
+    private final SupabaseStorageService supabaseStorageService;
 
     @Override
     public Mono<GetCollectionByIdResponse> getCollectionById(Long id) {
@@ -130,7 +134,7 @@ public class CollectionServiceImpl implements CollectionService {
 
                                                             return collectionRepository.save(savedCollection)
                                                                     .flatMap(updatedCollection ->
-                                                                            collectionTagRepository.saveAll(tagRelations)
+                                                                            collectionTagService.saveAll(tagRelations)
                                                                                     .then(Mono.fromSupplier(() -> {
                                                                                         CreateCollectionResponse response = new CreateCollectionResponse(
                                                                                                 savedCollection.getId(),
@@ -166,9 +170,43 @@ public class CollectionServiceImpl implements CollectionService {
                 .map(collectionMapper::toGetDto);
     }
 
+    @Transactional
     @Override
     public Mono<Boolean> deleteCollection(Long id) {
-        return collectionRepository.deleteById(id).thenReturn(true).defaultIfEmpty(false);
+        return collectionRepository.findById(id)
+                .switchIfEmpty(Mono.error(new CollectionNotFoundException()))
+                .flatMap(collection -> {
+                    Long mediaResourceId = collection.getMediaResourceId();
+                    Mono<Void> purgeImagesProcess = previewImageService.findAllByCollectionId(id)
+                            .collectList()
+                            .flatMap(images -> {
+                                if (images.isEmpty()) return Mono.empty();
+
+                                String filePaths = images.stream()
+                                        .map(PreviewImage::getFilePath)
+                                        .collect(java.util.stream.Collectors.joining(","));
+
+                                return supabaseStorageService.deleteFiles(filePaths)
+                                        .then(Flux.fromIterable(images)
+                                                .flatMap(img -> previewImageService.deleteById(img.getId()))
+                                                .then());
+                            });
+
+                    Mono<Void> purgeMediaResourceProcess = Mono.justOrEmpty(mediaResourceId)
+                            .flatMap(resourceId -> mediaResourceRepository.findById(resourceId)
+                                    .flatMap(resource -> {
+                                        return supabaseStorageService.deleteFiles(resource.getFilePath())
+                                                .then(mediaResourceRepository.deleteById(resourceId));
+                                    })
+                            ).then();
+
+                    return purgeImagesProcess
+                            .then(purgeMediaResourceProcess)
+                            .then(collectionTagService.deleteAllByCollectionsId(id))
+                            .then(collectionRepository.deleteById(id))
+                            .thenReturn(true);
+                })
+                .defaultIfEmpty(false);
     }
 
     @Override
@@ -191,6 +229,30 @@ public class CollectionServiceImpl implements CollectionService {
                         row.description(),
                         new ImageShortResponse(row.previewFilePath(), row.previewFileName())
                 ));
+    }
+
+    @Override
+    public Mono<CollectionByTagResponse> getCollectionByTagName(CollectionFilterInput input) {
+        return Mono.defer(() -> {
+            int offset = input.page() * input.size();
+            String cleanTagName = input.tagName().trim();
+            Mono<List<CollectionResponse>> collectionMono = collectionRepository
+                    .findCollectionsByTagNamePaged(cleanTagName, input.size(), offset)
+                    .map(collectionMapper::toDto)
+                    .collectList();
+
+            Mono<Long> totalElementsMono = collectionRepository.countCollectionsByTagName(cleanTagName);
+
+            return Mono.zip(collectionMono, totalElementsMono)
+                    .map(tuple -> {
+                        List<CollectionResponse> collections = tuple.getT1();
+                        long totalElements = tuple.getT2();
+                        int totalPages = (int) Math.ceil((double) totalElements / input.size());
+                        if (totalPages == 0) totalPages = 1;
+                        return new CollectionByTagResponse(collections, totalPages, totalElements);
+                    })
+                    .defaultIfEmpty(new CollectionByTagResponse(List.of(), 1, 0L));
+        });
     }
 
 

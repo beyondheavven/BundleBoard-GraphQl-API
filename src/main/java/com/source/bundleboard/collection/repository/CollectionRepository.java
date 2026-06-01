@@ -30,4 +30,21 @@ public interface CollectionRepository extends R2dbcRepository<Collection, Long> 
     Flux<CollectionWithImageRow> findAllByAuthorId(Long authorId);
 
     Flux<Collection> findAllBy(Pageable pageable);
+
+    @Query("""
+        SELECT c.* FROM collections c
+        INNER JOIN collection_tags ct ON c.id = ct.collections_id
+        INNER JOIN tags t ON ct.tags_id = t.id
+        WHERE t.name = :tagName
+        LIMIT :limit OFFSET :offset
+    """)
+    Flux<Collection> findCollectionsByTagNamePaged(String tagName, int limit, int offset);
+
+    @Query("""
+        SELECT COUNT(c.id) FROM collections c
+        INNER JOIN collection_tags ct ON c.id = ct.collections_id
+        INNER JOIN tags t ON ct.tags_id = t.id
+        WHERE t.name = :tagName
+    """)
+    Mono<Long> countCollectionsByTagName(String tagName);
 }
