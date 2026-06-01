@@ -1,6 +1,7 @@
 package com.source.bundleboard.collection.service;
 
 import com.source.bundleboard.collection.dto.*;
+import jakarta.validation.Valid;
 import org.springframework.security.config.annotation.web.PortMapperDsl;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -22,4 +23,6 @@ public interface CollectionService {
     Mono<CollectionShortResponse> findShortResponseById(Long collectionId);
 
     Flux<AuthoredCollectionResponse> findAllByAuthorId(Long authorId);
+
+    Mono<CollectionByTagResponse> getCollectionByTagName(@Valid CollectionFilterInput input);
 }
