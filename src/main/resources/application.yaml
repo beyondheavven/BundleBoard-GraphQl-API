@@ -89,9 +89,9 @@ app:
     block-duration-seconds: ${BLOCK_DURATION_SECONDS:300}
 
   s3:
-    endpoint: ${S3_ENDPOINT:http://localhost:4566}
-    access-key: ${S3_ACCESS_KEY:test}
-    secret-key: ${S3_SECRET_KEY:test}
-    bucket: ${S3_BUCKET:test-bucket}
-    public-url-prefix: ${S3_PUBLIC_URL_PREFIX:http://localhost:4566}
+    endpoint: ${S3_ENDPOINT:https://lemevepzkbfxkunmrgor.storage.supabase.co/storage/v1/s3}
+    access-key: ${S3_ACCESS_KEY:5e36e380e1f774193a77ca1f750df8e4}
+    secret-key: ${S3_SECRET_KEY:6ed04948146fd121d932bc4e4331c708c5b896856498a5e78f6393c195c2b02c}
+    bucket: ${S3_BUCKET:previews}
+    public-url-prefix: ${S3_PUBLIC_URL_PREFIX:https://lemevepzkbfxkunmrgor.supabase.co/storage/v1/object/public/previews/showcase}
     region: ${S3_REGION:us-east-1}
