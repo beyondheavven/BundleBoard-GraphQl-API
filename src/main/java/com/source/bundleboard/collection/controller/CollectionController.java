@@ -36,6 +36,7 @@ public class CollectionController {
 
     private final MediaResourceService mediaResourceService;
 
+
     @PreAuthorize("permitAll()")
     @QueryMapping
     public Flux<CollectionResponse> getAllCollections(@Argument int page, @Argument int size) {
@@ -46,6 +47,12 @@ public class CollectionController {
     @QueryMapping
     public Mono<GetCollectionByIdResponse> getCollectionById(@Argument Long id) {
         return collectionService.getCollectionById(id);
+    }
+
+    @PreAuthorize("permitAll()")
+    @QueryMapping
+    public Mono<CollectionByTagResponse> getCollectionByTag(@Argument @Valid CollectionFilterInput input){
+        return collectionService.getCollectionByTagName(input);
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'AUTHOR')")

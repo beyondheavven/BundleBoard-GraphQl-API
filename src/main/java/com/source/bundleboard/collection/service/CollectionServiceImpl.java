@@ -193,5 +193,29 @@ public class CollectionServiceImpl implements CollectionService {
                 ));
     }
 
+    @Override
+    public Mono<CollectionByTagResponse> getCollectionByTagName(CollectionFilterInput input) {
+        return Mono.defer(() -> {
+            int offset = input.page() * input.size();
+            String cleanTagName = input.tagName().trim();
+            Mono<List<CollectionResponse>> collectionMono = collectionRepository
+                    .findCollectionsByTagNamePaged(cleanTagName, input.size(), offset)
+                    .map(collectionMapper::toDto)
+                    .collectList();
+
+            Mono<Long> totalElementsMono = collectionRepository.countCollectionsByTagName(cleanTagName);
+
+            return Mono.zip(collectionMono, totalElementsMono)
+                    .map(tuple -> {
+                        List<CollectionResponse> collections = tuple.getT1();
+                        long totalElements = tuple.getT2();
+                        int totalPages = (int) Math.ceil((double) totalElements / input.size());
+                        if (totalPages == 0) totalPages = 1;
+                        return new CollectionByTagResponse(collections, totalPages, totalElements);
+                    })
+                    .defaultIfEmpty(new CollectionByTagResponse(List.of(), 1, 0L));
+        });
+    }
+
 
 }
