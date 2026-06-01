@@ -6,7 +6,7 @@ import com.source.bundleboard.api.exception.UserNotFoundException;
 import com.source.bundleboard.auth.dto.AuthRequest;
 import com.source.bundleboard.auth.dto.RefreshTokenRequest;
 import com.source.bundleboard.auth.dto.RegisterRequest;
-import com.source.bundleboard.auth.dto.SocialAuthRequest;
+import com.source.bundleboard.auth.dto.SocialLoginRequest;
 import com.source.bundleboard.auth.jwt.JwtProperties;
 import com.source.bundleboard.auth.jwt.service.JwtService;
 import com.source.bundleboard.auth.service.AuthServiceImpl;
@@ -158,7 +158,7 @@ public class AuthServiceTest {
 
     @Test
     void socialLogin_Success_CreateNewUser() {
-        SocialAuthRequest req = new SocialAuthRequest("social@test.com", "socialUser", "google");
+        SocialLoginRequest req = new SocialLoginRequest("social@test.com", "socialUser", "google");
         when(userService.getUserByEmail("social@test.com")).thenReturn(Mono.error(new UserNotFoundException()));
         when(passwordGenerator.generateSocialPassword()).thenReturn("randomPass");
         when(passwordEncoder.encode("randomPass")).thenReturn("encoded");
