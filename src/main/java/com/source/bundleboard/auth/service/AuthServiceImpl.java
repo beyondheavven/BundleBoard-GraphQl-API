@@ -173,7 +173,7 @@ public class AuthServiceImpl implements AuthService {
                             input.email(),
                             passwordEncoder.encode(input.password()),
                             "",
-                            Set.of(input.role()),
+                            Set.of(UserRole.client),
                             UserStatus.inactive,
                             null,
                             Instant.now(),
