@@ -3,13 +3,7 @@ extend type Mutation {
 }
 
 input PaymentRequest {
-    clientId: ID!
+    userId: ID!
     currency: String!
-    items: [CartItem!]!
-}
-
-input CartItem {
-    id: ID!
-    name: String!
-    price: Float!
+    collectionIds: [ID!]!
 }
