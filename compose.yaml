@@ -49,6 +49,12 @@ services:
       - S3_PUBLIC_URL_PREFIX=${S3_PUBLIC_URL_PREFIX}
 
       - REDIS_PASSWORD=${REDIS_PASSWORD}
+
+      - STRIPE_PUBLIC_KEY=${STRIPE_PUBLIC_KEY}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - WEBHOOK_SECRET_KEY=${WEBHOOK_SECRET_KEY}
+      - PAYMENT_SUCCESS_URL=${PAYMENT_SUCCESS_URL}
+      - PAYMENT_CANCEL_URL=${PAYMENT_CANCEL_URL}
     ports:
       - "8080:8080"
     networks:
@@ -117,7 +123,7 @@ services:
   stripe-cli:
     image: stripe/stripe-cli:latest
     container_name: stripe-cli
-    command: listen --forward-to http://app:3000/api/webhooks/stripe --print-secret --api-key ${STRIPE_SECRET_KEY}
+    command: listen --forward-to ${STRIPE_WEBHOOK_FORWARD_URL} --print-secret --api-key ${STRIPE_SECRET_KEY}
     environment:
       - STRIPE_API_KEY=${STRIPE_SECRET_KEY}
     depends_on:
