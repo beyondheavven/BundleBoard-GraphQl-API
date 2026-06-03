@@ -95,3 +95,10 @@ app:
     bucket: ${S3_BUCKET:previews}
     public-url-prefix: ${S3_PUBLIC_URL_PREFIX:https://lemevepzkbfxkunmrgor.supabase.co/storage/v1/object/public/previews/showcase}
     region: ${S3_REGION:us-east-1}
+
+  stripe:
+    secret-key: ${STRIPE_SECRET_KEY}
+    public-key: ${STRIPE_PUBLIC_KEY}
+    webhook-secret: ${STRIPE_WEBHOOK_SECRET}
+    payment-success-url: ${STRIPE_PAYMENT_SUCCESS_URL}
+    payment-cancel-url: ${STRIPE_PAYMENT_CANCEL_URL}
