@@ -1,0 +1,15 @@
+extend type Mutation {
+    createCheckoutSession(input: PaymentRequest!): String!
+}
+
+input PaymentRequest {
+    clientId: ID!
+    currency: String!
+    items: [CartItem!]!
+}
+
+input CartItem {
+    id: ID!
+    name: String!
+    price: Float!
+}
