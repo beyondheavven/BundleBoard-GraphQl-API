@@ -114,6 +114,18 @@ services:
     networks:
       - bundleboard_net
 
+  stripe-cli:
+    image: stripe/stripe-cli:latest
+    container_name: stripe-cli
+    command: listen --forward-to http://app:3000/api/webhooks/stripe --print-secret --api-key ${STRIPE_SECRET_KEY}
+    environment:
+      - STRIPE_API_KEY=${STRIPE_SECRET_KEY}
+    depends_on:
+      - app
+    restart: on-failure
+    networks:
+      - bundleboard_net
+
 
 volumes:
   loki-data:
