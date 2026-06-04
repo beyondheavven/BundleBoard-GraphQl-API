@@ -65,14 +65,17 @@ app:
     templates:
       verification-email: mail/verify-email
       reset-password: mail/reset-password
+      purchase-receipt: mail/purchase-receipt
 
     subjects:
       verification-email: Verify Email
       reset-password: Reset Password
+      purchase-receipt: Purchase Receipt
 
     paths:
       verification-email: /mail/verify
       reset-password: /password/reset-password
+      purchase-receipt: /mail/purchase-receipt
 
   email-verification:
     ttl-ms: ${EMAIL_VERIFICATION_TTL_MS:3600000}

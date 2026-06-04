@@ -16,6 +16,7 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import java.math.BigDecimal;
 import java.util.Map;
 
 @Service
@@ -61,6 +62,20 @@ public class MailServiceImpl implements MailService {
                 mailProperties.getSubjects().getResetPassword(),
                 mailProperties.getTemplates().getResetPassword(),
                 Map.of("resetLink", link)
+        );
+    }
+
+    @Override
+    public Mono<Void> sendPurchaseReceipt(String toEmail, String username, BigDecimal amount, String currency) {
+        return sendTemplateEmail(
+                toEmail,
+                mailProperties.getSubjects().getPurchaseReceipt(),
+                mailProperties.getTemplates().getPurchaseReceipt(),
+                Map.of(
+                        "username", username,
+                        "amount", amount,
+                        "currency", currency
+                )
         );
     }
 
