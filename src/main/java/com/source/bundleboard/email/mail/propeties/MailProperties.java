@@ -28,6 +28,8 @@ public class MailProperties {
 
         private String resetPassword;
 
+        private String purchaseReceipt;
+
     }
 
     @Getter
@@ -38,6 +40,8 @@ public class MailProperties {
 
         private String resetPassword;
 
+        private String purchaseReceipt;
+
     }
 
     @Getter
@@ -47,6 +51,8 @@ public class MailProperties {
         private String verificationEmail;
 
         private String resetPassword;
+
+        private String purchaseReceipt;
 
     }
 
