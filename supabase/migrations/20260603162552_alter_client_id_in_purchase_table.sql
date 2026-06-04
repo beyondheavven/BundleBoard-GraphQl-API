@@ -1,0 +1,1 @@
+ALTER TABLE purchases RENAME COLUMN clients_id TO user_id;

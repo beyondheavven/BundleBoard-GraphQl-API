@@ -1,6 +1,6 @@
 package com.source.bundleboard.config;
 
-import com.source.bundleboard.properties.S3Properties;
+import com.source.bundleboard.config.properties.S3Properties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

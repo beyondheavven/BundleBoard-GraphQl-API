@@ -6,7 +6,7 @@ import com.source.bundleboard.image.dto.UploadStatus;
 import com.source.bundleboard.image.model.PreviewImage;
 import com.source.bundleboard.image.service.PreviewImageService;
 import com.source.bundleboard.mediaresource.model.MimeType;
-import com.source.bundleboard.properties.S3Properties;
+import com.source.bundleboard.config.properties.S3Properties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.codec.multipart.FilePart;
@@ -91,7 +91,7 @@ public class SupabaseStorageServiceImpl implements SupabaseStorageService {
                 .flatMap(key -> {
                     software.amazon.awssdk.services.s3.model.DeleteObjectRequest deleteRequest =
                             software.amazon.awssdk.services.s3.model.DeleteObjectRequest.builder()
-                                    .bucket(s3Properties.getBucketName())
+                                    .bucket(s3Properties.getBucket())
                                     .key(key)
                                     .build();
 
@@ -134,7 +134,7 @@ public class SupabaseStorageServiceImpl implements SupabaseStorageService {
                 .flatMap(byteBuffers -> {
                     long size = byteBuffers.stream().mapToLong(ByteBuffer::remaining).sum();
                     PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                            .bucket(s3Properties.getBucketName())
+                            .bucket(s3Properties.getBucket())
                             .key(key)
                             .contentType(filePart.headers().getContentType().toString())
                             .build();

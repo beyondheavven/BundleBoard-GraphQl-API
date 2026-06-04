@@ -8,6 +8,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 
 @Getter
@@ -21,26 +22,23 @@ public class Purchase {
     @Column("id")
     private Long id;
 
-    @Column("collections_id")
-    private Long collectionId;
+    @Column("user_id")
+    private Long userId;
 
-    @Column("clients_id")
-    private Long clientId;
+    @Column("stripe_session_id")
+    private String stripeSessionId;
 
     @Column("stripe_payment_intent_id")
     private String stripePaymentIntentId;
 
     @Column("amount")
-    private Double amount;
+    private BigDecimal amount;
 
     @Column("currency")
     private String currency;
 
     @Column("status")
     private PurchaseStatus status;
-
-    @Column("snapshot_price")
-    private Double snapshotPrice;
 
     @Column("created_at")
     private Instant createdAt;

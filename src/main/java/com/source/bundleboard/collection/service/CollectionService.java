@@ -1,10 +1,15 @@
 package com.source.bundleboard.collection.service;
 
 import com.source.bundleboard.collection.dto.*;
+import com.source.bundleboard.collection.model.Collection;
+import com.stripe.net.HttpHeaders;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import org.springframework.security.config.annotation.web.PortMapperDsl;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 
 public interface CollectionService {
@@ -25,4 +30,8 @@ public interface CollectionService {
     Flux<AuthoredCollectionResponse> findAllByAuthorId(Long authorId);
 
     Mono<CollectionByTagResponse> getCollectionByTagName(@Valid CollectionFilterInput input);
+
+     Flux<Collection> findAllByIds(List<Long> ids);
+
+    Mono<Collection> findById(Long collectionId);
 }

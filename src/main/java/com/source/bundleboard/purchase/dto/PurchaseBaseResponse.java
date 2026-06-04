@@ -1,24 +1,24 @@
 package com.source.bundleboard.purchase.dto;
 
-import com.source.bundleboard.collection.dto.CollectionShortResponse;
+import com.source.bundleboard.purchase.item.dto.PurchaseItemBaseResponse;
 import com.source.bundleboard.purchase.model.PurchaseStatus;
 
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 
 public record PurchaseBaseResponse(
 
         Long id,
 
-        Double amount,
+        BigDecimal amount,
 
         String currency,
 
         PurchaseStatus status,
 
-        Double snapshotPrice,
-
         Instant createdAt,
 
-        CollectionShortResponse asset
+        List<PurchaseItemBaseResponse> items
 ) {
 }
