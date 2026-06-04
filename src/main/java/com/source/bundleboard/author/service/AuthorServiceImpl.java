@@ -17,6 +17,7 @@ import reactor.core.publisher.Mono;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -79,16 +80,24 @@ public class AuthorServiceImpl implements AuthorService {
     }
 
     private List<SocialLink> parseSocialLinks(Json json) {
-        if (json == null) return List.of();
+        if (json == null) {
+            return new ArrayList<>();
+        }
+
+        String jsonStr = json.asString();
+
+        if (jsonStr.isBlank() || jsonStr.trim().equals("{}")) {
+            return new ArrayList<>();
+        }
 
         try {
             return objectMapper.readValue(
-                    json.asString(),
-                    new TypeReference<List<SocialLink>>() {}
+                    jsonStr,
+                    new TypeReference<>() {}
             );
         } catch (Exception e) {
-            log.error("[JSON_PARSE_ERROR]: Failed to decode social links. Data: {}", json.asString(), e);
-            return List.of();
+            log.error("🔴 [JSON_PARSE_ERROR]: Failed to decode social links. Data: {}", jsonStr, e);
+            return new ArrayList<>();
         }
     }
 
