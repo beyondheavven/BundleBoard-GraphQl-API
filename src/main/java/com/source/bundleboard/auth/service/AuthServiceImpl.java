@@ -16,8 +16,8 @@ import com.source.bundleboard.user.model.User;
 import com.source.bundleboard.user.model.UserRole;
 import com.source.bundleboard.user.model.UserStatus;
 import com.source.bundleboard.user.service.UserService;
-import com.source.bundleboard.utils.PasswordGenerator;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +26,7 @@ import reactor.core.publisher.Mono;
 import java.time.Instant;
 import java.util.Set;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
@@ -42,21 +43,25 @@ public class AuthServiceImpl implements AuthService {
 
     private final EmailVerificationTokenService emailVerificationTokenService;
 
-    private final PasswordGenerator passwordGenerator;
-
 
     @Override
     @Transactional
     public Mono<AuthResponse> authenticate(AuthRequest request) {
+        log.info("🟢 Attempting to authenticate user: {}", request.username());
         return userService.findByUsername(request.username())
-                .switchIfEmpty(Mono.error(new UserNotFoundException()))
+                .switchIfEmpty(Mono.defer(() -> {
+                    log.warn("🟡 Authentication failed: User not found [{}]", request.username());
+                    return Mono.error(new UserNotFoundException());
+                }))
                 .flatMap(user -> {
 
                     if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+                        log.warn("🟡 Authentication failed: Incorrect password for user [{}]", request.username());
                         return Mono.error(new IncorrectPasswordException("Incorrect password."));
                     }
 
                     if (user.getStatus() == UserStatus.banned || user.getStatus() == UserStatus.inactive) {
+                        log.warn("🟡 Authentication failed: Status is {} for user [{}]", user.getStatus(), request.username());
                         return Mono.error(new UserStatusException());
                     }
 
@@ -68,15 +73,19 @@ public class AuthServiceImpl implements AuthService {
 
                     return userService.save(updatedUser)
                             .flatMap(savedUser -> generateAuthResponse(savedUser, !savedUser.isSetupCompleted()));
-                });
+                })
+                .doOnSuccess(response -> log.info("🟢 User authenticated successfully: {}", request.username()))
+                .doOnError(e -> log.error("🔴 Error during authentication for user [{}]: {}", request.username(), e.getMessage()));
     }
 
     @Override
     @Transactional
     public Mono<AuthResponse> register(RegisterRequest request) {
+        log.info("🟢 Attempting to register new user: {}", request.username());
         return userService.existsByUsername(request.username())
                 .flatMap(exists -> {
                     if (exists){
+                        log.warn("🟡 Registration failed: Username already exists [{}]", request.username());
                         return Mono.error(new UserAlreadyExistsException());
                     }
                     User user = new User(
@@ -94,57 +103,81 @@ public class AuthServiceImpl implements AuthService {
                     return userService.save(user);
                 })
                 .flatMap(savedUser ->
-                    emailVerificationTokenService.resendVerificationEmail(savedUser.getEmail())
-                            .then(generateAuthResponse(savedUser, false))
-                );
+                        emailVerificationTokenService.resendVerificationEmail(savedUser.getEmail())
+                                .doOnSuccess(v -> log.info("🟢 Verification email sent to: {}", savedUser.getEmail()))
+                                .then(generateAuthResponse(savedUser, false))
+                )
+                .doOnSuccess(response -> log.info("🟢 User registered successfully: {}", request.username()))
+                .doOnError(e -> log.error("🔴 Error during registration for user [{}]: {}", request.username(), e.getMessage()));
     }
 
     @Override
     @Transactional
     public Mono<RefreshResponse> refreshToken(RefreshTokenRequest refreshTokenRequest) {
         String refreshToken = refreshTokenRequest.refreshToken();
+        log.info("🟢 Attempting to refresh token");
         return jwtService.isRefreshToken(refreshToken)
                 .flatMap(isRefresh -> {
                     if (!isRefresh){
+                        log.warn("🟡 Token refresh failed: Provided token is not a refresh token");
                         return Mono.error(new InvalidTokenException());
                     }
                     return refreshTokenRepository.existsByTokenAndExpirationTimeAfter(refreshToken, Instant.now());
                 })
                 .flatMap(exists -> {
-                    if (!exists) return Mono.error(new InvalidTokenException());
+                    if (!exists) {
+                        log.warn("🟡 Token refresh failed: Token does not exist or is expired in DB");
+                        return Mono.error(new InvalidTokenException());
+                    }
                     return jwtService.extractUsername(refreshToken);
                 })
                 .flatMap(userService::findByUsername)
-                .switchIfEmpty(Mono.error(new UserNotFoundException()))
+                .switchIfEmpty(Mono.defer(() -> {
+                    log.warn("🟡 Token refresh failed: User not found for token");
+                    return Mono.error(new UserNotFoundException());
+                }))
                 .flatMap(user -> {
                     if (user.getStatus() == UserStatus.banned || user.getStatus() == UserStatus.inactive) {
+                        log.warn("🟡 Token refresh failed: User status is {} for user [{}]", user.getStatus(), user.getUsername());
                         return Mono.error(new UserStatusException());
                     }
 
                     return refreshTokenRepository.deleteByToken(refreshToken)
                             .then(generateRefreshResponse(user));
-                });
+                })
+                .doOnSuccess(response -> log.info("🟢 Token refreshed successfully"))
+                .doOnError(e -> log.error("🔴 Error during token refresh: {}", e.getMessage()));
     }
 
     @Override
     @Transactional
     public Mono<Boolean> logout(RefreshTokenRequest refreshTokenRequest) {
+        log.info("🟢 Attempting logout (invalidating token)");
         return refreshTokenRepository.deleteByToken(refreshTokenRequest.refreshToken())
                 .thenReturn(true)
-                .defaultIfEmpty(false);
+                .defaultIfEmpty(false)
+                .doOnSuccess(success -> {
+                    if (success) {
+                        log.info("🟢 Logout successful: Token invalidated");
+                    } else {
+                        log.warn("🟡 Logout warning: Token not found in DB");
+                    }
+                })
+                .doOnError(e -> log.error("🔴 Error during logout: {}", e.getMessage()));
     }
 
     @Override
     @Transactional
     public Mono<AuthResponse> socialLogin(SocialLoginRequest input) {
+        log.info("🟢 Attempting social login for email: {}", input.email());
         return userService.getUserByEmail(input.email())
-                .switchIfEmpty(Mono.error(new UserNotFoundException()))
+                .switchIfEmpty(Mono.defer(() -> {
+                    log.warn("🟡 Social login failed: User not found [{}]", input.email());
+                    return Mono.error(new UserNotFoundException());
+                }))
                 .flatMap(user -> {
-                    if (user.getStatus() == UserStatus.banned) {
-                        return Mono.error(new UserStatusException());
-                    }
-
-                    if (user.getStatus() == UserStatus.inactive) {
+                    if (user.getStatus() == UserStatus.banned || user.getStatus() == UserStatus.inactive) {
+                        log.warn("🟡 Social login failed: Status is {} for user [{}]", user.getStatus(), user.getEmail());
                         return Mono.error(new UserStatusException());
                     }
 
@@ -156,14 +189,20 @@ public class AuthServiceImpl implements AuthService {
 
                     return userService.save(updatedUser)
                             .flatMap(savedUser -> generateAuthResponse(savedUser, false));
-                });
+                })
+                .doOnSuccess(response -> log.info("🟢 Social login successful for: {}", input.email()))
+                .doOnError(e -> log.error("🔴 Error during social login for [{}]: {}", input.email(), e.getMessage()));
     }
 
     @Override
     @Transactional
     public Mono<AuthResponse> socialRegister(SocialRegisterRequest input) {
+        log.info("🟢 Attempting social registration for email: {}", input.email());
         return userService.getUserByEmail(input.email())
-                .flatMap(existingUser -> Mono.error(new UserAlreadyExistsException()))
+                .flatMap(existingUser -> {
+                    log.warn("🟡 Social registration failed: Email already exists [{}]", input.email());
+                    return Mono.<String>error(new UserAlreadyExistsException());
+                })
                 .onErrorResume(UserNotFoundException.class, e -> Mono.empty())
                 .then(makeUsernameUnique(input.username()))
                 .flatMap(uniqueUsername -> {
@@ -183,8 +222,11 @@ public class AuthServiceImpl implements AuthService {
                 })
                 .flatMap(savedUser ->
                         emailVerificationTokenService.resendVerificationEmail(savedUser.getEmail())
+                                .doOnSuccess(v -> log.info("🟢 Verification email sent to: {}", savedUser.getEmail()))
                                 .then(generateAuthResponse(savedUser, true))
-                );
+                )
+                .doOnSuccess(response -> log.info("🟢 Social registration successful for: {}", input.email()))
+                .doOnError(e -> log.error("🔴 Error during social registration for [{}]: {}", input.email(), e.getMessage()));
     }
 
     private Mono<AuthResponse> generateAuthResponse(User user, boolean isNew) {

@@ -17,5 +17,5 @@ public interface PurchaseService {
 
     Mono<Purchase> save(Purchase purchase);
 
-    Mono<Void> createPurchaseWithItems(Purchase purchase, List<PurchaseItem> items);
+    Mono<Purchase> createPurchaseWithItems(Purchase purchase, List<PurchaseItem> items);
 }

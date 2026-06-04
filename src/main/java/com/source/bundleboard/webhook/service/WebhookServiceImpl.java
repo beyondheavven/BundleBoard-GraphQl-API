@@ -1,6 +1,7 @@
 package com.source.bundleboard.webhook.service;
 
 import com.source.bundleboard.collection.service.CollectionService;
+import com.source.bundleboard.email.mail.service.MailService;
 import com.source.bundleboard.purchase.item.model.PurchaseItem;
 import com.source.bundleboard.purchase.model.Purchase;
 import com.source.bundleboard.purchase.model.PurchaseStatus;
@@ -35,6 +36,8 @@ public class WebhookServiceImpl implements WebhookService {
     private final UserService userService;
 
     private final CollectionService collectionService;
+
+    private final MailService mailService;
 
     @Override
     @Transactional
@@ -95,7 +98,7 @@ public class WebhookServiceImpl implements WebhookService {
                     purchase.setStripeSessionId(session.getId());
                     purchase.setStripePaymentIntentId(session.getPaymentIntent());
 
-                    purchase.setAmount(BigDecimal.valueOf(session.getAmountTotal()).divide(BigDecimal.valueOf(100)));
+                    purchase.setAmount(BigDecimal.valueOf(session.getAmountTotal(), 2));
                     purchase.setCurrency(session.getCurrency().toUpperCase());
                     purchase.setStatus(PurchaseStatus.succeeded);
 
@@ -109,7 +112,19 @@ public class WebhookServiceImpl implements WebhookService {
                                     })
                             )
                             .collectList()
-                            .flatMap(items -> purchaseService.createPurchaseWithItems(purchase, items));
+                            .flatMap(items -> purchaseService.createPurchaseWithItems(purchase, items))
+                            .flatMap(savedPurchase ->
+                                    mailService.sendPurchaseReceipt(
+                                            user.getEmail(),
+                                            user.getUsername(),
+                                            savedPurchase.getAmount(),
+                                            savedPurchase.getCurrency()
+                                    ).onErrorResume(e -> {
+                                        log.error("Failed to send purchase receipt email", e);
+                                        return Mono.empty();
+                                    })
+                                            .thenReturn(savedPurchase)
+                            );
                 })
                 .doOnSuccess(p -> log.info("Successfully saved new purchase for Session: {}", session.getId()))
                 .then();

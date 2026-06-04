@@ -51,11 +51,11 @@ public class PurchaseServiceImpl implements PurchaseService {
     }
 
     @Override
-    public Mono<Void> createPurchaseWithItems(Purchase purchase, List<PurchaseItem> items) {
+    public Mono<Purchase> createPurchaseWithItems(Purchase purchase, List<PurchaseItem> items) {
         return purchaseRepository.save(purchase)
                 .flatMap(savedPurchase -> {
                     items.forEach(item -> item.setPurchaseId(savedPurchase.getId()));
-                    return purchaseItemService.saveAll(items).then();
+                    return purchaseItemService.saveAll(items).then().thenReturn(savedPurchase);
                 });
     }
 
