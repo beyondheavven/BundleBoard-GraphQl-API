@@ -45,11 +45,11 @@ public class WebhookServiceImpl implements WebhookService {
         StripeObject stripeObject = deserializeEvent(event);
 
         if (stripeObject == null) {
-            log.error("Failed to deserialize Stripe event: {}", event.getId());
+            log.error("🔴 Failed to deserialize Stripe event: {}", event.getId());
             return Mono.empty();
         }
 
-        log.info("📥 Processing Stripe Event: {}", event.getType());
+        log.info("🟢 Processing Stripe Event: {}", event.getType());
 
         return switch (event.getType()) {
             case "checkout.session.completed" -> handleCheckoutCompleted((Session) stripeObject);
@@ -57,7 +57,7 @@ public class WebhookServiceImpl implements WebhookService {
             case "payment_intent.payment_failed", "payment_intent.canceled" -> handlePaymentFailed((PaymentIntent) stripeObject);
             case "charge.refunded" -> handleRefundEvent((Charge) stripeObject);
             default -> {
-                log.info("⏩ Event ignored: {}", event.getType());
+                log.info("🟡 Event ignored: {}", event.getType());
                 yield Mono.empty();
             }
         };
@@ -65,13 +65,13 @@ public class WebhookServiceImpl implements WebhookService {
 
     private Mono<Void> handleCheckoutCompleted(Session session) {
         if (!"paid".equals(session.getPaymentStatus())) {
-            log.warn("Checkout completed but not paid (status: {})", session.getPaymentStatus());
+            log.warn("🟡 Checkout completed but not paid (status: {})", session.getPaymentStatus());
             return Mono.empty();
         }
 
         return purchaseService.findByStripeSessionId(session.getId())
                 .flatMap(existingPurchase -> {
-                    log.info("Purchase for session {} already exists. Skipping.", session.getId());
+                    log.warn("🟡 Purchase for session {} already exists. Skipping.", session.getId());
                     return Mono.empty();
                 })
                 .switchIfEmpty(Mono.defer(() -> createNewPurchase(session)))
@@ -82,7 +82,7 @@ public class WebhookServiceImpl implements WebhookService {
         Map<String, String> metadata = session.getMetadata();
 
         if (metadata == null || !metadata.containsKey("userId") || !metadata.containsKey("collectionIds")) {
-            log.error("Missing metadata in Stripe Session: {}", session.getId());
+            log.error("🔴 Missing metadata in Stripe Session: {}", session.getId());
             return Mono.empty();
         }
 
@@ -119,47 +119,49 @@ public class WebhookServiceImpl implements WebhookService {
                                             user.getUsername(),
                                             savedPurchase.getAmount(),
                                             savedPurchase.getCurrency()
-                                    ).onErrorResume(e -> {
-                                        log.error("Failed to send purchase receipt email", e);
-                                        return Mono.empty();
-                                    })
+                                    )
+                                            .doOnError(e -> log.error("🔴 Failed to send purchase receipt email to {}. Reason: {}", user.getEmail(), e.getMessage(), e))
+                                            .onErrorResume(e -> Mono.empty())
                                             .thenReturn(savedPurchase)
                             );
                 })
-                .doOnSuccess(p -> log.info("Successfully saved new purchase for Session: {}", session.getId()))
+                .doOnSuccess(p -> log.info("🟢 Successfully saved new purchase for Session: {}", session.getId()))
+                .doOnError(e -> log.error("🔴 Error creating new purchase for session {}: {}", session.getId(), e.getMessage(), e))
                 .then();
     }
 
     private Mono<Void> handlePaymentFailed(PaymentIntent intent) {
-        String errorMsg = intent.getLastPaymentError() != null
-                ? intent.getLastPaymentError().getMessage()
-                : "Unknown or Canceled";
+        String errorMsg = intent.getLastPaymentError() != null ? intent.getLastPaymentError().getMessage() : "Unknown or Canceled";
 
-        log.warn("Payment failed or canceled. Intent: {}. Reason: {}", intent.getId(), errorMsg);
-
+        log.warn("🟡 Payment failed or canceled. Intent: {}. Reason: {}", intent.getId(), errorMsg);
         return purchaseService.findByStripePaymentIntentId(intent.getId())
                 .flatMap(purchase -> {
                     purchase.setStatus(PurchaseStatus.failed);
                     return purchaseService.save(purchase);
                 })
+                .doOnSuccess(p -> log.info("🟡 Purchase status updated to FAILED for Intent: {}", intent.getId()))
                 .then();
     }
 
     private Mono<Void> handleRefundEvent(Charge charge) {
         String paymentIntentId = charge.getPaymentIntent();
-        if (paymentIntentId == null) return Mono.empty();
+        if (paymentIntentId == null) {
+            log.warn("🟡 Refund event received but PaymentIntent ID is null. Charge: {}", charge.getId());
+            return Mono.empty();
+        }
 
         return purchaseService.findByStripePaymentIntentId(paymentIntentId)
                 .flatMap(purchase -> {
                     purchase.setStatus(PurchaseStatus.refunded);
                     return purchaseService.save(purchase);
                 })
-                .doOnSuccess(p -> log.info("Purchase status updated to REFUNDED"))
+                .doOnSuccess(p -> log.info("🟢 Purchase status updated to REFUNDED for Intent: {}", paymentIntentId))
+                .doOnError(e -> log.error("🔴 Error updating purchase to REFUNDED for Intent {}: {}", paymentIntentId, e.getMessage()))
                 .then();
     }
 
     private Mono<Void> handleCheckoutExpired(Session session) {
-        log.info("Checkout session expired for Session: {}", session.getId());
+        log.warn("🟡 Checkout session expired for Session: {}", session.getId());
         return Mono.empty();
     }
 
@@ -172,7 +174,7 @@ public class WebhookServiceImpl implements WebhookService {
             try {
                 return objectDeserializer.deserializeUnsafe();
             } catch (EventDataObjectDeserializationException e) {
-                log.error("Stripe deserialization unsafe error", e);
+                log.error("🔴 Stripe deserialization unsafe error for event {}", event.getId(), e);
                 return null;
             }
         }
