@@ -22,6 +22,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -97,10 +98,11 @@ public class WebhookServiceImpl implements WebhookService {
                     purchase.setUserId(user.getId());
                     purchase.setStripeSessionId(session.getId());
                     purchase.setStripePaymentIntentId(session.getPaymentIntent());
-
                     purchase.setAmount(BigDecimal.valueOf(session.getAmountTotal(), 2));
                     purchase.setCurrency(session.getCurrency().toUpperCase());
                     purchase.setStatus(PurchaseStatus.succeeded);
+                    purchase.setCreatedAt(Instant.now());
+                    purchase.setUpdatedAt(Instant.now());
 
                     return Flux.fromIterable(collectionIds)
                             .flatMap(collectionId -> collectionService.findById(collectionId)
