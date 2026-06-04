@@ -58,12 +58,8 @@ public class PaymentServiceImpl implements PaymentService {
                                 .setSuccessUrl(stripeProperties.getPaymentSuccessUrl())
                                 .setCancelUrl(stripeProperties.getPaymentCancelUrl())
                                 .addAllLineItem(lineItems)
-                                .setPaymentIntentData(SessionCreateParams.PaymentIntentData.builder()
-                                        .putAllMetadata(Map.of(
-                                                "clientId", input.userId().toString(),
-                                                "collectionIds", verifiedCollectionIdsStr
-                                        ))
-                                        .build())
+                                .putMetadata("userId", input.userId().toString())
+                                .putMetadata("collectionIds", verifiedCollectionIdsStr)
                                 .build();
 
                         Session session = Session.create(params);

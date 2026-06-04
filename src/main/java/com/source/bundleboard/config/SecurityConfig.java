@@ -53,6 +53,7 @@ public class SecurityConfig {
                 )
                 .authorizeExchange(exchangeSpec -> exchangeSpec
                                 .pathMatchers("/graphql", "/graphiql/**").permitAll()
+                                .pathMatchers("/api/webhook/**").permitAll()
                         .anyExchange().authenticated()
                 )
                 // Add JWT filter before the authentication filter
