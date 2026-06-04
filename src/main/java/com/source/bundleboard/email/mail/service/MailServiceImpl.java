@@ -16,6 +16,7 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.util.Map;
 
@@ -90,14 +91,15 @@ public class MailServiceImpl implements MailService {
                 MimeMessage mimeMessage = mailSender.createMimeMessage();
                 MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, UTF_8);
 
-                helper.setFrom(mailProperties.getFrom());
+
+                helper.setFrom(mailProperties.getFrom(), mailProperties.getFromName());
                 helper.setTo(toEmail);
                 helper.setSubject(subject);
                 helper.setText(html, true);
 
                 mailSender.send(mimeMessage);
                 log.info("Email successfully sent to {}", toEmail);
-            } catch (MessagingException e) {
+            } catch (MessagingException | UnsupportedEncodingException e) {
                 throw new BadTemplateEmailException(e.getMessage());
             }
         })
