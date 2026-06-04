@@ -1,0 +1,9 @@
+extend type Mutation {
+    createCheckoutSession(input: PaymentRequest!): String!
+}
+
+input PaymentRequest {
+    userId: ID!
+    currency: String!
+    collectionIds: [ID!]!
+}

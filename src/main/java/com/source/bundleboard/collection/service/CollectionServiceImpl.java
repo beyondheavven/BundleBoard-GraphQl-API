@@ -17,9 +17,9 @@ import com.source.bundleboard.mediaresource.model.MediaFileType;
 import com.source.bundleboard.mediaresource.model.MediaResource;
 import com.source.bundleboard.mediaresource.repository.MediaResourceRepository;
 import com.source.bundleboard.collectiontag.model.CollectionTag;
-import com.source.bundleboard.collectiontag.repository.CollectionTagRepository;
 import com.source.bundleboard.storage.SupabaseStorageService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -33,6 +33,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CollectionServiceImpl implements CollectionService {
 
     private final CollectionRepository collectionRepository;
@@ -253,6 +254,26 @@ public class CollectionServiceImpl implements CollectionService {
                     })
                     .defaultIfEmpty(new CollectionByTagResponse(List.of(), 1, 0L));
         });
+    }
+
+    @Override
+    public Flux<Collection> findAllByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Flux.empty();
+        }
+        return collectionRepository.findAllById(ids)
+                .collectList()
+                .flatMapMany(collections -> {
+                    if(collections.size() != ids.size()){
+                        log.warn("Only {} collections found out of {} requested", collections.size(), ids.size());
+                    }
+                    return Flux.fromIterable(collections);
+                });
+    }
+
+    @Override
+    public Mono<Collection> findById(Long collectionId) {
+        return collectionRepository.findById(collectionId).switchIfEmpty(Mono.empty());
     }
 
 

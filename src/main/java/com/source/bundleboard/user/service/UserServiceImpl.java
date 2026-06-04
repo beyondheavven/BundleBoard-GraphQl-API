@@ -5,7 +5,6 @@ import com.source.bundleboard.auth.jwt.JwtProperties;
 import com.source.bundleboard.auth.jwt.service.JwtService;
 import com.source.bundleboard.author.model.Author;
 import com.source.bundleboard.author.repository.AuthorRepository;
-import com.source.bundleboard.author.service.AuthorService;
 import com.source.bundleboard.client.service.ClientService;
 import com.source.bundleboard.collection.dto.AuthoredCollectionResponse;
 import com.source.bundleboard.collection.service.CollectionService;
@@ -20,6 +19,7 @@ import com.source.bundleboard.user.model.UserRole;
 import com.source.bundleboard.user.repository.UserRepository;
 import io.r2dbc.postgresql.codec.Json;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
@@ -35,6 +35,7 @@ import java.util.Collections;
 import java.util.List;
 
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -221,8 +222,7 @@ public class UserServiceImpl implements UserService {
                 .flatMap(auth -> userRepository.findByUsername(auth.getName()))
                 .switchIfEmpty(Mono.error(new UserNotFoundException()))
                 .flatMap(user -> {
-                            Mono<List<PurchaseBaseResponse>> purchasesMono = clientService.findByUserId(user.getId())
-                                    .flatMap(client -> purchaseService.findAllByClientId(client.getId()))
+                            Mono<List<PurchaseBaseResponse>> purchasesMono = purchaseService.findAllByUserId(user.getId())
                                     .defaultIfEmpty(Collections.emptyList())
                                     .onErrorReturn(Collections.emptyList());
 
