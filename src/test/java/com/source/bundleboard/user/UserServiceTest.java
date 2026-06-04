@@ -13,7 +13,6 @@ import com.source.bundleboard.user.model.User;
 import com.source.bundleboard.user.model.UserRole;
 import com.source.bundleboard.user.model.UserStatus;
 import com.source.bundleboard.user.repository.UserRepository;
-import com.source.bundleboard.user.service.UserService;
 import com.source.bundleboard.user.service.UserServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -115,7 +114,7 @@ class UserServiceTest {
 
         when(userRepository.findByUsername("testuser")).thenReturn(Mono.just(sampleUser));
         when(clientService.findByUserId(1L)).thenReturn(Mono.just(mockClient));
-        when(purchaseService.findAllByClientId(10L)).thenReturn(Mono.just(Collections.emptyList()));
+        when(purchaseService.findAllByUserId(10L)).thenReturn(Mono.just(Collections.emptyList()));
 
         Mono<UserProfileResponse> result = userService.getUserProfile()
                 .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(securityContext)));

@@ -271,5 +271,10 @@ public class CollectionServiceImpl implements CollectionService {
                 });
     }
 
+    @Override
+    public Mono<Collection> findById(Long collectionId) {
+        return collectionRepository.findById(collectionId).switchIfEmpty(Mono.empty());
+    }
+
 
 }

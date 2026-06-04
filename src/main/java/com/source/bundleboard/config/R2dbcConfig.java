@@ -1,6 +1,6 @@
 package com.source.bundleboard.config;
 
-import com.source.bundleboard.properties.R2dbcProperties;
+import com.source.bundleboard.config.properties.R2dbcProperties;
 import com.source.bundleboard.user.model.UserRole;
 import com.source.bundleboard.user.model.UserStatus;
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;

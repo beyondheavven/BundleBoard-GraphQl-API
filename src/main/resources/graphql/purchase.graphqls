@@ -1,14 +1,22 @@
 type Purchase {
     id: ID!
-    collectionId: String!
-    clientId: String!
+    userId: String!
+    stripeSessionId: String!
     stripePaymentId: String!
     amount: Float!
     currency: String!
     status: PurchaseStatus!
-    snapShotPrice: Float!
     createAt: String!
     updatedAt: String!
+    items: [PurchaseItem!]!
+}
+
+type PurchaseItem {
+    id: ID!
+    purchaseId: Int!
+    collectionId: Int!
+    snapShotPrice: Float!
+    createdAt: String!
 }
 
 type PurchaseBaseResponse {
@@ -16,8 +24,13 @@ type PurchaseBaseResponse {
     amount: Float!
     currency: String!
     status: PurchaseStatus!
-    snapshotPrice: Float!
     createdAt: String!
+    items: [PurchaseItemBaseResponse!]!
+}
+
+type PurchaseItemBaseResponse{
+    id: ID!
+    snapshotPrice: Float!
     asset: CollectionShortResponse!
 }
 
