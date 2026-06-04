@@ -14,6 +14,8 @@ public class MailProperties {
 
     private String from;
 
+    private String fromName;
+
     private Templates templates = new Templates();
 
     private Subjects subjects = new Subjects();
