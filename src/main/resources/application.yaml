@@ -62,6 +62,7 @@ app:
 
   mail:
     from: ${spring.mail.username:noreply@bundleboard.com}
+    from-name: "BundleBoard"
     templates:
       verification-email: mail/verify-email
       reset-password: mail/reset-password
