@@ -21,7 +21,7 @@ public interface CollectionMapper {
     @Mapping(target = "authorId", ignore = true)
     @Mapping(target = "mediaResourceId", ignore = true)
     @Mapping(target = "id", ignore = true)
-    void updateEntityFromDto(UpdateCollectionDto dto, @MappingTarget Collection entity);
+    void updateEntityFromDto(UpdateCollectionRequest dto, @MappingTarget Collection entity);
 
 
     @Mapping(target = "id", source = "collection.id")

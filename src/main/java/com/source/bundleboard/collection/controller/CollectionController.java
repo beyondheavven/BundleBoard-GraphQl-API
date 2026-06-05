@@ -63,7 +63,7 @@ public class CollectionController {
 
     @PreAuthorize("hasAnyRole('ADMIN', 'AUTHOR')")
     @MutationMapping
-    public Mono<GetCollectionByIdResponse> updateCollection(@Argument Long id, @Argument(name = "input") UpdateCollectionDto collection) {
+    public Mono<GetCollectionByIdResponse> updateCollection(@Argument Long id, @Argument(name = "input") UpdateCollectionRequest collection) {
         return collectionService.updateCollection(id, collection);
     }
 
