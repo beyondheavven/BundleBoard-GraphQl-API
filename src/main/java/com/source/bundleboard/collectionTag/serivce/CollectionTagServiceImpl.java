@@ -22,4 +22,9 @@ public class CollectionTagServiceImpl implements CollectionTagService {
         }
         return collectionTagRepository.saveAll(tagRelations);
     }
+
+    @Override
+    public Mono<Void> deleteAllByCollectionsId(Long collectionId) {
+        return collectionTagRepository.deleteAllByCollectionsId(collectionId);
+    }
 }
