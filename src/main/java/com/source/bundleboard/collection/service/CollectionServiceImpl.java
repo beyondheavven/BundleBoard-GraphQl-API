@@ -173,38 +173,31 @@ public class CollectionServiceImpl implements CollectionService {
 
     @Transactional
     @Override
-    public Mono<Boolean> deleteCollection(Long id) {
+    public Mono<Boolean> deleteCollection(Long id, String folderPath) {
         return collectionRepository.findById(id)
                 .switchIfEmpty(Mono.error(new CollectionNotFoundException()))
                 .flatMap(collection -> {
                     Long mediaResourceId = collection.getMediaResourceId();
-                    Mono<Void> purgeImagesProcess = previewImageService.findAllByCollectionId(id)
-                            .collectList()
-                            .flatMap(images -> {
-                                if (images.isEmpty()) return Mono.empty();
+                    Mono<Void> purgeStorageProcess = Mono.empty();
+                    if (folderPath != null && !folderPath.isBlank()) {
+                        Mono<Void> deletePreviews = supabaseStorageService.deleteFolder(folderPath, "previews");
+                        Mono<Void> deleteVault = supabaseStorageService.deleteFolder(folderPath, "vault");
+                        purgeStorageProcess = deletePreviews.then(deleteVault);
+                    }
 
-                                String filePaths = images.stream()
-                                        .map(PreviewImage::getFilePath)
-                                        .collect(java.util.stream.Collectors.joining(","));
+                    Mono<Void> purgeImagesDBProcess = previewImageService.findAllByCollectionId(id)
+                            .flatMap(img -> previewImageService.deleteById(img.getId()))
+                            .then();
 
-                                return supabaseStorageService.deleteFiles(filePaths)
-                                        .then(Flux.fromIterable(images)
-                                                .flatMap(img -> previewImageService.deleteById(img.getId()))
-                                                .then());
-                            });
+                    Mono<Void> purgeMediaResourceDBProcess = Mono.justOrEmpty(mediaResourceId)
+                            .flatMap(mediaResourceRepository::deleteById)
+                            .then();
 
-                    Mono<Void> purgeMediaResourceProcess = Mono.justOrEmpty(mediaResourceId)
-                            .flatMap(resourceId -> mediaResourceRepository.findById(resourceId)
-                                    .flatMap(resource -> {
-                                        return supabaseStorageService.deleteFiles(resource.getFilePath())
-                                                .then(mediaResourceRepository.deleteById(resourceId));
-                                    })
-                            ).then();
-
-                    return purgeImagesProcess
-                            .then(purgeMediaResourceProcess)
+                    return purgeStorageProcess
                             .then(collectionTagService.deleteAllByCollectionsId(id))
                             .then(collectionRepository.deleteById(id))
+                            .then(purgeImagesDBProcess)
+                            .then(purgeMediaResourceDBProcess)
                             .thenReturn(true);
                 })
                 .defaultIfEmpty(false);

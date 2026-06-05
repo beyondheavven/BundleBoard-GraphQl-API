@@ -23,7 +23,7 @@ public interface CollectionService {
 
     Mono<GetCollectionByIdResponse> updateCollection(Long id, UpdateCollectionDto collection);
 
-    Mono<Boolean> deleteCollection(Long id);
+    Mono<Boolean> deleteCollection(Long id, String folderPath);
 
     Mono<CollectionShortResponse> findShortResponseById(Long collectionId);
 

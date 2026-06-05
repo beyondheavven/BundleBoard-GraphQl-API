@@ -11,6 +11,7 @@ import com.source.bundleboard.collection.mapper.CollectionMapper;
 import com.source.bundleboard.collection.model.Collection;
 import com.source.bundleboard.collection.repository.CollectionRepository;
 import com.source.bundleboard.collection.service.CollectionServiceImpl;
+import com.source.bundleboard.collectiontag.serivce.CollectionTagService;
 import com.source.bundleboard.image.dto.ImageShortInput;
 import com.source.bundleboard.image.dto.ImageShortResponse;
 import com.source.bundleboard.image.model.PreviewImage;
@@ -21,6 +22,9 @@ import com.source.bundleboard.mediaresource.model.MimeType;
 import com.source.bundleboard.mediaresource.model.Provider;
 import com.source.bundleboard.mediaresource.repository.MediaResourceRepository;
 import com.source.bundleboard.collectiontag.repository.CollectionTagRepository;
+// import com.source.bundleboard.collectiontag.service.CollectionTagService; // УДАЛЕНО, так как используем TagService
+import com.source.bundleboard.storage.SupabaseStorageService;
+import com.source.bundleboard.tag.service.TagService;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,6 +65,15 @@ public class CollectionServiceTest {
     @Mock
     private CollectionTagRepository collectionTagRepository;
 
+    @Mock
+    private TagService tagService;
+
+    @Mock
+    private CollectionTagService collectionTagService;
+
+    @Mock
+    private SupabaseStorageService supabaseStorageService;
+
     @InjectMocks
     private CollectionServiceImpl collectionService;
 
@@ -68,8 +81,6 @@ public class CollectionServiceTest {
     private GetCollectionByIdResponse sampleGetDto;
     private Author sampleAuthor;
     private String username = "test_author";
-
-
 
     @BeforeEach
     void setUp() {
@@ -82,6 +93,7 @@ public class CollectionServiceTest {
         sampleCollection.setDescription("A comprehensive collection of Java reactive tutorials and bundles for developers.");
         sampleCollection.setPrice(new BigDecimal("10.00"));
         sampleCollection.setPreviewImageId(100L);
+        sampleCollection.setMediaResourceId(200L);
 
         sampleGetDto = new GetCollectionByIdResponse(
                 1L,
@@ -94,7 +106,6 @@ public class CollectionServiceTest {
                 200L
         );
     }
-
 
     @Test
     void getCollectionById_Success() {
@@ -129,7 +140,6 @@ public class CollectionServiceTest {
                 .verifyComplete();
     }
 
-
     @Test
     void createCollection_Success() {
         CreateNewCollectionInput inputDto = getCreateNewCollectionInput();
@@ -158,7 +168,7 @@ public class CollectionServiceTest {
         MediaResourceInput mediaInput = new MediaResourceInput("file.zip", "/path", MimeType.zip, Provider.local, 1000L);
         ImageShortInput imageInput = new ImageShortInput("img.png", "/path/img", MimeType.png, 1920, 1080, 204857L);
 
-        CreateNewCollectionInput inputDto = new CreateNewCollectionInput(
+        return new CreateNewCollectionInput(
                 "New Pack",
                 "Valid description",
                 new BigDecimal("15.00"),
@@ -167,7 +177,6 @@ public class CollectionServiceTest {
                 List.of(imageInput),
                 mediaInput
         );
-        return inputDto;
     }
 
     @Test
@@ -209,7 +218,6 @@ public class CollectionServiceTest {
                 .verify();
     }
 
-
     @Test
     void updateCollection_Success() {
         sampleCollection.setPrice(new BigDecimal("6.00"));
@@ -233,7 +241,7 @@ public class CollectionServiceTest {
         sampleCollection.setPrice(new BigDecimal("10.00"));
         sampleCollection.setDescription("Too short");
 
-        UpdateCollectionDto updateDto = new UpdateCollectionDto("Updated Name", null, null, null, null);
+        UpdateCollectionDto updateDto = new UpdateCollectionDto("Updated Name", null, null, null,  null);
         when(collectionRepository.findCollectionById(1L)).thenReturn(Mono.just(sampleCollection));
 
         StepVerifier.create(collectionService.updateCollection(1L, updateDto))
@@ -243,16 +251,45 @@ public class CollectionServiceTest {
         verify(collectionRepository, never()).save(any());
     }
 
-
     @Test
     void deleteCollection_Success() {
+        String folderPath = "gradients/collection-12345";
+
+        PreviewImage mockImage = new PreviewImage();
+        mockImage.setId(10L);
+
+        when(collectionRepository.findById(1L)).thenReturn(Mono.just(sampleCollection));
+
+        when(supabaseStorageService.deleteFolder(folderPath, "previews")).thenReturn(Mono.empty());
+        when(supabaseStorageService.deleteFolder(folderPath, "vault")).thenReturn(Mono.empty());
+
+        when(previewImageService.findAllByCollectionId(1L)).thenReturn(Flux.just(mockImage));
+        when(previewImageService.deleteById(10L)).thenReturn(Mono.empty());
+
+        when(mediaResourceRepository.deleteById(200L)).thenReturn(Mono.empty());
+
+        when(collectionTagService.deleteAllByCollectionsId(1L)).thenReturn(Mono.empty());
         when(collectionRepository.deleteById(1L)).thenReturn(Mono.empty());
 
-        StepVerifier.create(collectionService.deleteCollection(1L))
+        StepVerifier.create(collectionService.deleteCollection(1L, folderPath))
                 .expectNext(true)
                 .verifyComplete();
+
+        verify(supabaseStorageService).deleteFolder(folderPath, "previews");
+        verify(supabaseStorageService).deleteFolder(folderPath, "vault");
+        verify(collectionRepository).deleteById(1L);
     }
 
+    @Test
+    void deleteCollection_NotFound_ThrowsException() {
+        when(collectionRepository.findById(1L)).thenReturn(Mono.empty());
+
+        StepVerifier.create(collectionService.deleteCollection(1L, "path"))
+                .expectError(CollectionNotFoundException.class)
+                .verify();
+
+        verifyNoInteractions(supabaseStorageService, previewImageService, mediaResourceRepository, tagService);
+    }
 
     @Test
     void findShortResponseById_Success() {
