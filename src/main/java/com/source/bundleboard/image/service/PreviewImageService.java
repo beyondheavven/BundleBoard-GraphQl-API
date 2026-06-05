@@ -23,4 +23,6 @@ public interface PreviewImageService {
     Mono<Void> deleteById(Long id);
 
     Flux<ImageShortResponse> findAllShortResponsesByCollectionId(Long id);
+
+    Flux<PreviewImage> findByFilePath(String filePath);
 }
