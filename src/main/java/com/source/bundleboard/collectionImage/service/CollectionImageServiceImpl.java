@@ -5,6 +5,7 @@ import com.source.bundleboard.collectionImage.repository.CollectionImageReposito
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -21,5 +22,10 @@ public class CollectionImageServiceImpl implements CollectionImageService {
             return Flux.empty();
         }
         return collectionImageRepository.saveAll(collectionImages);
+    }
+
+    @Override
+    public Mono<Void> deleteAllByCollectionId(Long collectionId) {
+        return collectionImageRepository.deleteAllByCollectionId(collectionId);
     }
 }

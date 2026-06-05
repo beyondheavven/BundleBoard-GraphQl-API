@@ -187,25 +187,24 @@ public class CollectionServiceImpl implements CollectionService {
                 .flatMap(collection -> {
                     Long mediaResourceId = collection.getMediaResourceId();
 
-                    Mono<Void> purgeStorageProcess = Mono.defer(() -> {
-                        if (folderPath != null && !folderPath.isBlank()) {
-                            return supabaseStorageService.deleteFolder(folderPath, "previews")
-                                    .then(supabaseStorageService.deleteFolder(folderPath, "vault"));
-                        }
-                        return Mono.empty();
-                    });
-
-                    return previewImageService.findAllByCollectionId(id).collectList()
-                            .flatMap(images ->
-                                    collectionRepository.deleteById(id)
-                                            .then(Flux.fromIterable(images)
-                                                    .flatMap(img -> previewImageService.deleteById(img.getId()))
-                                                    .then())
-                            )
+                    Mono<Void> databaseCleanup = collectionTagService.deleteAllByCollectionsId(id)
+                            .then(collectionImageRepository.deleteAllByCollectionId(id))
+                            .then(collectionRepository.deleteById(id))
+                            .then(previewImageService.findAllByCollectionId(id).collectList()
+                                    .flatMap(images -> Flux.fromIterable(images)
+                                            .flatMap(img -> previewImageService.deleteById(img.getId()))
+                                            .then()))
                             .then(Mono.justOrEmpty(mediaResourceId)
                                     .flatMap(mediaResourceRepository::deleteById)
-                                    .then())
-                            .then(purgeStorageProcess)
+                                    .then());
+
+                    Mono<Void> storageCleanup = (folderPath != null && !folderPath.isBlank())
+                            ? supabaseStorageService.deleteFolder(folderPath, "previews")
+                            .then(supabaseStorageService.deleteFolder(folderPath, "vault"))
+                            : Mono.empty();
+
+                    return databaseCleanup
+                            .then(storageCleanup)
                             .thenReturn(true);
                 })
                 .defaultIfEmpty(false);
