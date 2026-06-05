@@ -3,6 +3,8 @@ package com.source.bundleboard.config;
 import com.source.bundleboard.config.properties.R2dbcProperties;
 import com.source.bundleboard.user.model.UserRole;
 import com.source.bundleboard.user.model.UserStatus;
+import io.r2dbc.pool.ConnectionPool;
+import io.r2dbc.pool.ConnectionPoolConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionFactory;
 import io.r2dbc.postgresql.codec.EnumCodec;
@@ -12,6 +14,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration;
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
+
+import java.time.Duration;
 
 @Configuration
 @EnableR2dbcRepositories
@@ -23,26 +27,40 @@ public class R2dbcConfig extends AbstractR2dbcConfiguration {
     @Bean
     @Override
     public ConnectionFactory connectionFactory() {
-        return new PostgresqlConnectionFactory(
+
+        PostgresqlConnectionFactory postgresqlConnectionFactory = new PostgresqlConnectionFactory(
                 PostgresqlConnectionConfiguration.builder()
                         .host(extractHost(r2dbcProperties.getUrl()))
-                        .port(5432)
+                        .port(6543)
                         .database(extractDatabase(r2dbcProperties.getUrl()))
                         .username(r2dbcProperties.getUsername())
                         .password(r2dbcProperties.getPassword())
+                        .preparedStatementCacheQueries(0)
                         .codecRegistrar(EnumCodec.builder()
                                 .withEnum("user_role", UserRole.class)
                                 .withEnum("user_status", UserStatus.class)
                                 .build())
                         .build()
         );
+
+        ConnectionPoolConfiguration poolConfiguration = ConnectionPoolConfiguration.builder(postgresqlConnectionFactory)
+                .maxSize(10)
+                .initialSize(2)
+                .maxIdleTime(Duration.ofMinutes(30))
+                .validationQuery("SELECT 1")
+                .build();
+
+        return new ConnectionPool(poolConfiguration);
     }
 
     private String extractHost(String url) {
-        return url.split("//")[1].split(":")[0];
+        String cleanUrl = url.replace("r2dbc:pool:postgresql://", "").replace("r2dbc:postgresql://", "");
+        return cleanUrl.split(":")[0];
     }
 
     private String extractDatabase(String url) {
-        return url.substring(url.lastIndexOf("/") + 1);
+        int qIndex = url.indexOf("?");
+        String cleanUrl = qIndex != -1 ? url.substring(0, qIndex) : url;
+        return cleanUrl.substring(cleanUrl.lastIndexOf("/") + 1);
     }
 }
