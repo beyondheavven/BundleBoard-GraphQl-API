@@ -16,9 +16,11 @@ public interface PreviewImageService {
 
     Mono<ImageShortResponse> findShortResponseById(Long id);
 
-    Mono<List<PreviewImage>> saveAll(List<PreviewImage> newImages);
+    Flux<PreviewImage> saveAll(List<PreviewImage> newImages);
 
     Flux<PreviewImage> findAllByCollectionId(Long collectionId);
 
     Mono<Void> deleteById(Long id);
+
+    Flux<ImageShortResponse> findAllShortResponsesByCollectionId(Long id);
 }

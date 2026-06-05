@@ -1,11 +1,13 @@
 package com.source.bundleboard.user.controller;
 
+import com.source.bundleboard.author.dto.AuthorResponse;
 import com.source.bundleboard.user.dto.*;
 import com.source.bundleboard.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
+import org.springframework.graphql.data.method.annotation.SchemaMapping;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.stereotype.Controller;

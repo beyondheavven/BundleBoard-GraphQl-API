@@ -2,10 +2,7 @@ package com.source.bundleboard.collection.service;
 
 import com.source.bundleboard.collection.dto.*;
 import com.source.bundleboard.collection.model.Collection;
-import com.stripe.net.HttpHeaders;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotEmpty;
-import org.springframework.security.config.annotation.web.PortMapperDsl;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -21,9 +18,9 @@ public interface CollectionService {
 
     Mono<CreateCollectionResponse> createCollection(CreateNewCollectionInput input, String username);
 
-    Mono<GetCollectionByIdResponse> updateCollection(Long id, UpdateCollectionDto collection);
+    Mono<GetCollectionByIdResponse> updateCollection(Long id, UpdateCollectionRequest collection);
 
-    Mono<Boolean> deleteCollection(Long id);
+    Mono<Boolean> deleteCollection(Long id, String folderPath);
 
     Mono<CollectionShortResponse> findShortResponseById(Long collectionId);
 

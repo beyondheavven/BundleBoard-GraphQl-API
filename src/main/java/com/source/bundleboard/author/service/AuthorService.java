@@ -9,11 +9,13 @@ import reactor.core.publisher.Mono;
 
 public interface AuthorService {
 
-    Mono<BaseAuthorResponse> findById(Long id);
+    Mono<BaseAuthorResponse> getAuthorBaseResponseById(Long id);
 
     Mono<AuthorShortResponse> findShortResponseById(Long id);
 
     Mono<AuthorResponse> findFullAuthorById(Long id);
 
     Mono<Author> findByUsername(String username);
+
+    Mono<Author> findById(Long id);
 }

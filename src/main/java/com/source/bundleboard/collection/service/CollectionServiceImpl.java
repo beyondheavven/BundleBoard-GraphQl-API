@@ -9,14 +9,16 @@ import com.source.bundleboard.collection.dto.*;
 import com.source.bundleboard.collection.mapper.CollectionMapper;
 import com.source.bundleboard.collection.model.Collection;
 import com.source.bundleboard.collection.repository.CollectionRepository;
-import com.source.bundleboard.collectiontag.serivce.CollectionTagService;
+import com.source.bundleboard.collectionImage.model.CollectionImage;
+import com.source.bundleboard.collectionImage.repository.CollectionImageRepository;
+import com.source.bundleboard.collectionTag.serivce.CollectionTagService;
 import com.source.bundleboard.image.dto.ImageShortResponse;
 import com.source.bundleboard.image.model.PreviewImage;
 import com.source.bundleboard.image.service.PreviewImageService;
 import com.source.bundleboard.mediaresource.model.MediaFileType;
 import com.source.bundleboard.mediaresource.model.MediaResource;
 import com.source.bundleboard.mediaresource.repository.MediaResourceRepository;
-import com.source.bundleboard.collectiontag.model.CollectionTag;
+import com.source.bundleboard.collectionTag.model.CollectionTag;
 import com.source.bundleboard.storage.SupabaseStorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +31,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -51,6 +54,8 @@ public class CollectionServiceImpl implements CollectionService {
     private final CollectionTagService collectionTagService;
 
     private final SupabaseStorageService supabaseStorageService;
+
+    private final CollectionImageRepository collectionImageRepository;
 
     @Override
     public Mono<GetCollectionByIdResponse> getCollectionById(Long id) {
@@ -110,41 +115,44 @@ public class CollectionServiceImpl implements CollectionService {
                                                             img.setWidth(imgDto.width());
                                                             img.setHeight(imgDto.height());
                                                             img.setFileSize(imgDto.fileSize());
-                                                            img.setCollectionsId(savedCollection.getId());
                                                             return img;
                                                         })
                                                         .toList();
 
-                                                return previewImageService.saveAll(newImages)
+                                                return previewImageService.saveAll(newImages).collectList()
                                                         .flatMap(savedImages -> {
                                                             if (savedImages.isEmpty()) {
                                                                 return Mono.error(new DescriptionException("Gallery must contain at least one image"));
                                                             }
 
-                                                            Long previewImageId = savedImages.get(0).getId();
-                                                            savedCollection.setPreviewImageId(previewImageId);
-
-                                                            List<CollectionTag> tagRelations = input.tagIds().stream()
-                                                                    .map(tagId -> {
-                                                                        CollectionTag relation = new CollectionTag();
-                                                                        relation.setTagsId(tagId);
-                                                                        relation.setCollectionsId(savedCollection.getId());
-                                                                        return relation;
-                                                                    })
+                                                            List<CollectionImage> imageRelations = savedImages.stream()
+                                                                    .map(img -> new CollectionImage(null, savedCollection.getId(), img.getId()))
                                                                     .toList();
 
-                                                            return collectionRepository.save(savedCollection)
-                                                                    .flatMap(updatedCollection ->
-                                                                            collectionTagService.saveAll(tagRelations)
-                                                                                    .then(Mono.fromSupplier(() -> {
-                                                                                        CreateCollectionResponse response = new CreateCollectionResponse(
-                                                                                                savedCollection.getId(),
-                                                                                                savedCollection.getName(),
-                                                                                                true
-                                                                                        );
-                                                                                        return response;
-                                                                                    }))
-                                                                    );
+                                                            return collectionImageRepository.saveAll(imageRelations).collectList()
+                                                                    .flatMap(savedImageRels -> {
+                                                                        List<CollectionTag> tagRelations = input.tagIds().stream()
+                                                                                .map(tagId -> {
+                                                                                    CollectionTag relation = new CollectionTag();
+                                                                                    relation.setTagsId(tagId);
+                                                                                    relation.setCollectionsId(savedCollection.getId());
+                                                                                    return relation;
+                                                                                })
+                                                                                .toList();
+
+                                                                        return collectionRepository.save(savedCollection)
+                                                                                .flatMap(updatedCollection ->
+                                                                                        collectionTagService.saveAll(tagRelations).collectList()
+                                                                                                .then(Mono.fromSupplier(() -> {
+                                                                                                    CreateCollectionResponse response = new CreateCollectionResponse(
+                                                                                                            savedCollection.getId(),
+                                                                                                            savedCollection.getName(),
+                                                                                                            true
+                                                                                                    );
+                                                                                                    return response;
+                                                                                                }))
+                                                                                );
+                                                                    });
                                                         });
                                             });
                                 });
@@ -153,7 +161,7 @@ public class CollectionServiceImpl implements CollectionService {
     }
 
     @Override
-    public Mono<GetCollectionByIdResponse> updateCollection(Long id, UpdateCollectionDto collection) {
+    public Mono<GetCollectionByIdResponse> updateCollection(Long id, UpdateCollectionRequest collection) {
         return collectionRepository.findCollectionById(id)
                 .switchIfEmpty(Mono.error(new CollectionNotFoundException()))
                 .flatMap(entity -> {
@@ -173,38 +181,30 @@ public class CollectionServiceImpl implements CollectionService {
 
     @Transactional
     @Override
-    public Mono<Boolean> deleteCollection(Long id) {
+    public Mono<Boolean> deleteCollection(Long id, String folderPath) {
         return collectionRepository.findById(id)
                 .switchIfEmpty(Mono.error(new CollectionNotFoundException()))
                 .flatMap(collection -> {
                     Long mediaResourceId = collection.getMediaResourceId();
-                    Mono<Void> purgeImagesProcess = previewImageService.findAllByCollectionId(id)
-                            .collectList()
-                            .flatMap(images -> {
-                                if (images.isEmpty()) return Mono.empty();
 
-                                String filePaths = images.stream()
-                                        .map(PreviewImage::getFilePath)
-                                        .collect(java.util.stream.Collectors.joining(","));
-
-                                return supabaseStorageService.deleteFiles(filePaths)
-                                        .then(Flux.fromIterable(images)
-                                                .flatMap(img -> previewImageService.deleteById(img.getId()))
-                                                .then());
-                            });
-
-                    Mono<Void> purgeMediaResourceProcess = Mono.justOrEmpty(mediaResourceId)
-                            .flatMap(resourceId -> mediaResourceRepository.findById(resourceId)
-                                    .flatMap(resource -> {
-                                        return supabaseStorageService.deleteFiles(resource.getFilePath())
-                                                .then(mediaResourceRepository.deleteById(resourceId));
-                                    })
-                            ).then();
-
-                    return purgeImagesProcess
-                            .then(purgeMediaResourceProcess)
-                            .then(collectionTagService.deleteAllByCollectionsId(id))
+                    Mono<Void> databaseCleanup = collectionTagService.deleteAllByCollectionsId(id)
+                            .then(collectionImageRepository.deleteAllByCollectionId(id))
                             .then(collectionRepository.deleteById(id))
+                            .then(previewImageService.findAllByCollectionId(id).collectList()
+                                    .flatMap(images -> Flux.fromIterable(images)
+                                            .flatMap(img -> previewImageService.deleteById(img.getId()))
+                                            .then()))
+                            .then(Mono.justOrEmpty(mediaResourceId)
+                                    .flatMap(mediaResourceRepository::deleteById)
+                                    .then());
+
+                    Mono<Void> storageCleanup = (folderPath != null && !folderPath.isBlank())
+                            ? supabaseStorageService.deleteFolder(folderPath, "previews")
+                            .then(supabaseStorageService.deleteFolder(folderPath, "vault"))
+                            : Mono.empty();
+
+                    return databaseCleanup
+                            .then(storageCleanup)
                             .thenReturn(true);
                 })
                 .defaultIfEmpty(false);
@@ -214,10 +214,10 @@ public class CollectionServiceImpl implements CollectionService {
     public Mono<CollectionShortResponse> findShortResponseById(Long collectionId) {
         return collectionRepository.findById(collectionId)
                 .switchIfEmpty(Mono.error(new CollectionNotFoundException()))
-                .flatMap(collection ->
-                    previewImageService.findShortResponseById(collection.getPreviewImageId())
-                            .map(imageDto -> collectionMapper.mapToShortResponse(collection, imageDto))
-                );
+                .map(collection -> new CollectionShortResponse(
+                        collection.getId(),
+                        collection.getName()
+                ));
     }
 
     @Override
@@ -227,8 +227,7 @@ public class CollectionServiceImpl implements CollectionService {
                         row.id(),
                         row.name(),
                         row.price(),
-                        row.description(),
-                        new ImageShortResponse(row.previewFilePath(), row.previewFileName())
+                        row.description()
                 ));
     }
 

@@ -2,12 +2,10 @@ package com.source.bundleboard.collection.dto;
 
 import java.math.BigDecimal;
 
-public record CollectionWithImageRow(
+public record CollectionRow(
         Long id,
         String name,
         BigDecimal price,
-        String description,
-        String previewFilePath,
-        String previewFileName
+        String description
 ) {
 }

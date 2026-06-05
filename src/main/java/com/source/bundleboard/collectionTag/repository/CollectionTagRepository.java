@@ -1,6 +1,6 @@
-package com.source.bundleboard.collectiontag.repository;
+package com.source.bundleboard.collectionTag.repository;
 
-import com.source.bundleboard.collectiontag.model.CollectionTag;
+import com.source.bundleboard.collectionTag.model.CollectionTag;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;

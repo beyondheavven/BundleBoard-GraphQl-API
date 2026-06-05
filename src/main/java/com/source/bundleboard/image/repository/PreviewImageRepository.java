@@ -1,7 +1,9 @@
 package com.source.bundleboard.image.repository;
 
 import com.source.bundleboard.image.model.PreviewImage;
+import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -11,6 +13,10 @@ public interface PreviewImageRepository extends R2dbcRepository<PreviewImage, Lo
 
     Mono<PreviewImage> findById(Long id);
 
-
-    Flux<PreviewImage> findAllByCollectionsId(Long collectionsId);
+    @Query("""
+        SELECT i.* FROM images i 
+        INNER JOIN collection_images ci ON i.id = ci.image_id 
+        WHERE ci.collection_id = :collectionId
+    """)
+    Flux<PreviewImage> findAllByCollectionId(@Param("collectionId") Long collectionId);
 }
