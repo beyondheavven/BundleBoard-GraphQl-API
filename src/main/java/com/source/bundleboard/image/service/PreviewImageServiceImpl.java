@@ -41,11 +41,11 @@ public class PreviewImageServiceImpl implements PreviewImageService {
     }
 
     @Override
-    public Mono<List<PreviewImage>> saveAll(List<PreviewImage> newImages) {
+    public Flux<PreviewImage> saveAll(List<PreviewImage> newImages) {
         if (newImages == null || newImages.isEmpty()) {
-            return Mono.empty();
+            return Flux.empty();
         }
-        return previewImageRepository.saveAll(newImages).collectList();
+        return previewImageRepository.saveAll(newImages);
     }
 
     @Override
@@ -53,7 +53,7 @@ public class PreviewImageServiceImpl implements PreviewImageService {
         if (collectionId == null) {
             return Flux.empty();
         }
-        return previewImageRepository.findAllByCollectionsId(collectionId);
+        return previewImageRepository.findAllByCollectionId(collectionId);
     }
 
     @Override
@@ -62,6 +62,18 @@ public class PreviewImageServiceImpl implements PreviewImageService {
             return Mono.empty();
         }
         return previewImageRepository.deleteById(id);
+    }
+
+    @Override
+    public Flux<ImageShortResponse> findAllShortResponsesByCollectionId(Long collectionId) {
+        if (collectionId == null) {
+            return Flux.empty();
+        }
+        return previewImageRepository.findAllByCollectionId(collectionId)
+                .map(image -> new ImageShortResponse(
+                        image.getFilePath(),
+                        image.getFileName()
+                ));
     }
 
 }

@@ -10,8 +10,6 @@ public record CollectionResponse(
 
         Double price,
 
-        Long authorId,
-
-        Long previewImageId
+        Long authorId
 ) {
 }

@@ -11,21 +11,16 @@ import org.mapstruct.MappingTarget;
 public interface CollectionMapper {
 
     @Mapping(target = "authorId", source = "authorId")
-    @Mapping(target = "previewImageId", source = "previewImageId")
     CollectionResponse toDto(Collection collection);
 
     @Mapping(target = "authorId", source = "authorId")
-    @Mapping(target = "previewImageId", source = "previewImageId")
     GetCollectionByIdResponse toGetDto(Collection collection);
 
     @Mapping(target = "authorId", ignore = true)
     @Mapping(target = "mediaResourceId", ignore = true)
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "videoTutorialUrl", ignore = true)
     void updateEntityFromDto(UpdateCollectionRequest dto, @MappingTarget Collection entity);
 
-
-    @Mapping(target = "id", source = "collection.id")
-    @Mapping(target = "name", source = "collection.name")
-    @Mapping(target = "previewImage", source = "image")
     CollectionShortResponse mapToShortResponse(Collection collection, ImageShortResponse image);
 }

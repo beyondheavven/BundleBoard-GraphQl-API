@@ -39,7 +39,4 @@ public class Collection {
     @Column("project_file_id")
     Long mediaResourceId;
 
-    @Column("preview_image_id")
-    Long previewImageId;
-
 }

@@ -16,8 +16,6 @@ public record GetCollectionByIdResponse(
 
         Long authorId,
 
-        Long previewImageId,
-
         Long mediaResourceId
 ) {
 }

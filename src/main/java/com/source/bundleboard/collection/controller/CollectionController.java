@@ -34,11 +34,10 @@ public class CollectionController {
 
     private final MediaResourceService mediaResourceService;
 
-
     @PreAuthorize("permitAll()")
     @QueryMapping
     public Flux<CollectionResponse> getAllCollections(@Argument int page, @Argument int size) {
-        return collectionService.getAllCollections(page,size);
+        return collectionService.getAllCollections(page, size);
     }
 
     @PreAuthorize("permitAll()")
@@ -88,19 +87,29 @@ public class CollectionController {
         return authorService.findFullAuthorById(collection.getAuthorId());
     }
 
-    @SchemaMapping(typeName = "CollectionResponse", field = "previewImage")
-    public Mono<ImageShortResponse> getPreviewImage(CollectionResponse collection) {
-        return imageService.findShortResponseById(collection.previewImageId());
+    @SchemaMapping(typeName = "CollectionResponse", field = "galleryImages")
+    public Flux<ImageShortResponse> getGalleryImages(CollectionResponse collection) {
+        return imageService.findAllShortResponsesByCollectionId(collection.id());
     }
 
-    @SchemaMapping(typeName = "GetCollectionByIdResponse", field = "previewImage")
-    public Mono<ImageShortResponse> getPreviewImageForDetails(GetCollectionByIdResponse collection) {
-        return imageService.findShortResponseById(collection.previewImageId());
+    @SchemaMapping(typeName = "GetCollectionByIdResponse", field = "galleryImages")
+    public Flux<ImageShortResponse> getGalleryImagesForDetails(GetCollectionByIdResponse collection) {
+        return imageService.findAllShortResponsesByCollectionId(collection.id());
     }
 
-    @SchemaMapping(typeName = "Collection", field = "previewImage")
-    public Mono<ImageShortResponse> getPreviewImageForCollection(Collection collection) {
-        return imageService.findShortResponseById(collection.getPreviewImageId());
+    @SchemaMapping(typeName = "Collection", field = "galleryImages")
+    public Flux<ImageShortResponse> getGalleryImagesForCollection(Collection collection) {
+        return imageService.findAllShortResponsesByCollectionId(collection.getId());
+    }
+
+    @SchemaMapping(typeName = "AuthoredCollectionResponse", field = "galleryImages")
+    public Flux<ImageShortResponse> getGalleryImagesForAuthored(AuthoredCollectionResponse collection) {
+        return imageService.findAllShortResponsesByCollectionId(collection.id());
+    }
+
+    @SchemaMapping(typeName = "CollectionShortResponse", field = "galleryImages")
+    public Flux<ImageShortResponse> getGalleryImagesForShort(CollectionShortResponse collection) {
+        return imageService.findAllShortResponsesByCollectionId(collection.id());
     }
 
     @SchemaMapping(typeName = "GetCollectionByIdResponse", field = "mediaResource")
@@ -112,6 +121,4 @@ public class CollectionController {
     public Mono<GetMediaResourceByIdResponse> getMediaResource(Collection collection) {
         return mediaResourceService.findGetMediaResourceById(collection.getMediaResourceId());
     }
-
-
 }
