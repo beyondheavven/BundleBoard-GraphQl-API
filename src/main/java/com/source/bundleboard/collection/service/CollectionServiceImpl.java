@@ -153,7 +153,7 @@ public class CollectionServiceImpl implements CollectionService {
     }
 
     @Override
-    public Mono<GetCollectionByIdResponse> updateCollection(Long id, UpdateCollectionDto collection) {
+    public Mono<GetCollectionByIdResponse> updateCollection(Long id, UpdateCollectionRequest collection) {
         return collectionRepository.findCollectionById(id)
                 .switchIfEmpty(Mono.error(new CollectionNotFoundException()))
                 .flatMap(entity -> {

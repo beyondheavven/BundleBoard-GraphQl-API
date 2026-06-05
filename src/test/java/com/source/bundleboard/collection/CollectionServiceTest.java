@@ -223,7 +223,7 @@ public class CollectionServiceTest {
         sampleCollection.setPrice(new BigDecimal("6.00"));
         sampleCollection.setDescription("A".repeat(250));
 
-        UpdateCollectionDto updateDto = new UpdateCollectionDto("Updated Name", null, null, null, null);
+        UpdateCollectionRequest updateDto = new UpdateCollectionRequest("Updated Name", null, null, null, null);
 
         when(collectionRepository.findCollectionById(1L)).thenReturn(Mono.just(sampleCollection));
         when(collectionRepository.save(sampleCollection)).thenReturn(Mono.just(sampleCollection));
@@ -241,7 +241,7 @@ public class CollectionServiceTest {
         sampleCollection.setPrice(new BigDecimal("10.00"));
         sampleCollection.setDescription("Too short");
 
-        UpdateCollectionDto updateDto = new UpdateCollectionDto("Updated Name", null, null, null,  null);
+        UpdateCollectionRequest updateDto = new UpdateCollectionRequest("Updated Name", null, null, null,  null);
         when(collectionRepository.findCollectionById(1L)).thenReturn(Mono.just(sampleCollection));
 
         StepVerifier.create(collectionService.updateCollection(1L, updateDto))
