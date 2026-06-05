@@ -76,4 +76,12 @@ public class PreviewImageServiceImpl implements PreviewImageService {
                 ));
     }
 
+    @Override
+    public Flux<PreviewImage> findByFilePath(String filePath) {
+        if (filePath == null || filePath.isBlank()) {
+            return Flux.empty();
+        }
+        return previewImageRepository.findByFilePath(filePath);
+    }
+
 }

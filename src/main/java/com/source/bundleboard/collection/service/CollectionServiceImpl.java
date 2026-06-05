@@ -17,6 +17,7 @@ import com.source.bundleboard.image.model.PreviewImage;
 import com.source.bundleboard.image.service.PreviewImageService;
 import com.source.bundleboard.mediaresource.model.MediaFileType;
 import com.source.bundleboard.mediaresource.model.MediaResource;
+import com.source.bundleboard.mediaresource.model.MimeType;
 import com.source.bundleboard.mediaresource.repository.MediaResourceRepository;
 import com.source.bundleboard.collectionTag.model.CollectionTag;
 import com.source.bundleboard.storage.SupabaseStorageService;
@@ -33,6 +34,7 @@ import reactor.core.publisher.Mono;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -160,21 +162,77 @@ public class CollectionServiceImpl implements CollectionService {
         });
     }
 
+    @Transactional
     @Override
     public Mono<GetCollectionByIdResponse> updateCollection(Long id, UpdateCollectionRequest collection) {
         return collectionRepository.findCollectionById(id)
                 .switchIfEmpty(Mono.error(new CollectionNotFoundException()))
                 .flatMap(entity -> {
-                    if(entity.getPrice().compareTo(MIN_PRICE) < 0){
+
+                    if(collection.price().compareTo(new BigDecimal("5.00")) < 0){
                         return Mono.error(new MinimalPriceException("Minimal price is 5 USD"));
                     }
 
-                    if(entity.getDescription().length() < 200 || entity.getDescription().length() > 1000){
-                        return Mono.error(new DescriptionException("Description must be between 200 and 1000 characters"));
+                    if(collection.description().length() < 100 || collection.description().length() > 2000){
+                        return Mono.error(new DescriptionException("Description must be between 100 and 2000 characters"));
                     }
 
                     collectionMapper.updateEntityFromDto(collection, entity);
-                    return collectionRepository.save(entity);
+
+                    return collectionRepository.save(entity)
+                            .flatMap(savedCollection -> {
+                                if (collection.galleryImages() == null || collection.galleryImages().isEmpty()) {
+                                    return Mono.just(savedCollection);
+                                }
+
+                                return previewImageService.findAllByCollectionId(id).collectList()
+                                        .flatMap(oldImages -> {
+
+                                            List<String> newPaths = collection.galleryImages().stream()
+                                                    .map(PreviewImage::getFilePath)
+                                                    .toList();
+
+                                            List<PreviewImage> orphanedImages = oldImages.stream()
+                                                    .filter(old -> !newPaths.contains(old.getFilePath()))
+                                                    .toList();
+
+                                            String orphanedPaths = orphanedImages.stream()
+                                                    .map(PreviewImage::getFilePath)
+                                                    .collect(Collectors.joining(","));
+
+                                            Mono<Void> purgeStorage = orphanedPaths.isEmpty() ? Mono.empty() :
+                                                    supabaseStorageService.deleteFiles(orphanedPaths, "previews");
+
+                                            Mono<Void> purgeDb = Flux.fromIterable(orphanedImages)
+                                                    .flatMap(img -> previewImageService.deleteById(img.getId()))
+                                                    .then();
+
+                                            Mono<Void> clearOldLinks = collectionImageRepository.deleteAllByCollectionId(id);
+
+                                            Mono<List<CollectionImage>> processNewImages = Flux.fromIterable(collection.galleryImages())
+                                                    .concatMap(imgDto -> previewImageService.findByFilePath(imgDto.getFilePath())
+                                                            .switchIfEmpty(Mono.defer(() -> {
+                                                                PreviewImage newImg = new PreviewImage();
+                                                                newImg.setFilePath(imgDto.getFilePath());
+                                                                newImg.setFileName(imgDto.getFileName() != null ? imgDto.getFileName() : "update-image.webp");
+                                                                newImg.setMimeType(imgDto.getMimeType() != null ? imgDto.getMimeType() : MimeType.webp);
+                                                                newImg.setFileSize(imgDto.getFileSize() != null ? imgDto.getFileSize() : 0L);
+                                                                newImg.setWidth(imgDto.getWidth() != null ? imgDto.getWidth() : 1200);
+                                                                newImg.setHeight(imgDto.getHeight() != null ? imgDto.getHeight() : 800);
+                                                                return previewImageService.save(newImg);
+                                                            }))
+                                                    )
+                                                    .map(savedImg -> new CollectionImage(null, id, savedImg.getId()))
+                                                    .collectList()
+                                                    .flatMap(links -> collectionImageRepository.saveAll(links).collectList());
+
+                                            return clearOldLinks
+                                                    .then(purgeDb)
+                                                    .then(purgeStorage)
+                                                    .then(processNewImages)
+                                                    .thenReturn(savedCollection);
+                                        });
+                            });
                 })
                 .map(collectionMapper::toGetDto);
     }

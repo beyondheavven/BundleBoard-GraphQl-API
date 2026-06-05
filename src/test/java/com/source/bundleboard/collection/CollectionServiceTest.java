@@ -17,6 +17,7 @@ import com.source.bundleboard.collectionImage.service.CollectionImageService;
 import com.source.bundleboard.collectionTag.serivce.CollectionTagService;
 import com.source.bundleboard.image.dto.ImageShortInput;
 import com.source.bundleboard.image.model.PreviewImage;
+import com.source.bundleboard.image.repository.PreviewImageRepository;
 import com.source.bundleboard.image.service.PreviewImageService;
 import com.source.bundleboard.mediaresource.dto.MediaResourceInput;
 import com.source.bundleboard.mediaresource.model.MediaResource;
@@ -70,6 +71,9 @@ public class CollectionServiceTest {
     @Mock
     private CollectionImageService collectionImageService;
 
+    @Mock
+    private CollectionImageRepository collectionImageRepository;
+
     @InjectMocks
     private CollectionServiceImpl collectionService;
 
@@ -77,6 +81,7 @@ public class CollectionServiceTest {
     private GetCollectionByIdResponse sampleGetDto;
     private Author sampleAuthor;
     private String username = "test_author";
+    private String validDescription = "A".repeat(150);
 
     @BeforeEach
     void setUp() {
@@ -86,20 +91,18 @@ public class CollectionServiceTest {
         sampleCollection = new Collection();
         sampleCollection.setId(1L);
         sampleCollection.setName("Java Bundle");
-        sampleCollection.setDescription("A comprehensive collection of Java reactive tutorials and bundles for developers.");
+        sampleCollection.setDescription(validDescription);
         sampleCollection.setPrice(new BigDecimal("10.00"));
-        // 🟢 Убрано: setPreviewImageId
         sampleCollection.setMediaResourceId(200L);
         sampleCollection.setAuthorId(42L);
 
         sampleGetDto = new GetCollectionByIdResponse(
                 1L,
                 "Java Bundle",
-                "A comprehensive collection of Java reactive tutorials and bundles for developers.",
+                validDescription,
                 new BigDecimal("10.00"),
                 "http://tutorials.com/1",
                 42L,
-                // 🟢 Убрано: previewImageId
                 200L
         );
     }
@@ -166,13 +169,13 @@ public class CollectionServiceTest {
                 .verifyComplete();
     }
 
-    private static @NotNull CreateNewCollectionInput getCreateNewCollectionInput() {
+    private @NotNull CreateNewCollectionInput getCreateNewCollectionInput() {
         MediaResourceInput mediaInput = new MediaResourceInput("file.zip", "/path", MimeType.zip, Provider.local, 1000L);
         ImageShortInput imageInput = new ImageShortInput("img.png", "/path/img", MimeType.png, 1920, 1080, 204857L);
 
         return new CreateNewCollectionInput(
                 "New Pack",
-                "Valid description",
+                validDescription,
                 new BigDecimal("15.00"),
                 "http://url",
                 List.of(1L, 2L),
@@ -185,7 +188,7 @@ public class CollectionServiceTest {
     void createCollection_LowPrice_ThrowsMinimalPriceException() {
         CreateNewCollectionInput inputDto = new CreateNewCollectionInput(
                 "Cheap Pack",
-                "Desc",
+                validDescription,
                 new BigDecimal("4.99"),
                 null,
                 List.of(),
@@ -205,7 +208,7 @@ public class CollectionServiceTest {
     void createCollection_AuthorNotFound_ThrowsAuthorNotFoundException() {
         CreateNewCollectionInput inputDto = new CreateNewCollectionInput(
                 "Pack",
-                "Desc",
+                validDescription,
                 new BigDecimal("10.00"),
                 null,
                 List.of(),
@@ -221,10 +224,8 @@ public class CollectionServiceTest {
     }
 
     @Test
-    void updateCollection_Success() {
-        sampleCollection.setPrice(new BigDecimal("6.00"));
-        sampleCollection.setDescription("A".repeat(250));
-        UpdateCollectionRequest updateDto = new UpdateCollectionRequest("Updated Name", null, null);
+    void updateCollection_Success_NoImagesProvided() {
+        UpdateCollectionRequest updateDto = new UpdateCollectionRequest("Updated Name", validDescription, new BigDecimal("6.00"), List.of());
 
         when(collectionRepository.findCollectionById(1L)).thenReturn(Mono.just(sampleCollection));
         when(collectionRepository.save(sampleCollection)).thenReturn(Mono.just(sampleCollection));
@@ -235,18 +236,30 @@ public class CollectionServiceTest {
                 .verifyComplete();
 
         verify(collectionMapper).updateEntityFromDto(updateDto, sampleCollection);
+        verifyNoInteractions(previewImageService, collectionImageRepository, supabaseStorageService);
     }
 
     @Test
-    void updateCollection_InvalidDescriptionInEntity_ThrowsDescriptionException() {
-        sampleCollection.setPrice(new BigDecimal("10.00"));
-        sampleCollection.setDescription("Too short");
+    void updateCollection_InvalidDescription_ThrowsDescriptionException() {
+        UpdateCollectionRequest updateDto = new UpdateCollectionRequest("Updated Name", "Too short", new BigDecimal("10.00"), null);
 
-        UpdateCollectionRequest updateDto = new UpdateCollectionRequest("Updated Name", null, null);
         when(collectionRepository.findCollectionById(1L)).thenReturn(Mono.just(sampleCollection));
 
         StepVerifier.create(collectionService.updateCollection(1L, updateDto))
                 .expectError(DescriptionException.class)
+                .verify();
+
+        verify(collectionRepository, never()).save(any());
+    }
+
+    @Test
+    void updateCollection_InvalidPrice_ThrowsMinimalPriceException() {
+        UpdateCollectionRequest updateDto = new UpdateCollectionRequest("Updated Name", validDescription, new BigDecimal("4.50"), null);
+
+        when(collectionRepository.findCollectionById(1L)).thenReturn(Mono.just(sampleCollection));
+
+        StepVerifier.create(collectionService.updateCollection(1L, updateDto))
+                .expectError(MinimalPriceException.class)
                 .verify();
 
         verify(collectionRepository, never()).save(any());
@@ -261,6 +274,9 @@ public class CollectionServiceTest {
 
         when(collectionRepository.findById(1L)).thenReturn(Mono.just(sampleCollection));
 
+        when(collectionTagService.deleteAllByCollectionsId(1L)).thenReturn(Mono.empty());
+        when(collectionImageRepository.deleteAllByCollectionId(1L)).thenReturn(Mono.empty());
+
         when(supabaseStorageService.deleteFolder(folderPath, "previews")).thenReturn(Mono.empty());
         when(supabaseStorageService.deleteFolder(folderPath, "vault")).thenReturn(Mono.empty());
 
@@ -274,10 +290,10 @@ public class CollectionServiceTest {
                 .expectNext(true)
                 .verifyComplete();
 
-        verify(supabaseStorageService).deleteFolder(folderPath, "previews");
-        verify(supabaseStorageService).deleteFolder(folderPath, "vault");
+        verify(collectionTagService).deleteAllByCollectionsId(1L);
+        verify(collectionImageRepository).deleteAllByCollectionId(1L);
         verify(collectionRepository).deleteById(1L);
-        verify(previewImageService).deleteById(10L);
+        verify(supabaseStorageService).deleteFolder(folderPath, "previews");
     }
 
     @Test
