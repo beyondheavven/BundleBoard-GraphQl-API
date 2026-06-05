@@ -18,8 +18,6 @@ public interface CollectionService {
 
     Mono<CreateCollectionResponse> createCollection(CreateNewCollectionInput input, String username);
 
-    Mono<GetCollectionByIdResponse> updateCollection(Long id, UpdateCollectionRequest collection);
-
     Mono<Boolean> deleteCollection(Long id, String folderPath);
 
     Mono<CollectionShortResponse> findShortResponseById(Long collectionId);
@@ -31,4 +29,6 @@ public interface CollectionService {
      Flux<Collection> findAllByIds(List<Long> ids);
 
     Mono<Collection> findById(Long collectionId);
+
+    Mono<GetCollectionByIdResponse> updateCollection(Long id, UpdateCollectionRequest collection);
 }

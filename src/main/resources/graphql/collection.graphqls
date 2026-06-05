@@ -6,7 +6,7 @@ extend type Query {
 
 extend type Mutation {
     createCollection(input: CreateNewCollectionInput!): CreateCollectionResponse!
-    updateCollection(id: ID!, input: UpdateCollectionRequest!): Collection!
+    updateCollection(id: ID!, input: UpdateCollectionRequest!): GetCollectionByIdResponse!
     deleteCollection(id: ID!, folderPath: String): Boolean!
 }
 
@@ -88,4 +88,5 @@ input UpdateCollectionRequest {
     name: String
     description: String
     price: Float
+    galleryImages: [ImageShortInput!]!
 }

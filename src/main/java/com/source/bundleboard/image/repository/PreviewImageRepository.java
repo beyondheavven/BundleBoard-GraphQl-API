@@ -19,4 +19,6 @@ public interface PreviewImageRepository extends R2dbcRepository<PreviewImage, Lo
         WHERE ci.collection_id = :collectionId
     """)
     Flux<PreviewImage> findAllByCollectionId(@Param("collectionId") Long collectionId);
+
+    Flux<PreviewImage> findByFilePath(String filePath);
 }
