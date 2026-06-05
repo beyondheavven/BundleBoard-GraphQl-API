@@ -87,11 +87,13 @@ public class SupabaseStorageServiceImpl implements SupabaseStorageService {
     private String extractS3Key(String fileNameOrUrl) {
         String prefix = s3Properties.getPreviewsPublicUrlPrefix();
 
-        if (fileNameOrUrl != null && fileNameOrUrl.startsWith(prefix)) {
-            return fileNameOrUrl.substring(prefix.length());
+        if (fileNameOrUrl != null && prefix != null && fileNameOrUrl.startsWith(prefix)) {
+            String key = fileNameOrUrl.substring(prefix.length());
+            return key.startsWith("/") ? key.substring(1) : key;
         }
-        if (fileNameOrUrl != null && fileNameOrUrl.contains("showcase/")) {
-            return fileNameOrUrl.substring(fileNameOrUrl.indexOf("showcase/"));
+
+        if (fileNameOrUrl != null && fileNameOrUrl.contains("previews/")) {
+            return fileNameOrUrl.substring(fileNameOrUrl.indexOf("previews/") + 9);
         }
 
         return fileNameOrUrl;
