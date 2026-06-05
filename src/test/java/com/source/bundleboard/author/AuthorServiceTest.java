@@ -87,11 +87,11 @@ public class AuthorServiceTest {
 
 
     @Test
-    void findById_Success() {
+    void getAuthorBaseResponseById_Success() {
         when(authorRepository.findByUserId(userId)).thenReturn(Mono.just(sampleAuthor));
         when(authorMapper.toDto(sampleAuthor)).thenReturn(sampleBaseAuthorResponse);
 
-        StepVerifier.create(authorService.findById(userId))
+        StepVerifier.create(authorService.getAuthorBaseResponseById(userId))
                 .assertNext(response -> {
                     assertEquals(authorId, response.id());
                     assertEquals("Experienced content creator", response.bio());
@@ -107,10 +107,10 @@ public class AuthorServiceTest {
     }
 
     @Test
-    void findById_NotFound_ThrowsAuthorNotFoundException() {
+    void getAuthorBaseResponseById_NotFound_ThrowsAuthorNotFoundException() {
         when(authorRepository.findByUserId(userId)).thenReturn(Mono.empty());
 
-        StepVerifier.create(authorService.findById(userId))
+        StepVerifier.create(authorService.getAuthorBaseResponseById(userId))
                 .expectError(AuthorNotFoundException.class)
                 .verify();
 

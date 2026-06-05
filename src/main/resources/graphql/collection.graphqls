@@ -7,7 +7,7 @@ extend type Query {
 extend type Mutation {
     createCollection(input: CreateNewCollectionInput!): CreateCollectionResponse!
     updateCollection(id: ID!, input: UpdateCollectionInput!): Collection!
-    deleteCollection(id: ID!): Boolean!
+    deleteCollection(id: ID!, folderPath: String): Boolean!
 }
 
 type CollectionByTagResponse {

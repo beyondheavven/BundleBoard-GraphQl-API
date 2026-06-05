@@ -35,7 +35,7 @@ public class AuthorServiceImpl implements AuthorService {
     private final ObjectMapper objectMapper;
 
     @Override
-    public Mono<BaseAuthorResponse> findById(Long id) {
+    public Mono<BaseAuthorResponse> getAuthorBaseResponseById(Long id) {
         return authorRepository.findByUserId(id)
                 .map(authorMapper::toDto)
                 .switchIfEmpty(Mono.error(new AuthorNotFoundException()));
@@ -77,6 +77,14 @@ public class AuthorServiceImpl implements AuthorService {
         return userRepository.findByUsername(username)
                 .flatMap(user -> authorRepository.findByUserId(user.getId()))
                 .switchIfEmpty(Mono.error(new AuthorNotFoundException()));
+    }
+
+    @Override
+    public Mono<Author> findById(Long id) {
+        if (id == null) {
+            return Mono.empty();
+        }
+        return authorRepository.findById(id);
     }
 
     private List<SocialLink> parseSocialLinks(Json json) {

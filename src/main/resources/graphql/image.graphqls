@@ -1,9 +1,3 @@
-scalar Upload
-
-extend type Mutation {
-    uploadImage(file: Upload!): Image!
-}
-
 type Image {
     id: ID!
     fileName: String!
