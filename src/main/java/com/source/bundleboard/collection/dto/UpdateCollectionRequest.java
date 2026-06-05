@@ -1,15 +1,14 @@
 package com.source.bundleboard.collection.dto;
 
-public record CollectionResponse(
+import java.math.BigDecimal;
 
-        Long id,
+public record UpdateCollectionRequest(
 
         String name,
 
         String description,
 
-        Double price,
+        BigDecimal price
 
-        Long authorId
 ) {
 }

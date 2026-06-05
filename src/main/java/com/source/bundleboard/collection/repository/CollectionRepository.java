@@ -1,6 +1,6 @@
 package com.source.bundleboard.collection.repository;
 
-import com.source.bundleboard.collection.dto.CollectionWithImageRow;
+import com.source.bundleboard.collection.dto.CollectionRow;
 import com.source.bundleboard.collection.model.Collection;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.r2dbc.repository.Query;
@@ -16,18 +16,10 @@ public interface CollectionRepository extends R2dbcRepository<Collection, Long> 
     Mono<Collection> findCollectionById(Long id);
 
     @Query("""
-        SELECT 
-            c.id AS id, 
-            c.name AS name, 
-            c.price AS price, 
-            c.description AS description, 
-            i.file_path AS preview_file_path, 
-            i.file_name AS preview_file_name
-        FROM collections c
-        LEFT JOIN images i ON c.preview_image_id = i.id
-        WHERE c.authors_id = :authorId
+    SELECT id, name, price, description FROM collections
+        WHERE authors_id = :authorId
     """)
-    Flux<CollectionWithImageRow> findAllByAuthorId(Long authorId);
+    Flux<CollectionRow> findAllByAuthorId(Long authorId);
 
     Flux<Collection> findAllBy(Pageable pageable);
 

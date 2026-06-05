@@ -23,12 +23,15 @@ public class S3Properties {
     @NotBlank(message = "S3 Secret Key is required")
     private String secretKey;
 
-    @NotBlank(message = "S3 Bucket Name is required")
-    private String bucket;
+    @NotBlank(message = "Previews Bucket Name is required")
+    private String previewsBucket;
+
+    @NotBlank(message = "Previews Public URL Prefix is required")
+    private String previewsPublicUrlPrefix;
+
+    @NotBlank(message = "Vault Bucket Name is required")
+    private String vaultBucket;
 
     @NotBlank(message = "S3 Region is required")
     private String region;
-
-    @NotBlank(message = "S3 Public URL Prefix is required")
-    private String publicUrlPrefix;
 }

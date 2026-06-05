@@ -1,4 +1,4 @@
-package com.source.bundleboard.collectiontag.model;
+package com.source.bundleboard.collectionTag.model;
 
 import lombok.*;
 import org.springframework.data.annotation.Id;

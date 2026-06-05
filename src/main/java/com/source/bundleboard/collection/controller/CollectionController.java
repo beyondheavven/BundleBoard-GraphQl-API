@@ -4,6 +4,7 @@ import com.source.bundleboard.author.dto.AuthorResponse;
 import com.source.bundleboard.author.dto.AuthorShortResponse;
 import com.source.bundleboard.author.service.AuthorService;
 import com.source.bundleboard.collection.dto.*;
+import com.source.bundleboard.collection.model.Collection;
 import com.source.bundleboard.collection.service.CollectionService;
 import com.source.bundleboard.image.dto.ImageShortResponse;
 import com.source.bundleboard.image.service.PreviewImageService;
@@ -16,13 +17,10 @@ import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.graphql.data.method.annotation.SchemaMapping;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.security.Principal;
 
 @Controller
 @RequiredArgsConstructor
@@ -36,11 +34,10 @@ public class CollectionController {
 
     private final MediaResourceService mediaResourceService;
 
-
     @PreAuthorize("permitAll()")
     @QueryMapping
     public Flux<CollectionResponse> getAllCollections(@Argument int page, @Argument int size) {
-        return collectionService.getAllCollections(page,size);
+        return collectionService.getAllCollections(page, size);
     }
 
     @PreAuthorize("permitAll()")
@@ -65,14 +62,14 @@ public class CollectionController {
 
     @PreAuthorize("hasAnyRole('ADMIN', 'AUTHOR')")
     @MutationMapping
-    public Mono<GetCollectionByIdResponse> updateCollection(@Argument Long id, @Argument(name = "input") UpdateCollectionDto collection) {
+    public Mono<GetCollectionByIdResponse> updateCollection(@Argument Long id, @Argument(name = "input") UpdateCollectionRequest collection) {
         return collectionService.updateCollection(id, collection);
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'AUTHOR')")
     @MutationMapping
-    public Mono<Boolean> deleteCollection(@Argument Long id) {
-        return collectionService.deleteCollection(id);
+    public Mono<Boolean> deleteCollection(@Argument Long id, @Argument String folderPath) {
+        return collectionService.deleteCollection(id, folderPath);
     }
 
     @SchemaMapping(typeName = "CollectionResponse", field = "author")
@@ -80,19 +77,39 @@ public class CollectionController {
         return authorService.findShortResponseById(collection.authorId());
     }
 
-    @SchemaMapping(typeName = "CollectionResponse", field = "previewImage")
-    public Mono<ImageShortResponse> getPreviewImage(CollectionResponse collection) {
-        return imageService.findShortResponseById(collection.previewImageId());
-    }
-
     @SchemaMapping(typeName = "GetCollectionByIdResponse", field = "author")
     public Mono<AuthorResponse> getFullAuthor(GetCollectionByIdResponse collection) {
         return authorService.findFullAuthorById(collection.authorId());
     }
 
-    @SchemaMapping(typeName = "GetCollectionByIdResponse", field = "previewImage")
-    public Mono<ImageShortResponse> getPreviewImageForDetails(GetCollectionByIdResponse collection) {
-        return imageService.findShortResponseById(collection.previewImageId());
+    @SchemaMapping(typeName = "Collection", field = "author")
+    public Mono<AuthorResponse> getAuthor(Collection collection) {
+        return authorService.findFullAuthorById(collection.getAuthorId());
+    }
+
+    @SchemaMapping(typeName = "CollectionResponse", field = "galleryImages")
+    public Flux<ImageShortResponse> getGalleryImages(CollectionResponse collection) {
+        return imageService.findAllShortResponsesByCollectionId(collection.id());
+    }
+
+    @SchemaMapping(typeName = "GetCollectionByIdResponse", field = "galleryImages")
+    public Flux<ImageShortResponse> getGalleryImagesForDetails(GetCollectionByIdResponse collection) {
+        return imageService.findAllShortResponsesByCollectionId(collection.id());
+    }
+
+    @SchemaMapping(typeName = "Collection", field = "galleryImages")
+    public Flux<ImageShortResponse> getGalleryImagesForCollection(Collection collection) {
+        return imageService.findAllShortResponsesByCollectionId(collection.getId());
+    }
+
+    @SchemaMapping(typeName = "AuthoredCollectionResponse", field = "galleryImages")
+    public Flux<ImageShortResponse> getGalleryImagesForAuthored(AuthoredCollectionResponse collection) {
+        return imageService.findAllShortResponsesByCollectionId(collection.id());
+    }
+
+    @SchemaMapping(typeName = "CollectionShortResponse", field = "galleryImages")
+    public Flux<ImageShortResponse> getGalleryImagesForShort(CollectionShortResponse collection) {
+        return imageService.findAllShortResponsesByCollectionId(collection.id());
     }
 
     @SchemaMapping(typeName = "GetCollectionByIdResponse", field = "mediaResource")
@@ -100,5 +117,8 @@ public class CollectionController {
         return mediaResourceService.findGetMediaResourceById(collection.mediaResourceId());
     }
 
-
+    @SchemaMapping(typeName = "Collection", field = "mediaResource")
+    public Mono<GetMediaResourceByIdResponse> getMediaResource(Collection collection) {
+        return mediaResourceService.findGetMediaResourceById(collection.getMediaResourceId());
+    }
 }
