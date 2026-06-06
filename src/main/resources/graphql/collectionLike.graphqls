@@ -1,0 +1,7 @@
+extend type Query {
+    getLikedCollections: [CollectionResponse!]!
+}
+
+extend type Mutation {
+    toggleFavorite(collectionId: ID!): Boolean!
+}

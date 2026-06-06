@@ -35,6 +35,8 @@ type CollectionResponse {
     price: Float!
     author: AuthorShortResponse!
     galleryImages: [ImageShortResponse!]!
+    likesCount: Int!
+    isLiked: Boolean!
 }
 
 type GetCollectionByIdResponse {
@@ -46,6 +48,8 @@ type GetCollectionByIdResponse {
     author: AuthorResponse!
     galleryImages: [ImageShortResponse!]!
     mediaResource: GetMediaResourceByIdResponse!
+    likesCount: Int!
+    isLiked: Boolean!
 }
 
 type CollectionShortResponse{
@@ -60,6 +64,8 @@ type AuthoredCollectionResponse {
     price: Float!
     description: String!
     galleryImages: [ImageShortResponse!]!
+    likesCount: Int!
+    isLiked: Boolean!
 }
 
 type CreateCollectionResponse {
