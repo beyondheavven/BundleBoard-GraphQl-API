@@ -39,4 +39,12 @@ public interface CollectionRepository extends R2dbcRepository<Collection, Long> 
         WHERE t.name = :tagName
     """)
     Mono<Long> countCollectionsByTagName(String tagName);
+
+    @Query("""
+    SELECT c.* FROM collections c
+    INNER JOIN collection_likes cl ON c.id = cl.collection_id
+    WHERE cl.author_id = :authorId
+    ORDER BY cl.created_at DESC
+    """)
+    Flux<Collection> findLikedCollectionsByAuthorId(Long authorId);
 }

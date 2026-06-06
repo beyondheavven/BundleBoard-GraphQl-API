@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
@@ -235,6 +236,22 @@ public class CollectionServiceImpl implements CollectionService {
                             });
                 })
                 .map(collectionMapper::toGetDto);
+    }
+
+    @Override
+    public Flux<CollectionResponse> getLikedCollections() {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(ctx -> ctx.getAuthentication().getName())
+                .flatMapMany(username ->
+                        authorService.findByUsername(username)
+                                .flatMapMany(author -> this.findLikedCollectionsByAuthorId(author.getId()))
+                );
+    }
+
+    @Override
+    public Flux<CollectionResponse> findLikedCollectionsByAuthorId(Long authorId) {
+        return collectionRepository.findLikedCollectionsByAuthorId(authorId)
+                .map(collectionMapper::toDto);
     }
 
     @Transactional
