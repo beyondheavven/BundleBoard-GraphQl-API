@@ -72,6 +72,12 @@ public class CollectionController {
         return collectionService.deleteCollection(id, folderPath);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'AUTHOR')")
+    @QueryMapping
+    public Flux<CollectionResponse> getLikedCollections() {
+        return collectionService.getLikedCollections();
+    }
+
     @SchemaMapping(typeName = "CollectionResponse", field = "author")
     public Mono<AuthorShortResponse> getAuthor(CollectionResponse collection) {
         return authorService.findShortResponseById(collection.authorId());
