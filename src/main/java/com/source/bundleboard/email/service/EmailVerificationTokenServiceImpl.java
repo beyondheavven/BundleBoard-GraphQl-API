@@ -5,27 +5,31 @@ import com.source.bundleboard.api.exception.UserNotFoundException;
 import com.source.bundleboard.api.exception.UserStatusException;
 import com.source.bundleboard.email.dto.EmailResponse;
 import com.source.bundleboard.email.dto.TokenEntity;
-import com.source.bundleboard.email.mail.service.MailService;
+import com.source.bundleboard.email.mail.propeties.MailProperties;
 import com.source.bundleboard.email.model.EmailVerificationToken;
 import com.source.bundleboard.email.model.EmailTokenStatus;
 import com.source.bundleboard.email.model.EmailTokenType;
 import com.source.bundleboard.email.properties.EmailVerificationProperties;
 import com.source.bundleboard.email.repository.EmailVerificationTokenRepository;
+import com.source.bundleboard.rabbitmq.dto.EmailTask;
+import com.source.bundleboard.rabbitmq.producer.TaskProducer;
 import com.source.bundleboard.user.model.User;
 import com.source.bundleboard.user.model.UserStatus;
 import com.source.bundleboard.user.service.UserService;
+import com.source.bundleboard.utils.AppLinkBuilder;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
-
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +42,11 @@ public class EmailVerificationTokenServiceImpl implements EmailVerificationToken
 
     private final UserService userService;
 
-    private final MailService mailService;
+    private final TaskProducer taskProducer;
+
+    private final MailProperties mailProperties;
+
+    private final AppLinkBuilder appLinkBuilder;
 
     private final SecureRandom random = new SecureRandom();
 
@@ -76,9 +84,8 @@ public class EmailVerificationTokenServiceImpl implements EmailVerificationToken
                 .flatMap(user -> {
                     TokenEntity tokenEntity = createTokenEntity(user.getId(), EmailTokenType.change_email);
                     tokenEntity.token().setNewEmail(newEmail);
-                    return emailVerificationTokenRepository.save(tokenEntity.token())
-                            .flatMap(token -> mailService.sendVerificationEmail(newEmail, tokenEntity.rawToken()))
-                            .thenReturn(new EmailResponse(true, "Email verification link sent to " + newEmail, null));
+
+                    return getMono(newEmail, tokenEntity);
                 });
     }
 
@@ -89,10 +96,25 @@ public class EmailVerificationTokenServiceImpl implements EmailVerificationToken
                 .switchIfEmpty(Mono.error(new UserNotFoundException()))
                 .flatMap(user -> {
                     TokenEntity tokenEntity = createTokenEntity(user.getId(), EmailTokenType.verify_email);
-                    return emailVerificationTokenRepository.save(tokenEntity.token())
-                            .flatMap(token -> mailService.sendVerificationEmail(email, tokenEntity.rawToken()))
-                            .thenReturn(new EmailResponse(true, "Email verification link sent to " + email, null));
+
+                    return getMono(email, tokenEntity);
                 });
+    }
+
+    @NotNull
+    private Mono<EmailResponse> getMono(String email, TokenEntity tokenEntity) {
+        return emailVerificationTokenRepository.save(tokenEntity.token())
+                .flatMap(token -> {
+                    String link = appLinkBuilder.buildLink(mailProperties.getPaths().getVerificationEmail(), tokenEntity.rawToken());
+                    EmailTask task = new EmailTask(
+                            email,
+                            mailProperties.getSubjects().getVerificationEmail(),
+                            mailProperties.getTemplates().getVerificationEmail(),
+                            Map.of("verificationLink", link)
+                    );
+                    return taskProducer.sendEmailTask(task);
+                })
+                .thenReturn(new EmailResponse(true, "Email verification link sent to " + email, null));
     }
 
     private TokenEntity createTokenEntity(Long userId, EmailTokenType emailTokenType) {

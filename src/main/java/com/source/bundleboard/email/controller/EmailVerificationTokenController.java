@@ -31,7 +31,4 @@ public class EmailVerificationTokenController {
         return tokenService.resendVerificationEmail(email);
     }
 
-
-
-
 }
