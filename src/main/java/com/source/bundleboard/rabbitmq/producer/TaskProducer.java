@@ -9,4 +9,6 @@ public interface TaskProducer {
     Mono<Void> sendEmailTask(EmailTask task);
 
     Mono<Void> sendStorageTask(StorageTask storageTask);
+
+    Mono<Void> sendWebhookTask(String eventJson);
 }

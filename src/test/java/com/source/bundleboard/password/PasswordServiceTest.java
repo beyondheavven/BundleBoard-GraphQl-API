@@ -4,7 +4,6 @@ import com.source.bundleboard.api.exception.InvalidTokenException;
 import com.source.bundleboard.api.exception.UnmatchedPasswordsException;
 import com.source.bundleboard.api.exception.UserStatusException;
 import com.source.bundleboard.email.mail.propeties.MailProperties;
-import com.source.bundleboard.email.mail.service.MailService;
 import com.source.bundleboard.email.properties.EmailVerificationProperties;
 import com.source.bundleboard.email.service.EmailVerificationTokenService;
 import com.source.bundleboard.password.dto.*;

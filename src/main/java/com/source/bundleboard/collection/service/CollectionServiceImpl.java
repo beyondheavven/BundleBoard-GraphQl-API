@@ -252,6 +252,16 @@ public class CollectionServiceImpl implements CollectionService {
                 .map(collectionMapper::toDto);
     }
 
+    @Override
+    public Mono<CollectionShortResponse> findShortById(Long collectionId) {
+        return collectionRepository.findById(collectionId)
+                .map(collection -> new CollectionShortResponse(
+                        collection.getId(),
+                        collection.getName(),
+                        null
+                ));
+    }
+
     @Transactional
     @Override
     public Mono<Boolean> deleteCollection(Long id, String folderPath) {
@@ -289,7 +299,8 @@ public class CollectionServiceImpl implements CollectionService {
                 .switchIfEmpty(Mono.error(new CollectionNotFoundException()))
                 .map(collection -> new CollectionShortResponse(
                         collection.getId(),
-                        collection.getName()
+                        collection.getName(),
+                        null
                 ));
     }
 

@@ -2,6 +2,7 @@ package com.source.bundleboard.purchase.service;
 
 import com.source.bundleboard.collection.service.CollectionService;
 import com.source.bundleboard.purchase.dto.PurchaseBaseResponse;
+import com.source.bundleboard.purchase.item.dto.PurchaseItemBaseResponse;
 import com.source.bundleboard.purchase.item.mapper.PurchaseItemMapper;
 import com.source.bundleboard.purchase.item.model.PurchaseItem;
 import com.source.bundleboard.purchase.item.service.PurchaseItemService;
@@ -59,11 +60,34 @@ public class PurchaseServiceImpl implements PurchaseService {
                 });
     }
 
+    @Override
+    public Mono<List<PurchaseBaseResponse>> findAllLightweightByUserId(Long userId) {
+        return purchaseRepository.findAllByUserId(userId)
+                .map(purchase -> {
+                    return new PurchaseBaseResponse(
+                            purchase.getId(),
+                            purchase.getAmount(),
+                            purchase.getCurrency(),
+                            purchase.getStatus(),
+                            purchase.getCreatedAt() != null ? purchase.getCreatedAt() : null,
+                            null
+                    );
+                })
+                .collectList();
+    }
+
     private Mono<PurchaseBaseResponse> enrichPurchaseWithAsset(Purchase purchase) {
         return purchaseItemService.findAllByPurchaseId(purchase.getId())
-                .flatMap(item ->
-                        collectionService.findShortResponseById(item.getCollectionId())
-                                .map(collectionMin -> purchaseItemMapper.toItemResponse(item, collectionMin))
+                .flatMap(itemDto ->
+                        collectionService.findShortResponseById(itemDto.collectionId())
+                                .map(collectionMin ->
+                                        new PurchaseItemBaseResponse(
+                                                itemDto.id(),
+                                                itemDto.snapshotPrice(),
+                                                itemDto.collectionId(),
+                                                collectionMin
+                                        )
+                                )
                 )
                 .collectList()
                 .map(enrichedItems ->

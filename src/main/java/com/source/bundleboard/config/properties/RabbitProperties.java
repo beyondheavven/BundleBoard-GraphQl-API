@@ -32,4 +32,7 @@ public class RabbitProperties {
 
     @NotBlank(message = "RabbitMQ emailQueue is required")
     private String emailQueue;
+
+    @NotBlank(message = "RabbitMQ webhookQueue is required")
+    private String webhookQueue;
 }

@@ -1,5 +1,6 @@
 package com.source.bundleboard.purchase.item.service;
 
+import com.source.bundleboard.purchase.item.dto.PurchaseItemBaseResponse;
 import com.source.bundleboard.purchase.item.model.PurchaseItem;
 import com.source.bundleboard.purchase.item.repository.PurchaseItemRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +27,13 @@ public class PurchaseItemServiceImpl implements PurchaseItemService {
     }
 
     @Override
-    public Flux<PurchaseItem> findAllByPurchaseId(Long id) {
-        return purchaseItemRepository.findAllByPurchaseId(id);
+    public Flux<PurchaseItemBaseResponse> findAllByPurchaseId(Long id) {
+        return purchaseItemRepository.findAllByPurchaseId(id)
+                .map(item -> new PurchaseItemBaseResponse(
+                        item.getId(),
+                        item.getSnapshotPrice(),
+                        item.getCollectionId(),
+                        null
+                ));
     }
 }

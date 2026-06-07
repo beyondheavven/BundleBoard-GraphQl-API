@@ -25,6 +25,11 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public Queue webhookQueue() {
+        return new Queue(rabbitProperties.getWebhookQueue(), true);
+    }
+
+    @Bean
     public MessageConverter jsonMessageConverter() {
         return new JacksonJsonMessageConverter();
     }

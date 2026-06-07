@@ -58,6 +58,8 @@ services:
       - PAYMENT_SUCCESS_URL=${PAYMENT_SUCCESS_URL}
       - PAYMENT_CANCEL_URL=${PAYMENT_CANCEL_URL}
 
+      - RABBITMQ_HOST=${RABBITMQ_HOST}
+      - RABBITMQ_PORT=${RABBITMQ_PORT}
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
     ports:
@@ -117,10 +119,15 @@ services:
       - "5672:5672"
       - "15672:15672"
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:guest}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:guest}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
     networks:
       - bundleboard_net
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "-q", "ping" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
 
   redis:
     image: redis:7-alpine
