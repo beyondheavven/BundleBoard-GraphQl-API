@@ -1,17 +1,11 @@
 package com.source.bundleboard.email.mail.service;
 
-import reactor.core.publisher.Mono;
-
-import java.math.BigDecimal;
+import java.util.Map;
 
 public interface MailService {
 
-    Mono<Void> sendVerificationEmail(String toEmail, String verificationToken);
+    void sendTemplateEmailSync(String toEmail, String subject, String template, Map<String, Object> model);
 
-    Mono<Void> sendPasswordChangeEmail(String toEmail, String code);
-
-    Mono<Void> sendPasswordResetLink(String toEmail, String link);
-
-    Mono<Void> sendPurchaseReceipt(String toEmail, String username, BigDecimal amount, String currency);
+    String buildLink(String path, String token);
 
 }

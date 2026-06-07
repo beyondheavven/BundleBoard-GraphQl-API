@@ -10,6 +10,8 @@ public record PurchaseItemBaseResponse(
 
         BigDecimal snapshotPrice,
 
+        Long collectionId,
+
         CollectionShortResponse asset
 ) {
 }

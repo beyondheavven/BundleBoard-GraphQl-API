@@ -12,15 +12,17 @@ import com.source.bundleboard.collection.repository.CollectionRepository;
 import com.source.bundleboard.collectionImage.model.CollectionImage;
 import com.source.bundleboard.collectionImage.repository.CollectionImageRepository;
 import com.source.bundleboard.collectionTag.serivce.CollectionTagService;
-import com.source.bundleboard.image.dto.ImageShortResponse;
 import com.source.bundleboard.image.model.PreviewImage;
 import com.source.bundleboard.image.service.PreviewImageService;
+import com.source.bundleboard.mediaresource.dto.MediaResourceInput;
 import com.source.bundleboard.mediaresource.model.MediaFileType;
 import com.source.bundleboard.mediaresource.model.MediaResource;
 import com.source.bundleboard.mediaresource.model.MimeType;
 import com.source.bundleboard.mediaresource.repository.MediaResourceRepository;
 import com.source.bundleboard.collectionTag.model.CollectionTag;
-import com.source.bundleboard.storage.SupabaseStorageService;
+import com.source.bundleboard.rabbitmq.dto.StorageOperationType;
+import com.source.bundleboard.rabbitmq.dto.StorageTask;
+import com.source.bundleboard.rabbitmq.producer.TaskProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -33,7 +35,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -56,7 +57,7 @@ public class CollectionServiceImpl implements CollectionService {
 
     private final CollectionTagService collectionTagService;
 
-    private final SupabaseStorageService supabaseStorageService;
+    private final TaskProducer taskProducer;
 
     private final CollectionImageRepository collectionImageRepository;
 
@@ -86,7 +87,6 @@ public class CollectionServiceImpl implements CollectionService {
             return authorService.findByUsername(username)
                     .switchIfEmpty(Mono.error(new AuthorNotFoundException()))
                     .flatMap(author -> {
-
                         MediaResource mediaResource = new MediaResource();
                         mediaResource.setFileName(input.mediaResource().fileName());
                         mediaResource.setFilePath(input.mediaResource().filePath());
@@ -97,7 +97,6 @@ public class CollectionServiceImpl implements CollectionService {
 
                         return mediaResourceRepository.save(mediaResource)
                                 .flatMap(savedResource -> {
-
                                     Collection collection = new Collection();
                                     collection.setName(input.name());
                                     collection.setDescription(input.description());
@@ -108,7 +107,6 @@ public class CollectionServiceImpl implements CollectionService {
 
                                     return collectionRepository.save(collection)
                                             .flatMap(savedCollection -> {
-
                                                 List<PreviewImage> newImages = input.galleryImages().stream()
                                                         .map(imgDto -> {
                                                             PreviewImage img = new PreviewImage();
@@ -202,7 +200,7 @@ public class CollectionServiceImpl implements CollectionService {
                                                     .collect(Collectors.joining(","));
 
                                             Mono<Void> purgeStorage = orphanedPaths.isEmpty() ? Mono.empty() :
-                                                    supabaseStorageService.deleteFiles(orphanedPaths, "previews");
+                                                    taskProducer.sendStorageTask(new StorageTask(StorageOperationType.DELETE_FILES, orphanedPaths, "previews"));
 
                                             Mono<Void> purgeDb = Flux.fromIterable(orphanedImages)
                                                     .flatMap(img -> previewImageService.deleteById(img.getId()))
@@ -254,6 +252,16 @@ public class CollectionServiceImpl implements CollectionService {
                 .map(collectionMapper::toDto);
     }
 
+    @Override
+    public Mono<CollectionShortResponse> findShortById(Long collectionId) {
+        return collectionRepository.findById(collectionId)
+                .map(collection -> new CollectionShortResponse(
+                        collection.getId(),
+                        collection.getName(),
+                        null
+                ));
+    }
+
     @Transactional
     @Override
     public Mono<Boolean> deleteCollection(Long id, String folderPath) {
@@ -274,8 +282,8 @@ public class CollectionServiceImpl implements CollectionService {
                                     .then());
 
                     Mono<Void> storageCleanup = (folderPath != null && !folderPath.isBlank())
-                            ? supabaseStorageService.deleteFolder(folderPath, "previews")
-                            .then(supabaseStorageService.deleteFolder(folderPath, "vault"))
+                            ? taskProducer.sendStorageTask(new StorageTask(StorageOperationType.DELETE_FOLDERS, folderPath, "previews"))
+                            .then(taskProducer.sendStorageTask(new StorageTask(StorageOperationType.DELETE_FOLDERS, folderPath, "vault")))
                             : Mono.empty();
 
                     return databaseCleanup
@@ -291,7 +299,8 @@ public class CollectionServiceImpl implements CollectionService {
                 .switchIfEmpty(Mono.error(new CollectionNotFoundException()))
                 .map(collection -> new CollectionShortResponse(
                         collection.getId(),
-                        collection.getName()
+                        collection.getName(),
+                        null
                 ));
     }
 

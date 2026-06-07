@@ -9,6 +9,7 @@ import com.source.bundleboard.author.mapper.AuthorMapper;
 import com.source.bundleboard.author.model.Author;
 import com.source.bundleboard.author.repository.AuthorRepository;
 import com.source.bundleboard.user.repository.UserRepository;
+import com.source.bundleboard.user.service.UserService;
 import io.r2dbc.postgresql.codec.Json;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,11 +29,11 @@ public class AuthorServiceImpl implements AuthorService {
 
     private final AuthorRepository authorRepository;
 
-    private final UserRepository userRepository;
-
     private final AuthorMapper authorMapper;
 
     private final ObjectMapper objectMapper;
+
+    private final UserService userService;
 
     @Override
     public Mono<BaseAuthorResponse> getAuthorBaseResponseById(Long id) {
@@ -44,7 +45,7 @@ public class AuthorServiceImpl implements AuthorService {
     @Override
     public Mono<AuthorShortResponse> findShortResponseById(Long id) {
         return authorRepository.findById(id)
-                .flatMap(author -> userRepository.findById(author.getUserId())
+                .flatMap(author -> userService.getUserById(author.getUserId())
                         .map(user -> new AuthorShortResponse(
                                 author.getId(),
                                 author.getRating(),
@@ -58,7 +59,7 @@ public class AuthorServiceImpl implements AuthorService {
     @Override
     public Mono<AuthorResponse> findFullAuthorById(Long id) {
         return authorRepository.findById(id)
-                .flatMap(author -> userRepository.findById(author.getUserId())
+                .flatMap(author -> userService.getUserById(author.getUserId())
                         .map(user -> new AuthorResponse(
                                 author.getId(),
                                 author.getBio(),
@@ -74,7 +75,7 @@ public class AuthorServiceImpl implements AuthorService {
 
     @Override
     public Mono<Author> findByUsername(String username) {
-        return userRepository.findByUsername(username)
+        return userService.findByUsername(username)
                 .flatMap(user -> authorRepository.findByUserId(user.getId()))
                 .switchIfEmpty(Mono.error(new AuthorNotFoundException()));
     }
@@ -85,6 +86,12 @@ public class AuthorServiceImpl implements AuthorService {
             return Mono.empty();
         }
         return authorRepository.findById(id);
+    }
+
+    @Override
+    public Mono<Author> findByUserId(Long userId) {
+        return authorRepository.findByUserId(userId)
+                .switchIfEmpty(Mono.error(new AuthorNotFoundException()));
     }
 
     private List<SocialLink> parseSocialLinks(Json json) {

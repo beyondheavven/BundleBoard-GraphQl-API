@@ -15,8 +15,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
-import reactor.test.StepVerifier;
 
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -39,83 +41,50 @@ public class MailServiceTest {
     @InjectMocks
     private MailServiceImpl mailService;
 
-    @Mock private MimeMessage mimeMessage;
-
-    private final MailProperties.Paths paths = new MailProperties.Paths();
-    private final MailProperties.Subjects subjects = new MailProperties.Subjects();
-    private final MailProperties.Templates templates = new MailProperties.Templates();
+    @Mock
+    private MimeMessage mimeMessage;
 
     @BeforeEach
     void setUp() {
-        lenient().when(mailProperties.getPaths()).thenReturn(paths);
-        lenient().when(mailProperties.getSubjects()).thenReturn(subjects);
-        lenient().when(mailProperties.getTemplates()).thenReturn(templates);
-        lenient().when(mailProperties.getFrom()).thenReturn("noreply@bundleboard.com");
-
         lenient().when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        lenient().when(mailProperties.getFrom()).thenReturn("noreply@bundleboard.com");
+        lenient().when(mailProperties.getFromName()).thenReturn("BundleBoard");
     }
 
-
     @Test
-    void sendVerificationEmail_Success() {
-        paths.setVerificationEmail("/verify");
-        subjects.setVerificationEmail("Verify your email");
-        templates.setVerificationEmail("verification-template");
+    void sendTemplateEmailSync_Success() {
+        String toEmail = "user@test.com";
+        String subject = "Test Subject";
+        String template = "test-template";
+        Map<String, Object> model = Map.of("key", "value");
 
-        when(emailVerificationProperties.getVerifyEmailUrl()).thenReturn("https://bundleboard.com");
-        when(templateEngine.process(eq("verification-template"), any(Context.class)))
-                .thenReturn("<html>Verification Link</html>");
+        when(templateEngine.process(eq(template), any(Context.class)))
+                .thenReturn("<html>Content</html>");
 
-        StepVerifier.create(mailService.sendVerificationEmail("user@test.com", "token123"))
-                .verifyComplete();
-
+        assertDoesNotThrow(() -> mailService.sendTemplateEmailSync(toEmail, subject, template, model));
         verify(mailSender).send(mimeMessage);
-        verify(templateEngine).process(eq("verification-template"), any(Context.class));
+        verify(templateEngine).process(eq(template), any(Context.class));
     }
 
     @Test
-    void sendPasswordChangeEmail_Success() {
-        subjects.setResetPassword("Password Reset Code");
-        templates.setResetPassword("reset-code-template");
-
-        when(templateEngine.process(eq("reset-code-template"), any(Context.class)))
-                .thenReturn("<html>Your code: 1234</html>");
-        StepVerifier.create(mailService.sendPasswordChangeEmail("user@test.com", "1234"))
-                .verifyComplete();
-
-        verify(mailSender).send(mimeMessage);
-    }
-
-    @Test
-    void sendPasswordResetLink_Success() {
-        subjects.setResetPassword("Password Reset Link");
-        templates.setResetPassword("reset-link-template");
-
-        when(templateEngine.process(eq("reset-link-template"), any(Context.class)))
-                .thenReturn("<html>Click here to reset</html>");
-
-        StepVerifier.create(mailService.sendPasswordResetLink("user@test.com", "https://reset-url"))
-                .verifyComplete();
-
-        verify(mailSender).send(mimeMessage);
-    }
-
-
-    @Test
-    void sendTemplateEmail_ThrowsBadTemplateEmailException_WhenMessagingExceptionOccurs() throws Exception {
-        subjects.setResetPassword("Fail Test");
-        templates.setResetPassword("fail-template");
-
-        when(templateEngine.process(eq("fail-template"), any(Context.class)))
-                .thenReturn("<html>Fail</html>");
+    void sendTemplateEmailSync_ThrowsBadTemplateEmailException_WhenMessagingExceptionOccurs() {
+        when(templateEngine.process(anyString(), any(Context.class))).thenReturn("content");
 
         doAnswer(invocation -> {
             throw new MessagingException("SMTP Connection failed");
         }).when(mailSender).send(any(MimeMessage.class));
+        assertThrows(BadTemplateEmailException.class, () ->
+                mailService.sendTemplateEmailSync("user@test.com", "Sub", "tpl", Map.of())
+        );
+    }
 
-        StepVerifier.create(mailService.sendPasswordResetLink("invalid-email", "https://reset-url"))
-                .expectErrorMatches(throwable -> throwable instanceof BadTemplateEmailException
-                        && throwable.getMessage().contains("SMTP Connection failed"))
-                .verify();
+    @Test
+    void buildLink_ShouldReturnCorrectUrl() {
+        String baseUrl = "https://bundleboard.com";
+        String path = "/verify";
+        String token = "abc123";
+        when(emailVerificationProperties.getVerifyEmailUrl()).thenReturn(baseUrl);
+        String result = mailService.buildLink(path, token);
+        assertEquals("https://bundleboard.com/verify?token=abc123", result);
     }
 }

@@ -3,7 +3,7 @@ package com.source.bundleboard.password.service;
 import com.source.bundleboard.api.exception.InvalidTokenException;
 import com.source.bundleboard.api.exception.UnmatchedPasswordsException;
 import com.source.bundleboard.api.exception.UserStatusException;
-import com.source.bundleboard.email.mail.service.MailService;
+import com.source.bundleboard.email.mail.propeties.MailProperties;
 import com.source.bundleboard.email.service.EmailVerificationTokenService;
 import com.source.bundleboard.password.dto.PasswordConfirmResetInput;
 import com.source.bundleboard.password.dto.PasswordChangeInput;
@@ -14,7 +14,10 @@ import com.source.bundleboard.password.model.PasswordResetToken;
 import com.source.bundleboard.password.model.PasswordResetType;
 import com.source.bundleboard.password.properties.PasswordResetTokenProperties;
 import com.source.bundleboard.password.repository.PasswordResetTokenRepository;
+import com.source.bundleboard.rabbitmq.dto.EmailTask;
+import com.source.bundleboard.rabbitmq.producer.TaskProducer;
 import com.source.bundleboard.user.service.UserService;
+import com.source.bundleboard.utils.AppLinkBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Service
@@ -33,13 +37,17 @@ public class PasswordServiceImpl implements PasswordService {
 
     private final UserService userService;
 
-    private final MailService mailService;
-
     private final PasswordEncoder passwordEncoder;
 
     private final EmailVerificationTokenService tokenService;
 
     private final PasswordResetTokenProperties passwordResetTokenProperties;
+
+    private final TaskProducer taskProducer;
+
+    private final MailProperties mailProperties;
+
+    private final AppLinkBuilder appLinkBuilder;
 
     @Override
     public Mono<PasswordChangeResponse> requestPasswordChange(PasswordChangeInput input, UserDetails userDetails) {
@@ -54,8 +62,18 @@ public class PasswordServiceImpl implements PasswordService {
                     token.setType(PasswordResetType.change_password);
 
                     return passwordResetTokenRepository.save(token)
-                            .flatMap(savedToken -> mailService.sendPasswordChangeEmail(user.getEmail(), rawCode))
+                            .flatMap(savedToken -> {
+                                EmailTask task = new EmailTask(
+                                        user.getEmail(),
+                                        mailProperties.getSubjects().getResetPassword(),
+                                        mailProperties.getTemplates().getResetPassword(),
+                                        Map.of("resetCode", rawCode)
+                                );
+
+                                return taskProducer.sendEmailTask(task);
+                            })
                             .thenReturn(new PasswordChangeResponse(true, "Code sent successfully", null));
+
                 });
     }
 
@@ -91,8 +109,19 @@ public class PasswordServiceImpl implements PasswordService {
                     token.setType(PasswordResetType.reset_password);
 
                     return passwordResetTokenRepository.save(token)
-                            .flatMap(savedToken -> mailService.sendPasswordResetLink(user.getEmail(), rawToken))
-                            .thenReturn(new PasswordResetResponse(true, "Reset link sent to your email", rawToken));
+                            .flatMap(savedToken -> {
+                                String resetLink = appLinkBuilder.buildLink(mailProperties.getPaths().getResetPassword(), rawToken);
+
+                                EmailTask task = new EmailTask(
+                                        user.getEmail(),
+                                        mailProperties.getSubjects().getResetPassword(),
+                                        mailProperties.getTemplates().getResetPassword(),
+                                        Map.of("resetLink", resetLink)
+                                );
+
+                                return taskProducer.sendEmailTask(task);
+                            })
+                            .thenReturn(new PasswordResetResponse(true, "Reset link sent to email", rawToken));
                 })
                 .switchIfEmpty(Mono.error(new InvalidTokenException()));
     }
