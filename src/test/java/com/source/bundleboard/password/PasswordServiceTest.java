@@ -3,7 +3,9 @@ package com.source.bundleboard.password;
 import com.source.bundleboard.api.exception.InvalidTokenException;
 import com.source.bundleboard.api.exception.UnmatchedPasswordsException;
 import com.source.bundleboard.api.exception.UserStatusException;
+import com.source.bundleboard.email.mail.propeties.MailProperties;
 import com.source.bundleboard.email.mail.service.MailService;
+import com.source.bundleboard.email.properties.EmailVerificationProperties;
 import com.source.bundleboard.email.service.EmailVerificationTokenService;
 import com.source.bundleboard.password.dto.*;
 import com.source.bundleboard.password.model.PasswordResetToken;
@@ -11,8 +13,11 @@ import com.source.bundleboard.password.model.PasswordResetType;
 import com.source.bundleboard.password.properties.PasswordResetTokenProperties;
 import com.source.bundleboard.password.repository.PasswordResetTokenRepository;
 import com.source.bundleboard.password.service.PasswordServiceImpl;
+import com.source.bundleboard.rabbitmq.dto.EmailTask;
+import com.source.bundleboard.rabbitmq.producer.TaskProducer;
 import com.source.bundleboard.user.model.User;
 import com.source.bundleboard.user.service.UserService;
+import com.source.bundleboard.utils.AppLinkBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -44,7 +49,16 @@ public class PasswordServiceTest {
     private UserService userService;
 
     @Mock
-    private MailService mailService;
+    private TaskProducer taskProducer;
+
+    @Mock
+    private MailProperties mailProperties;
+
+    @Mock
+    private EmailVerificationProperties emailVerificationProperties;
+
+    @Mock
+    private AppLinkBuilder appLinkBuilder;
 
     @Mock
     private PasswordEncoder passwordEncoder;
@@ -71,6 +85,8 @@ public class PasswordServiceTest {
         lenient().when(mockUserDetails.getUsername()).thenReturn("user@example.com");
         lenient().when(passwordResetTokenProperties.getBlockDurationSeconds()).thenReturn(300);
         lenient().when(passwordResetTokenProperties.getMaxAttempts()).thenReturn(3);
+        lenient().when(mailProperties.getSubjects()).thenReturn(new MailProperties.Subjects());
+        lenient().when(mailProperties.getTemplates()).thenReturn(new MailProperties.Templates());
     }
 
     @Nested
@@ -84,7 +100,7 @@ public class PasswordServiceTest {
             when(tokenService.sha256Hex(anyString())).thenReturn("hashed_code");
             when(passwordEncoder.encode("newPass")).thenReturn("new_hashed_password");
             when(passwordResetTokenRepository.save(any(PasswordResetToken.class))).thenReturn(Mono.just(new PasswordResetToken()));
-            when(mailService.sendPasswordChangeEmail(eq("user@example.com"), anyString())).thenReturn(Mono.empty());
+            when(taskProducer.sendEmailTask(any(EmailTask.class))).thenReturn(Mono.empty());
 
             Mono<PasswordChangeResponse> result = passwordService.requestPasswordChange(input, mockUserDetails);
 
@@ -184,7 +200,8 @@ public class PasswordServiceTest {
             when(passwordEncoder.encode("")).thenReturn("empty_hash");
             when(passwordResetTokenRepository.save(any(PasswordResetToken.class)))
                     .thenReturn(Mono.just(new PasswordResetToken()));
-            when(mailService.sendPasswordResetLink("user@example.com", "raw_reset_token")).thenReturn(Mono.empty());
+            when(appLinkBuilder.buildLink(any(), eq("raw_reset_token"))).thenReturn("http://mock-link");
+            when(taskProducer.sendEmailTask(any(EmailTask.class))).thenReturn(Mono.empty());
 
             Mono<PasswordResetResponse> result = passwordService.requestPasswordReset(input);
 
