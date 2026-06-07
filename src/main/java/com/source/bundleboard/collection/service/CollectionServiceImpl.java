@@ -14,6 +14,7 @@ import com.source.bundleboard.collectionImage.repository.CollectionImageReposito
 import com.source.bundleboard.collectionTag.serivce.CollectionTagService;
 import com.source.bundleboard.image.model.PreviewImage;
 import com.source.bundleboard.image.service.PreviewImageService;
+import com.source.bundleboard.mediaresource.dto.MediaResourceInput;
 import com.source.bundleboard.mediaresource.model.MediaFileType;
 import com.source.bundleboard.mediaresource.model.MediaResource;
 import com.source.bundleboard.mediaresource.model.MimeType;
@@ -86,7 +87,6 @@ public class CollectionServiceImpl implements CollectionService {
             return authorService.findByUsername(username)
                     .switchIfEmpty(Mono.error(new AuthorNotFoundException()))
                     .flatMap(author -> {
-
                         MediaResource mediaResource = new MediaResource();
                         mediaResource.setFileName(input.mediaResource().fileName());
                         mediaResource.setFilePath(input.mediaResource().filePath());
@@ -97,7 +97,6 @@ public class CollectionServiceImpl implements CollectionService {
 
                         return mediaResourceRepository.save(mediaResource)
                                 .flatMap(savedResource -> {
-
                                     Collection collection = new Collection();
                                     collection.setName(input.name());
                                     collection.setDescription(input.description());
@@ -108,7 +107,6 @@ public class CollectionServiceImpl implements CollectionService {
 
                                     return collectionRepository.save(collection)
                                             .flatMap(savedCollection -> {
-
                                                 List<PreviewImage> newImages = input.galleryImages().stream()
                                                         .map(imgDto -> {
                                                             PreviewImage img = new PreviewImage();
