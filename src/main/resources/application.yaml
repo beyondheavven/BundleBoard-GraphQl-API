@@ -33,6 +33,14 @@ spring:
           starttls:
             enable: ${MAIL_SMTP_STARTTLS_ENABLE:false}
 
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    media-queue: bundleboard.media.queue
+    email-queue: bundleboard.email.queue
+
 logging:
   level:
     org.springframework.security: DEBUG

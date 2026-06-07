@@ -57,6 +57,9 @@ services:
       - WEBHOOK_SECRET_KEY=${WEBHOOK_SECRET_KEY}
       - PAYMENT_SUCCESS_URL=${PAYMENT_SUCCESS_URL}
       - PAYMENT_CANCEL_URL=${PAYMENT_CANCEL_URL}
+
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
     ports:
       - "8080:8080"
     networks:
@@ -104,6 +107,18 @@ services:
       - ./monitoring/grafana/provisioning/datasources/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
       - ./monitoring/grafana/provisioning/dashboards/dashboard.yml:/etc/grafana/provisioning/dashboards/dashboard.yml
       - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards/imported
+    networks:
+      - bundleboard_net
+
+  rabbitmq:
+    image: rabbitmq:4.0-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:guest}
     networks:
       - bundleboard_net
 
