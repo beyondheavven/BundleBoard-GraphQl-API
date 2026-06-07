@@ -2,37 +2,46 @@ package com.source.bundleboard.webhook.controller;
 
 
 import com.source.bundleboard.config.properties.StripeProperties;
+import com.source.bundleboard.rabbitmq.producer.TaskProducer;
 import com.source.bundleboard.webhook.service.WebhookService;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.net.Webhook;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import reactor.core.publisher.Mono;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/webhook")
 @RequiredArgsConstructor
 public class WebhookController {
 
-    private final WebhookService webhookService;
-
     private final StripeProperties stripeProperties;
 
+    private final TaskProducer taskProducer;
+
     @PostMapping("/stripe")
-    @ResponseStatus(HttpStatus.OK)
-    public Mono<Void> handleStripeWebhook(@RequestBody String payload, @RequestHeader("Stripe-Signature") String sigHeader) {
+    public Mono<ResponseEntity<String>> handleStripeWebhook(
+            @RequestBody String payload,
+            @RequestHeader("Stripe-Signature") String sigHeader) {
+
         return Mono.fromCallable(() ->
                         Webhook.constructEvent(payload, sigHeader, stripeProperties.getWebhookSecret())
                 )
-                .onErrorMap(SignatureVerificationException.class, ex ->
-                        new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid signature")
-                )
-                .flatMap(webhookService::processEvent)
-                .onErrorMap(ex -> !(ex instanceof ResponseStatusException), ex ->
-                        new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Webhook processing failed")
-                );
+                .flatMap(event -> {
+                    return taskProducer.sendWebhookTask(event.toJson());
+                })
+                .thenReturn(ResponseEntity.ok("Webhook received and queued"))
+                .onErrorResume(e -> {
+                    log.error("Error in webhook signature", e);
+                    return Mono.just(ResponseEntity.badRequest().body("Signature verification failed"));
+                });
     }
 }

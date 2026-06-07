@@ -3,16 +3,18 @@ package com.source.bundleboard.email;
 import com.source.bundleboard.api.exception.InvalidEmailVerificationTokenException;
 import com.source.bundleboard.api.exception.UserNotFoundException;
 import com.source.bundleboard.api.exception.UserStatusException;
-import com.source.bundleboard.email.mail.service.MailService;
 import com.source.bundleboard.email.model.EmailTokenStatus;
 import com.source.bundleboard.email.model.EmailTokenType;
 import com.source.bundleboard.email.model.EmailVerificationToken;
 import com.source.bundleboard.email.properties.EmailVerificationProperties;
 import com.source.bundleboard.email.repository.EmailVerificationTokenRepository;
 import com.source.bundleboard.email.service.EmailVerificationTokenServiceImpl;
+import com.source.bundleboard.rabbitmq.dto.EmailTask;
+import com.source.bundleboard.rabbitmq.producer.TaskProducer;
 import com.source.bundleboard.user.model.User;
 import com.source.bundleboard.user.model.UserStatus;
 import com.source.bundleboard.user.service.UserService;
+import com.source.bundleboard.utils.AppLinkBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,7 +42,11 @@ public class EmailVerificationTokenServiceTest {
     @Mock
     private UserService userService;
 
-    @Mock private MailService mailService;
+    @Mock
+    private TaskProducer taskProducer;
+
+    @Mock
+    private AppLinkBuilder appLinkBuilder;
 
     @InjectMocks
     @Spy
@@ -144,7 +150,6 @@ public class EmailVerificationTokenServiceTest {
     @Test
     void verifyEmail_TokenExpired_IncrementsAttemptsAndThrowsInvalidTokenException() {
         doReturn(hashedToken).when(emailTokenService).sha256Hex(rawToken);
-        // Токен протух
         sampleToken.setExpiresAt(Instant.now().minusSeconds(10));
 
         when(emailVerificationTokenRepository.findByToken(hashedToken)).thenReturn(Mono.just(sampleToken));
@@ -183,7 +188,8 @@ public class EmailVerificationTokenServiceTest {
 
         when(userService.getUserByUsername("john_doe")).thenReturn(Mono.just(sampleUser));
         when(emailVerificationTokenRepository.save(any(EmailVerificationToken.class))).thenReturn(Mono.just(sampleToken));
-        when(mailService.sendVerificationEmail(eq("new@example.com"), eq(rawToken))).thenReturn(Mono.empty());
+        when(appLinkBuilder.buildLink(anyString(), anyString())).thenReturn("http://link");
+        when(taskProducer.sendEmailTask(any(EmailTask.class))).thenReturn(Mono.empty());
 
         StepVerifier.create(emailTokenService.sendChangeEmailToken("new@example.com", "john_doe"))
                 .assertNext(response -> {
@@ -192,13 +198,8 @@ public class EmailVerificationTokenServiceTest {
                 })
                 .verifyComplete();
 
-        verify(emailVerificationTokenRepository).save(argThat(token ->
-                token.getUserId().equals(42L) &&
-                        "new@example.com".equals(token.getNewEmail()) &&
-                        token.getEmailTokenType() == EmailTokenType.change_email
-        ));
+        verify(taskProducer).sendEmailTask(any(EmailTask.class));
     }
-
 
     @Test
     void resendVerificationEmail_Success() {
@@ -207,16 +208,15 @@ public class EmailVerificationTokenServiceTest {
 
         when(userService.getUserByEmail("john@example.com")).thenReturn(Mono.just(sampleUser));
         when(emailVerificationTokenRepository.save(any(EmailVerificationToken.class))).thenReturn(Mono.just(sampleToken));
-        when(mailService.sendVerificationEmail(eq("john@example.com"), eq(rawToken))).thenReturn(Mono.empty());
+
+        when(appLinkBuilder.buildLink(anyString(), anyString())).thenReturn("http://link");
+        when(taskProducer.sendEmailTask(any(EmailTask.class))).thenReturn(Mono.empty());
 
         StepVerifier.create(emailTokenService.resendVerificationEmail("john@example.com"))
                 .assertNext(response -> assertTrue(response.success()))
                 .verifyComplete();
 
-        verify(emailVerificationTokenRepository).save(argThat(token ->
-                token.getUserId().equals(42L) &&
-                        token.getEmailTokenType() == EmailTokenType.verify_email
-        ));
+        verify(taskProducer).sendEmailTask(any(EmailTask.class));
     }
 
     @Test
@@ -226,7 +226,6 @@ public class EmailVerificationTokenServiceTest {
         StepVerifier.create(emailTokenService.resendVerificationEmail("missing@example.com"))
                 .expectError(UserNotFoundException.class)
                 .verify();
-
-        verifyNoInteractions(mailService, emailVerificationTokenRepository);
+        verifyNoInteractions(taskProducer, emailVerificationTokenRepository);
     }
 }

@@ -1,11 +1,13 @@
 package com.source.bundleboard.webhook.service;
 
 import com.source.bundleboard.collection.service.CollectionService;
-import com.source.bundleboard.email.mail.service.MailService;
+import com.source.bundleboard.email.mail.propeties.MailProperties;
 import com.source.bundleboard.purchase.item.model.PurchaseItem;
 import com.source.bundleboard.purchase.model.Purchase;
 import com.source.bundleboard.purchase.model.PurchaseStatus;
 import com.source.bundleboard.purchase.service.PurchaseService;
+import com.source.bundleboard.rabbitmq.dto.EmailTask;
+import com.source.bundleboard.rabbitmq.producer.TaskProducer;
 import com.source.bundleboard.user.service.UserService;
 import com.stripe.exception.EventDataObjectDeserializationException;
 import com.stripe.model.Charge;
@@ -38,7 +40,9 @@ public class WebhookServiceImpl implements WebhookService {
 
     private final CollectionService collectionService;
 
-    private final MailService mailService;
+    private final TaskProducer taskProducer;
+
+    private final MailProperties mailProperties;
 
     @Override
     @Transactional
@@ -70,13 +74,15 @@ public class WebhookServiceImpl implements WebhookService {
             return Mono.empty();
         }
 
-        return purchaseService.findByStripeSessionId(session.getId())
+        return purchaseService.findByStripeSessionId(session.getId()).hasElement()
                 .flatMap(existingPurchase -> {
-                    log.warn("🟡 Purchase for session {} already exists. Skipping.", session.getId());
-                    return Mono.empty();
-                })
-                .switchIfEmpty(Mono.defer(() -> createNewPurchase(session)))
-                .then();
+                    if (existingPurchase) {
+                        log.warn("🟡 Purchase for session {} already exists. Skipping.", session.getId());
+                        return Mono.empty();
+                    }else {
+                        return createNewPurchase(session);
+                    }
+                });
     }
 
     private Mono<Void> createNewPurchase(Session session) {
@@ -115,17 +121,23 @@ public class WebhookServiceImpl implements WebhookService {
                             )
                             .collectList()
                             .flatMap(items -> purchaseService.createPurchaseWithItems(purchase, items))
-                            .flatMap(savedPurchase ->
-                                    mailService.sendPurchaseReceipt(
+                            .flatMap(savedPurchase -> {
+                                    EmailTask task = new EmailTask(
                                             user.getEmail(),
-                                            user.getUsername(),
-                                            savedPurchase.getAmount(),
-                                            savedPurchase.getCurrency()
-                                    )
+                                            mailProperties.getSubjects().getPurchaseReceipt(),
+                                            mailProperties.getTemplates().getPurchaseReceipt(),
+                                            Map.of(
+                                                    "username", user.getUsername(),
+                                                    "amount", savedPurchase.getAmount(),
+                                                    "currency", savedPurchase.getCurrency()
+                                            )
+
+                                    );
+                                    return taskProducer.sendEmailTask(task)
                                             .doOnError(e -> log.error("🔴 Failed to send purchase receipt email to {}. Reason: {}", user.getEmail(), e.getMessage(), e))
                                             .onErrorResume(e -> Mono.empty())
-                                            .thenReturn(savedPurchase)
-                            );
+                                            .thenReturn(savedPurchase);
+                            });
                 })
                 .doOnSuccess(p -> log.info("🟢 Successfully saved new purchase for Session: {}", session.getId()))
                 .doOnError(e -> log.error("🔴 Error creating new purchase for session {}: {}", session.getId(), e.getMessage(), e))

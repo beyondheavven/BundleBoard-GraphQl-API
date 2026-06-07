@@ -12,4 +12,6 @@ public interface PurchaseItemMapper {
     @Mapping(target = "id", source = "purchaseItem.id")
     @Mapping(target = "asset", source = "collection")
     PurchaseItemBaseResponse toItemResponse(PurchaseItem purchaseItem, CollectionShortResponse collection);
+
+    PurchaseItemBaseResponse toItemBaseResponse(PurchaseItem purchaseItem);
 }

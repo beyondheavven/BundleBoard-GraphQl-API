@@ -1,4 +1,4 @@
 package com.source.bundleboard.image.controller;
 
-public class ImageController {
+public class PreviewImageController {
 }

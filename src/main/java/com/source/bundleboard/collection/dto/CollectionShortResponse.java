@@ -9,6 +9,8 @@ public record CollectionShortResponse(
 
         Long id,
 
-        String name
+        String name,
+
+        List<ImageShortResponse> galleryImages
 ) {
 }

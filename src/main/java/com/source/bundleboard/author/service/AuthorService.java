@@ -18,4 +18,6 @@ public interface AuthorService {
     Mono<Author> findByUsername(String username);
 
     Mono<Author> findById(Long id);
+
+    Mono<Author> findByUserId(Long userId);
 }

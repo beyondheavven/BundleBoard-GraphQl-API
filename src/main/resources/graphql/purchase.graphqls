@@ -25,13 +25,13 @@ type PurchaseBaseResponse {
     currency: String!
     status: PurchaseStatus!
     createdAt: String!
-    items: [PurchaseItemBaseResponse!]!
+    items: [PurchaseItemBaseResponse]!
 }
 
 type PurchaseItemBaseResponse{
     id: ID!
     snapshotPrice: Float!
-    asset: CollectionShortResponse!
+    asset: CollectionShortResponse
 }
 
 enum PurchaseStatus {
