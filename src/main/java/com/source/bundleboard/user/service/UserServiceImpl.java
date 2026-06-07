@@ -44,8 +44,6 @@ public class UserServiceImpl implements UserService {
 
     private final UserMapper userMapper;
 
-    private final PurchaseService purchaseService;
-
     private final ClientService clientService;
 
     private final AuthorRepository authorRepository;
@@ -55,8 +53,6 @@ public class UserServiceImpl implements UserService {
     private final RefreshTokenService refreshTokenService;
 
     private final JwtProperties jwtProperties;
-
-    private final CollectionService collectionService;
 
     @Override
     public Mono<UserResponseDto> findUserByUsername(String username) {
@@ -221,35 +217,16 @@ public class UserServiceImpl implements UserService {
                 .filter(Authentication::isAuthenticated)
                 .flatMap(auth -> userRepository.findByUsername(auth.getName()))
                 .switchIfEmpty(Mono.error(new UserNotFoundException()))
-                .flatMap(user -> {
-                            Mono<List<PurchaseBaseResponse>> purchasesMono = purchaseService.findAllByUserId(user.getId())
-                                    .defaultIfEmpty(Collections.emptyList())
-                                    .onErrorReturn(Collections.emptyList());
-
-                            Mono<List<AuthoredCollectionResponse>> authoredCollectionsMono = Mono.just(user.getRoles())
-                            .flatMap(roles -> {
-                                if (roles.contains(UserRole.author)) {
-                                    return authorRepository.findByUserId(user.getId())
-                                            .flatMapMany(author -> collectionService.findAllByAuthorId(author.getId()))
-                                            .collectList()
-                                            .defaultIfEmpty(Collections.emptyList());
-                                }
-                                return Mono.just(Collections.<AuthoredCollectionResponse>emptyList());
-                            })
-                            .onErrorReturn(Collections.emptyList());
-
-                    return Mono.zip(purchasesMono, authoredCollectionsMono)
-                            .map(tuple -> new UserProfileResponse(
-                                    user.getId(),
-                                    user.getUsername(),
-                                    user.getEmail(),
-                                    user.getAvatarUrl(),
-                                    user.getStatus(),
-                                    user.getRoles(),
-                                    tuple.getT2(),
-                                    tuple.getT1()
-                            ));
-                });
+                .map(user -> new UserProfileResponse(
+                        user.getId(),
+                        user.getUsername(),
+                        user.getEmail(),
+                        user.getAvatarUrl(),
+                        user.getStatus(),
+                        user.getRoles(),
+                        null,
+                        null
+                ));
     }
 
     @Override

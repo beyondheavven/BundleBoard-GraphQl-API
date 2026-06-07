@@ -3,7 +3,10 @@ package com.source.bundleboard.rabbitmq.consumer;
 import com.source.bundleboard.email.mail.service.MailService;
 import com.source.bundleboard.rabbitmq.dto.EmailTask;
 import com.source.bundleboard.rabbitmq.dto.StorageTask;
+import com.source.bundleboard.rabbitmq.dto.WebhookTask;
 import com.source.bundleboard.storage.SupabaseStorageService;
+import com.source.bundleboard.webhook.service.WebhookService;
+import com.stripe.model.Event;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -17,6 +20,8 @@ public class TaskConsumer {
     private final MailService mailService;
 
     private final SupabaseStorageService supabaseStorageService;
+
+    private final WebhookService webhookService;
 
     @RabbitListener(queues = "#{@rabbitProperties.emailQueue}")
     public void processEmail(EmailTask emailTask) {
@@ -55,5 +60,18 @@ public class TaskConsumer {
             throw e;
         }
 
+    }
+
+    @RabbitListener(queues = "#{@rabbitProperties.webhookQueue}")
+    public void processWebhook(WebhookTask task) {
+        log.info("RabbitMQ started processing Stripe Webhook:");
+        try {
+            Event event = Event.GSON.fromJson(task.payload(), Event.class);
+            webhookService.processEvent(event).block();
+            log.info("Stripe Webhook processed successfully.");
+        } catch (Exception e) {
+            log.error("Error while processing webhook.", e);
+            throw e;
+        }
     }
 }

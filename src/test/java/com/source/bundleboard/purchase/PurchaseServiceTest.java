@@ -94,10 +94,10 @@ public class PurchaseServiceTest {
         item2.setCollectionId(502L);
         item2.setSnapshotPrice(new BigDecimal("49.99"));
 
-        mockAsset = new CollectionShortResponse(501L, "Test Collection");
+        mockAsset = new CollectionShortResponse(501L, "Test Collection", null);
 
-        itemResponse1 = new PurchaseItemBaseResponse(11L, new BigDecimal("99.99"), mockAsset);
-        itemResponse2 = new PurchaseItemBaseResponse(12L, new BigDecimal("49.99"), mockAsset);
+        itemResponse1 = new PurchaseItemBaseResponse(11L,  new BigDecimal("99.99"), 501L, mockAsset);
+        itemResponse2 = new PurchaseItemBaseResponse(12L, new BigDecimal("49.99"),501L, mockAsset);
 
         response1 = new PurchaseBaseResponse(
                 1L,

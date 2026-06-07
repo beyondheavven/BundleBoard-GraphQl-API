@@ -40,6 +40,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 
 import static org.mockito.Mockito.*;
@@ -309,7 +310,7 @@ public class CollectionServiceTest {
 
     @Test
     void findShortResponseById_Success() {
-        CollectionShortResponse expectedShortResponse = new CollectionShortResponse(1L, "Java Bundle");
+        CollectionShortResponse expectedShortResponse = new CollectionShortResponse(1L, "Java Bundle", Collections.emptyList());
 
         when(collectionRepository.findById(1L)).thenReturn(Mono.just(sampleCollection));
 

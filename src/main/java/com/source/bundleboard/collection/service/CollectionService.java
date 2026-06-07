@@ -3,7 +3,6 @@ package com.source.bundleboard.collection.service;
 import com.source.bundleboard.collection.dto.*;
 import com.source.bundleboard.collection.model.Collection;
 import jakarta.validation.Valid;
-import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -36,4 +35,6 @@ public interface CollectionService {
     Flux<CollectionResponse> getLikedCollections();
 
     Flux<CollectionResponse> findLikedCollectionsByAuthorId(Long authorId);
+
+    Mono<CollectionShortResponse> findShortById(Long id);
 }

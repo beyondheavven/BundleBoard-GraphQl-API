@@ -74,13 +74,15 @@ public class WebhookServiceImpl implements WebhookService {
             return Mono.empty();
         }
 
-        return purchaseService.findByStripeSessionId(session.getId())
+        return purchaseService.findByStripeSessionId(session.getId()).hasElement()
                 .flatMap(existingPurchase -> {
-                    log.warn("🟡 Purchase for session {} already exists. Skipping.", session.getId());
-                    return Mono.empty();
-                })
-                .switchIfEmpty(Mono.defer(() -> createNewPurchase(session)))
-                .then();
+                    if (existingPurchase) {
+                        log.warn("🟡 Purchase for session {} already exists. Skipping.", session.getId());
+                        return Mono.empty();
+                    }else {
+                        return createNewPurchase(session);
+                    }
+                });
     }
 
     private Mono<Void> createNewPurchase(Session session) {
