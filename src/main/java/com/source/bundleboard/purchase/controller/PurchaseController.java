@@ -1,5 +1,6 @@
 package com.source.bundleboard.purchase.controller;
 
+import com.source.bundleboard.api.exception.CollectionNotFoundException;
 import com.source.bundleboard.collection.dto.CollectionShortResponse;
 import com.source.bundleboard.collection.service.CollectionService;
 import com.source.bundleboard.purchase.dto.PurchaseBaseResponse;
@@ -27,6 +28,7 @@ public class PurchaseController {
 
     @SchemaMapping(typeName = "PurchaseItemBaseResponse", field = "asset")
     public Mono<CollectionShortResponse> getAssetForPurchaseItem(PurchaseItemBaseResponse item) {
-        return collectionService.findShortResponseById(item.collectionId());
+        return collectionService.findShortResponseById(item.collectionId())
+                .onErrorResume(CollectionNotFoundException.class, e -> Mono.empty());
     }
 }
