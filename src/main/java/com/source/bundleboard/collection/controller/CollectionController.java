@@ -78,6 +78,17 @@ public class CollectionController {
         return collectionService.getLikedCollections();
     }
 
+    @PreAuthorize("permitAll()")
+    @QueryMapping
+    public Flux<CollectionResponse> searchCollections(@Argument String query,
+                                                      @Argument int size,
+                                                      @Argument int page){
+        if (query == null || query.trim().length() < 2) {
+            return Flux.empty();
+        }
+        return collectionService.searchByName(query, page, size);
+    }
+
     @SchemaMapping(typeName = "CollectionResponse", field = "author")
     public Mono<AuthorShortResponse> getAuthor(CollectionResponse collection) {
         return authorService.findShortResponseById(collection.authorId());

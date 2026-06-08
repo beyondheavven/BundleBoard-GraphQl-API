@@ -14,7 +14,6 @@ import com.source.bundleboard.collectionImage.repository.CollectionImageReposito
 import com.source.bundleboard.collectionTag.serivce.CollectionTagService;
 import com.source.bundleboard.image.model.PreviewImage;
 import com.source.bundleboard.image.service.PreviewImageService;
-import com.source.bundleboard.mediaresource.dto.MediaResourceInput;
 import com.source.bundleboard.mediaresource.model.MediaFileType;
 import com.source.bundleboard.mediaresource.model.MediaResource;
 import com.source.bundleboard.mediaresource.model.MimeType;
@@ -261,6 +260,23 @@ public class CollectionServiceImpl implements CollectionService {
                         null
                 ));
     }
+
+    @Override
+    public Flux<CollectionResponse> searchByName(String query, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return collectionRepository.findByNameContainingIgnoreCase(query, pageable)
+                .map(collection -> new CollectionResponse(
+                        collection.getId(),
+                        collection.getName(),
+                        collection.getDescription(),
+                        collection.getPrice(),
+                        collection.getAuthorId(),
+                        null,
+                        null,
+                        false
+                ));
+    }
+
 
     @Transactional
     @Override
