@@ -37,4 +37,7 @@ public interface CollectionService {
     Flux<CollectionResponse> findLikedCollectionsByAuthorId(Long authorId);
 
     Mono<CollectionShortResponse> findShortById(Long id);
+
+
+    Flux<CollectionResponse> searchByName(String query, int page, int size);
 }
