@@ -45,6 +45,8 @@ type UserUpdateResponse {
     username: String
     avatarUrl: String
     updatedAt: String
+    accessToken: String!
+    refreshToken: String!
 }
 
 type UpdateAvatarResponse {

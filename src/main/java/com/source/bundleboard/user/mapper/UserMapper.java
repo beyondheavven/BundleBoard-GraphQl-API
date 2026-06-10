@@ -18,8 +18,13 @@ public interface UserMapper {
     @Mapping(target = "status", source = "status")
     UserResponseDto toDto(User user);
 
-    @Mapping(target = "updatedAt", ignore = true)
-    UserUpdateResponse toUpdateResponse(User user);
+    @Mapping(target = "id", source = "user.id")
+    @Mapping(target = "username", source = "user.username")
+    @Mapping(target = "avatarUrl", source = "user.avatarUrl")
+    @Mapping(target = "updatedAt", expression = "java(Instant.now())")
+    @Mapping(target = "accessToken", source = "accessToken")
+    @Mapping(target = "refreshToken", source = "refreshToken")
+    UserUpdateResponse toUpdateResponse(User user, String accessToken, String refreshToken);
 
 
 }
