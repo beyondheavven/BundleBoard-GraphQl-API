@@ -1,12 +1,19 @@
 package com.source.bundleboard.user.dto;
 
+
+import java.time.Instant;
+
 public record UserUpdateResponse(
         Long id,
         
         String username,
         
-        String email,
+        String avatarUrl,
 
-        String updatedAt
+        Instant updatedAt,
+
+        String accessToken,
+
+        String refreshToken
 ) {
 }
