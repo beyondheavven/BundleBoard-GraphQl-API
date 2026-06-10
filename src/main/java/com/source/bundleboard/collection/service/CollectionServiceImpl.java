@@ -71,8 +71,7 @@ public class CollectionServiceImpl implements CollectionService {
     public Flux<CollectionResponse> getAllCollections(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
             return collectionRepository.findAllBy(pageable)
-                .map(collectionMapper::toDto)
-                .switchIfEmpty(Flux.error(new CollectionNotFoundException()));
+                .map(collectionMapper::toDto);
     }
 
     @Transactional
