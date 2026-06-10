@@ -1,9 +1,13 @@
-type Query {
-    debugSecurity: String!
+type Mutation {
+    """
+    Служебная заглушка. GraphQL запрещает пустые типы.
+    Все реальные мутации собираются через 'extend type Mutation' из других файлов.
+    """
+    _empty: String
 }
 
-type Mutation {
-
+type Query {
+    debugSecurity: String!
 }
 
 type Tag {
