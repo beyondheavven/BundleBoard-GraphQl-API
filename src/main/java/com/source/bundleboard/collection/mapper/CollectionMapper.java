@@ -21,6 +21,4 @@ public interface CollectionMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "videoTutorialUrl", ignore = true)
     void updateEntityFromDto(UpdateCollectionRequest dto, @MappingTarget Collection entity);
-
-    CollectionShortResponse mapToShortResponse(Collection collection, ImageShortResponse image);
 }

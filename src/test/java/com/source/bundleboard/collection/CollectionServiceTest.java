@@ -17,7 +17,6 @@ import com.source.bundleboard.collectionImage.service.CollectionImageService;
 import com.source.bundleboard.collectionTag.serivce.CollectionTagService;
 import com.source.bundleboard.image.dto.ImageShortInput;
 import com.source.bundleboard.image.model.PreviewImage;
-import com.source.bundleboard.image.repository.PreviewImageRepository;
 import com.source.bundleboard.image.service.PreviewImageService;
 import com.source.bundleboard.mediaresource.dto.MediaResourceInput;
 import com.source.bundleboard.mediaresource.model.MediaResource;
@@ -133,7 +132,17 @@ public class CollectionServiceTest {
         int size = 9;
         Pageable expectedPageable = PageRequest.of(page, size, Sort.by("id").ascending());
 
-        CollectionResponse responseDto = new CollectionResponse(1L, "Java Bundle", "Desc", 10.0, 42L);
+        CollectionResponse responseDto = new CollectionResponse(
+                1L,
+                "Java Bundle",
+                "Desc",
+                new BigDecimal("10.00"),
+                42L,
+                null,
+                0L,
+                false
+        );
+
         when(collectionRepository.findAllBy(expectedPageable)).thenReturn(Flux.just(sampleCollection));
         when(collectionMapper.toDto(sampleCollection)).thenReturn(responseDto);
 

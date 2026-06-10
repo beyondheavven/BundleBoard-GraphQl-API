@@ -1,5 +1,10 @@
 package com.source.bundleboard.collection.dto;
 
+import com.source.bundleboard.image.dto.ImageShortResponse;
+
+import java.math.BigDecimal;
+import java.util.List;
+
 public record CollectionResponse(
 
         Long id,
@@ -8,8 +13,14 @@ public record CollectionResponse(
 
         String description,
 
-        Double price,
+        BigDecimal price,
 
-        Long authorId
+        Long authorId,
+
+        List<ImageShortResponse> galleryImages,
+
+        Long likesCount,
+
+        Boolean isLiked
 ) {
 }

@@ -47,4 +47,6 @@ public interface CollectionRepository extends R2dbcRepository<Collection, Long> 
     ORDER BY cl.created_at DESC
     """)
     Flux<Collection> findLikedCollectionsByAuthorId(Long authorId);
+
+    Flux<Collection> findByNameContainingIgnoreCase(String name, Pageable pageable);
 }
