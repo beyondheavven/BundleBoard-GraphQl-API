@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+
 @Service
 @RequiredArgsConstructor
 public class ReactiveUserDetailsServiceImpl implements ReactiveUserDetailsService {
@@ -26,6 +27,14 @@ public class ReactiveUserDetailsServiceImpl implements ReactiveUserDetailsServic
                 .map(this::toUserDetails);
     }
 
+    public Mono<UserDetails> loadUserById(Long id) {
+        return userRepository.findById(id)
+                .switchIfEmpty(Mono.error(
+                        new UsernameNotFoundException("User node not found by ID: " + id)
+                ))
+                .map(this::toUserDetails);
+    }
+
     private UserDetails toUserDetails(User user) {
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getUsername())
@@ -38,4 +47,6 @@ public class ReactiveUserDetailsServiceImpl implements ReactiveUserDetailsServic
                 .build();
 
     }
+
+
 }
