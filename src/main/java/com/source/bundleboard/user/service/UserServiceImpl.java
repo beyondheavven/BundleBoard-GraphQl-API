@@ -75,7 +75,7 @@ public class UserServiceImpl implements UserService {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> securityContext.getAuthentication())
                 .filter(Authentication::isAuthenticated)
-                .flatMap(authentication -> userRepository.findByUsername(authentication.getName()))
+                .flatMap(authentication -> userRepository.findById(request.id()))
                 .switchIfEmpty(Mono.error(new UserNotFoundException()))
                 .flatMap( user -> {
 
@@ -94,8 +94,8 @@ public class UserServiceImpl implements UserService {
                             .map(role -> new SimpleGrantedAuthority("ROLE_" + role.name().toUpperCase()))
                             .collect(Collectors.toList());
 
-                    String newAccessToken = jwtService.generateAccessToken(savedUser.getUsername(), authorities);
-                    String newRefreshToken = jwtService.generateRefreshToken(savedUser.getUsername());
+                    String newAccessToken = jwtService.generateAccessToken(savedUser.getId(), savedUser.getUsername(), authorities);
+                    String newRefreshToken = jwtService.generateRefreshToken(savedUser.getId(), savedUser.getUsername());
                     return userMapper.toUpdateResponse(savedUser, newAccessToken, newRefreshToken);
                 });
     }
@@ -180,10 +180,11 @@ public class UserServiceImpl implements UserService {
 
     private Mono<UpdateUserRoleResponse> generateTokensAndResponse(User user) {
         String newAccessToken = jwtService.generateAccessToken(
+                user.getId(),
                 user.getUsername(),
                 UserRole.toAuthorities(user.getRoles())
         );
-        String newRefreshTokenString = jwtService.generateRefreshToken(user.getUsername());
+        String newRefreshTokenString = jwtService.generateRefreshToken(user.getId(), user.getUsername());
 
         return refreshTokenService.deleteByUserId(user.getId())
                 .then(refreshTokenService.save(new RefreshToken(

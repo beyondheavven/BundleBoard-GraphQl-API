@@ -9,9 +9,9 @@ import java.util.List;
 
 public interface JwtService {
 
-    String generateAccessToken(String username, Collection<? extends GrantedAuthority> authorities);
+    String generateAccessToken(Long userId, String username, Collection<? extends GrantedAuthority> authorities);
 
-    String generateRefreshToken(String username);
+    String generateRefreshToken(Long userId, String username);
 
     Mono<Claims> validateToken(String token);
 

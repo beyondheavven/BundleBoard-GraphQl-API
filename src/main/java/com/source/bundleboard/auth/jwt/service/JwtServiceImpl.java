@@ -36,7 +36,7 @@ public class JwtServiceImpl implements JwtService {
 
     // Generate access token with user details and roles embedded as claims
     @Override
-    public String generateAccessToken(String username, Collection<? extends GrantedAuthority> authorities) {
+    public String generateAccessToken(Long userId, String username, Collection<? extends GrantedAuthority> authorities) {
         Instant now = Instant.now();
 
         List<String> roles = authorities.stream()
@@ -45,6 +45,7 @@ public class JwtServiceImpl implements JwtService {
 
         return Jwts.builder()
                 .subject(username)
+                .claim("userId", userId)
                 .claim("roles", roles)
                 .claim("type", "access")
                 .issuedAt(Date.from(now))
@@ -55,10 +56,11 @@ public class JwtServiceImpl implements JwtService {
 
     // Generate refresh token for obtaining new access tokens
     @Override
-    public String generateRefreshToken(String username) {
+    public String generateRefreshToken(Long userId, String username) {
         Instant now = Instant.now();
         return Jwts.builder()
                 .subject(username)
+                .claim("userId", userId)
                 .claim("type", "refresh")
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plusMillis(jwtProperties.getRefreshTokenExpirationMs())))

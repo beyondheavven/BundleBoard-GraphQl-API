@@ -1,19 +1,22 @@
 package com.source.bundleboard.auth.jwt;
 
+import com.source.bundleboard.auth.core.ReactiveUserDetailsServiceImpl;
 import com.source.bundleboard.auth.jwt.service.JwtService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
-import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter implements WebFilter {
@@ -22,7 +25,7 @@ public class JwtAuthenticationFilter implements WebFilter {
 
     private final JwtService jwtService;
 
-    private final ReactiveUserDetailsService userDetailsService;
+    private final ReactiveUserDetailsServiceImpl userDetailsService;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
@@ -39,21 +42,31 @@ public class JwtAuthenticationFilter implements WebFilter {
 
         return jwtService.validateToken(token)
                 .flatMap(claims -> {
-                    String username = claims.getSubject();
-                    return userDetailsService.findByUsername(username)
-                            .flatMap(userDetails ->
-                                    jwtService.extractAuthorities(token)
-                                            .map(grantedAuthorities -> new UsernamePasswordAuthenticationToken(
-                                                        userDetails,
-                                                        null,
-                                                        grantedAuthorities
-                                                ))
-                                            );
+                    Number userIdNumber = claims.get("userId", Number.class);
+                    Mono<UserDetails> userDetailsMono;
+                    if (userIdNumber != null) {
+                        userDetailsMono = userDetailsService.loadUserById(userIdNumber.longValue());
+                    } else {
+                        String username = claims.getSubject();
+                        log.info("ℹ️ Legacy token detected without userId claim. Falling back to username: [{}]", username);
+                        userDetailsMono = userDetailsService.findByUsername(username);
+                    }
 
+                    return userDetailsMono.flatMap(userDetails ->
+                            jwtService.extractAuthorities(token)
+                                    .map(grantedAuthorities -> new UsernamePasswordAuthenticationToken(
+                                            userDetails,
+                                            null,
+                                            grantedAuthorities
+                                    ))
+                    );
                 })
                 .flatMap(auth -> chain.filter(exchange)
-                        .contextWrite(ReactiveSecurityContextHolder.withAuthentication(auth))
-                        .onErrorResume(e -> chain.filter(exchange)));
+                        .contextWrite(ReactiveSecurityContextHolder.withAuthentication(auth)))
+                .onErrorResume(e -> {
+                    log.warn("⚠️ Transactional authentication handshake rejected: {}", e.getMessage());
+                    return chain.filter(exchange);
+                });
     }
 
     private String extractToken(ServerHttpRequest request) {
