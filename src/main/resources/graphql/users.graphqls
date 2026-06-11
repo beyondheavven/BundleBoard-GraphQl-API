@@ -42,9 +42,11 @@ type UserResponseDto {
 
 type UserUpdateResponse {
     id: ID!
-    username: String!
-    avatarUrl: String!
-    updatedAt: String!
+    username: String
+    avatarUrl: String
+    updatedAt: String
+    accessToken: String!
+    refreshToken: String!
 }
 
 type UpdateAvatarResponse {

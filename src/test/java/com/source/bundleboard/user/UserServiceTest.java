@@ -73,7 +73,6 @@ class UserServiceTest {
         );
     }
 
-
     @Test
     void findUserById_Success() {
         when(userRepository.findById(1L)).thenReturn(Mono.just(sampleUser));
@@ -129,7 +128,6 @@ class UserServiceTest {
                 .verifyComplete();
     }
 
-
     @Test
     void updateMe_Success() {
         Authentication authentication = mock(Authentication.class);
@@ -137,18 +135,29 @@ class UserServiceTest {
         when(authentication.getName()).thenReturn("testuser");
         SecurityContext securityContext = new SecurityContextImpl(authentication);
 
-        UpdateUserRequest request = new UpdateUserRequest("new_username", "http://avatar.com/new.png");
+        UpdateUserRequest request = new UpdateUserRequest(1L, "new_username", "http://avatar.com/new.png");
+        String dummyAccessToken = "mock-secure-access-token-string";
+        String dummyRefreshToken = "mock-secure-refresh-token-string";
 
         UserUpdateResponse expectedResponse = new UserUpdateResponse(
                 1L,
                 "new_username",
                 "http://avatar.com/new.png",
-                Instant.now().toString()
+                Instant.now(),
+                dummyAccessToken,
+                dummyRefreshToken
         );
 
         when(userRepository.findByUsername("testuser")).thenReturn(Mono.just(sampleUser));
         when(userRepository.save(any(User.class))).thenReturn(Mono.just(sampleUser));
-        when(userMapper.toUpdateResponse(any(User.class))).thenReturn(expectedResponse);
+
+        when(jwtService.generateAccessToken(eq(1L), eq("new_username"), anyCollection()))
+                .thenReturn(dummyAccessToken);
+        when(jwtService.generateRefreshToken(eq(1L), eq("new_username")))
+                .thenReturn(dummyRefreshToken);
+
+        when(userMapper.toUpdateResponse(any(User.class), eq(dummyAccessToken), eq(dummyRefreshToken)))
+                .thenReturn(expectedResponse);
 
         Mono<UserUpdateResponse> result = userService.updateMe(request)
                 .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(securityContext)));
@@ -161,6 +170,9 @@ class UserServiceTest {
                 "new_username".equals(user.getUsername()) &&
                         "http://avatar.com/new.png".equals(user.getAvatarUrl())
         ));
+
+        verify(jwtService).generateAccessToken(eq(1L), eq("new_username"), anyCollection());
+        verify(jwtService).generateRefreshToken(eq(1L), eq("new_username"));
     }
 
     @Test
@@ -192,8 +204,8 @@ class UserServiceTest {
         when(authorRepository.findByUserId(1L)).thenReturn(Mono.empty());
         when(authorRepository.save(any())).thenReturn(Mono.empty());
 
-        when(jwtService.generateAccessToken(any(), any())).thenReturn("access-token-123");
-        when(jwtService.generateRefreshToken(any())).thenReturn("refresh-token-123");
+        when(jwtService.generateAccessToken(any(), any(), any())).thenReturn("access-token-123");
+        when(jwtService.generateRefreshToken(any(), any())).thenReturn("refresh-token-123");
         when(jwtProperties.getRefreshTokenExpirationMs()).thenReturn(60000L);
         when(refreshTokenService.deleteByUserId(1L)).thenReturn(Mono.empty());
 
