@@ -129,11 +129,24 @@ public class AuthServiceImpl implements AuthService {
                         log.warn("🟡 Token refresh failed: Token does not exist or is expired in DB");
                         return Mono.error(new InvalidTokenException());
                     }
-                    return jwtService.extractUsername(refreshToken);
+                    return jwtService.validateToken(refreshToken);
+                }).flatMap(claims -> {
+                    Number userIdNumber = claims.get("userId", Number.class);
+
+                    if (userIdNumber != null) {
+                        return userService.getUserById(userIdNumber.longValue());
+                    }
+
+                    String username = claims.getSubject();
+                    if (username != null) {
+                        log.info("ℹ️ Legacy refresh token detected without userId. Falling back to username lookup: [{}]", username);
+                        return userService.getUserByUsername(username);
+                    }
+                log.warn("🔴 Token refresh failed: Token claims are corrupted or missing identifier targets");
+                return Mono.error(new InvalidTokenException());
                 })
-                .flatMap(userService::findByUsername)
                 .switchIfEmpty(Mono.defer(() -> {
-                    log.warn("🟡 Token refresh failed: User not found for token");
+                    log.warn("🟡 Token refresh failed: User node no longer exists in database");
                     return Mono.error(new UserNotFoundException());
                 }))
                 .flatMap(user -> {
@@ -230,8 +243,8 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private Mono<AuthResponse> generateAuthResponse(User user, boolean isNew) {
-        String accessToken = jwtService.generateAccessToken(user.getUsername(), UserRole.toAuthorities(user.getRoles()));
-        String refreshToken = jwtService.generateRefreshToken(user.getUsername());
+        String accessToken = jwtService.generateAccessToken(user.getId(), user.getUsername(), UserRole.toAuthorities(user.getRoles()));
+        String refreshToken = jwtService.generateRefreshToken(user.getId(), user.getUsername());
 
         UserDto userDto = new UserDto(user.getId(), user.getUsername(), user.getEmail(), user.getRoles());
 
@@ -248,8 +261,8 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private Mono<RefreshResponse> generateRefreshResponse(User user) {
-        String accessToken = jwtService.generateAccessToken(user.getUsername(), UserRole.toAuthorities(user.getRoles()));
-        String refreshToken = jwtService.generateRefreshToken(user.getUsername());
+        String accessToken = jwtService.generateAccessToken(user.getId(), user.getUsername(), UserRole.toAuthorities(user.getRoles()));
+        String refreshToken = jwtService.generateRefreshToken(user.getId(), user.getUsername());
 
         RefreshToken refreshTokenEntity = new RefreshToken(
                 null,

@@ -6,10 +6,6 @@ import com.source.bundleboard.auth.jwt.service.JwtService;
 import com.source.bundleboard.author.model.Author;
 import com.source.bundleboard.author.repository.AuthorRepository;
 import com.source.bundleboard.client.service.ClientService;
-import com.source.bundleboard.collection.dto.AuthoredCollectionResponse;
-import com.source.bundleboard.collection.service.CollectionService;
-import com.source.bundleboard.purchase.dto.PurchaseBaseResponse;
-import com.source.bundleboard.purchase.service.PurchaseService;
 import com.source.bundleboard.refreshtoken.model.RefreshToken;
 import com.source.bundleboard.refreshtoken.service.RefreshTokenService;
 import com.source.bundleboard.user.dto.*;
@@ -21,6 +17,8 @@ import io.r2dbc.postgresql.codec.Json;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.stereotype.Service;
@@ -31,8 +29,8 @@ import reactor.core.publisher.Mono;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -77,7 +75,7 @@ public class UserServiceImpl implements UserService {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> securityContext.getAuthentication())
                 .filter(Authentication::isAuthenticated)
-                .flatMap(authentication -> userRepository.findByUsername(authentication.getName()))
+                .flatMap(authentication -> userRepository.findById(request.id()))
                 .switchIfEmpty(Mono.error(new UserNotFoundException()))
                 .flatMap( user -> {
 
@@ -91,7 +89,15 @@ public class UserServiceImpl implements UserService {
 
                     return userRepository.save(user);
                 })
-                .map(userMapper::toUpdateResponse);
+                .map(savedUser -> {
+                    List<GrantedAuthority> authorities = savedUser.getRoles().stream()
+                            .map(role -> new SimpleGrantedAuthority("ROLE_" + role.name().toUpperCase()))
+                            .collect(Collectors.toList());
+
+                    String newAccessToken = jwtService.generateAccessToken(savedUser.getId(), savedUser.getUsername(), authorities);
+                    String newRefreshToken = jwtService.generateRefreshToken(savedUser.getId(), savedUser.getUsername());
+                    return userMapper.toUpdateResponse(savedUser, newAccessToken, newRefreshToken);
+                });
     }
 
     @Override
@@ -174,10 +180,11 @@ public class UserServiceImpl implements UserService {
 
     private Mono<UpdateUserRoleResponse> generateTokensAndResponse(User user) {
         String newAccessToken = jwtService.generateAccessToken(
+                user.getId(),
                 user.getUsername(),
                 UserRole.toAuthorities(user.getRoles())
         );
-        String newRefreshTokenString = jwtService.generateRefreshToken(user.getUsername());
+        String newRefreshTokenString = jwtService.generateRefreshToken(user.getId(), user.getUsername());
 
         return refreshTokenService.deleteByUserId(user.getId())
                 .then(refreshTokenService.save(new RefreshToken(

@@ -76,8 +76,8 @@ public class AuthServiceTest {
         when(userService.findByUsername("testuser")).thenReturn(Mono.just(testUser));
         when(passwordEncoder.matches("rawPass", "encodedPass")).thenReturn(true);
         when(userService.save(any(User.class))).thenReturn(Mono.just(testUser));
-        when(jwtService.generateAccessToken(any(), any())).thenReturn("access");
-        when(jwtService.generateRefreshToken(any())).thenReturn("refresh");
+        when(jwtService.generateAccessToken(any(), any(), any())).thenReturn("access");
+        when(jwtService.generateRefreshToken(any(), any())).thenReturn("refresh");
         when(refreshTokenRepository.save(any())).thenReturn(Mono.just(new RefreshToken(1L, 1L, "refresh", Instant.now(), Instant.now())));
 
         StepVerifier.create(authService.authenticate(new AuthRequest("testuser", "rawPass")))
@@ -110,8 +110,8 @@ public class AuthServiceTest {
         when(passwordEncoder.encode("pass")).thenReturn("encoded");
         when(userService.save(any(User.class))).thenReturn(Mono.just(testUser));
         when(emailVerificationTokenService.resendVerificationEmail(anyString())).thenReturn(Mono.empty());
-        when(jwtService.generateAccessToken(any(), any())).thenReturn("a");
-        when(jwtService.generateRefreshToken(any())).thenReturn("r");
+        when(jwtService.generateAccessToken(any(), any(), any())).thenReturn("a");
+        when(jwtService.generateRefreshToken(any(),any())).thenReturn("r");
         when(refreshTokenRepository.save(any())).thenReturn(Mono.just(new RefreshToken(1L, 1L, "r", Instant.now(), Instant.now())));
 
         StepVerifier.create(authService.register(req))
@@ -128,8 +128,8 @@ public class AuthServiceTest {
         when(userService.findByUsername("testuser")).thenReturn(Mono.just(testUser));
         when(refreshTokenRepository.deleteByToken(token)).thenReturn(Mono.empty());
 
-        when(jwtService.generateAccessToken(any(), any())).thenReturn("a");
-        when(jwtService.generateRefreshToken(any())).thenReturn("r");
+        when(jwtService.generateAccessToken(any(),any(), any())).thenReturn("a");
+        when(jwtService.generateRefreshToken(any(),any())).thenReturn("r");
         when(jwtProperties.getRefreshTokenExpirationMs()).thenReturn(1000L);
         when(refreshTokenRepository.save(any())).thenReturn(Mono.just(new RefreshToken(1L, 1L, "r", Instant.now(), Instant.now())));
 
@@ -163,9 +163,8 @@ public class AuthServiceTest {
         when(passwordGenerator.generateSocialPassword()).thenReturn("randomPass");
         when(passwordEncoder.encode("randomPass")).thenReturn("encoded");
         when(userService.save(any(User.class))).thenReturn(Mono.just(testUser));
-
-        when(jwtService.generateAccessToken(any(), any())).thenReturn("a");
-        when(jwtService.generateRefreshToken(any())).thenReturn("r");
+        when(jwtService.generateAccessToken(any(), any(), any())).thenReturn("a");
+        when(jwtService.generateRefreshToken(any(), any())).thenReturn("r");
         when(jwtProperties.getRefreshTokenExpirationMs()).thenReturn(1000L);
         when(refreshTokenRepository.save(any())).thenReturn(Mono.just(new RefreshToken(1L, 1L, "r", Instant.now(), Instant.now())));
 
