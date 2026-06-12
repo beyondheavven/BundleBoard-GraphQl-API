@@ -36,4 +36,6 @@ public interface UserService {
     Mono<UserProfileResponse> getUserProfile();
 
     Mono<UpdateAvatarResponse> updateUserAvatar(UpdateAvatarRequest input);
+
+    Mono<UserCommentResponse> getUserCommentResponseById(Long userId);
 }
