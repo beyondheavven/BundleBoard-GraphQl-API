@@ -85,6 +85,12 @@ type UserDto {
     roles: [UserRole!]!
 }
 
+type UserCommentResponse {
+    id: ID!
+    username: String!
+    avatarUrl: String
+}
+
 enum UserRole {
     admin, author, client
 }

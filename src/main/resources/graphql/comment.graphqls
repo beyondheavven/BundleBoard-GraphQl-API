@@ -1,0 +1,30 @@
+extend type Query {
+    getCommentsByCollectionId(collectionId: ID!): [Comment!]!
+}
+
+extend type Mutation {
+    addComment(input: AddCommentRequest!): CommentResponse!
+    deleteComment(id: ID!): Boolean!
+}
+
+type Comment {
+    id: ID!
+    collection: CollectionCommentResponse!
+    user: UserCommentResponse!
+    content: String!
+    createdAt: String!
+    updatedAt: String!
+}
+
+
+
+type CommentResponse {
+    comment: Comment
+    success: Boolean!
+    message: String!
+}
+
+input AddCommentRequest {
+    collectionId: ID!
+    content: String!
+}

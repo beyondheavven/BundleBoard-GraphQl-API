@@ -252,5 +252,19 @@ public class UserServiceImpl implements UserService {
                 ));
     }
 
+    @Override
+    public Mono<UserCommentResponse> getUserCommentResponseById(Long userId) {
+        if (userId == null) {
+            return Mono.error(new UserNotFoundException());
+        }
+
+        return userRepository.findById(userId)
+                .map(user -> new UserCommentResponse(
+                        user.getId(),
+                        user.getUsername(),
+                        user.getAvatarUrl()
+                ));
+    }
+
 
 }

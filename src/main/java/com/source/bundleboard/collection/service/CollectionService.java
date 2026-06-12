@@ -40,4 +40,6 @@ public interface CollectionService {
 
 
     Flux<CollectionResponse> searchByName(String query, int page, int size);
+
+    Mono<CollectionCommentResponse> getCollectionCommentResponseById(Long collectionId);
 }
