@@ -14,4 +14,6 @@ public interface CommentService {
     Mono<CommentResponse> addComment(AddCommentRequest input, UserDetails userDetails);
 
     Mono<Boolean> deleteComment(Long commentId, UserDetails userDetails);
+
+    Flux<Comment> getCommentByUserId(Long userId);
 }

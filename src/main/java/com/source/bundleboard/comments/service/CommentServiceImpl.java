@@ -25,6 +25,9 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public Flux<Comment> getCommentsByCollectionId(Long collectionId) {
+        if (collectionId == null) {
+            return Flux.empty();
+        }
         return commentRepository.findAllByCollectionIdOrderByCreatedAtDesc(collectionId);
     }
 
@@ -60,5 +63,13 @@ public class CommentServiceImpl implements CommentService {
                             }
                         })
                 );
+    }
+
+    @Override
+    public Flux<Comment> getCommentByUserId(Long userId) {
+        if (userId == null) {
+            return Flux.empty();
+        }
+        return commentRepository.findByUserId(userId);
     }
 }

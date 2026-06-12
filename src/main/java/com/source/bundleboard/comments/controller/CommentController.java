@@ -38,6 +38,12 @@ public class CommentController {
         return commentService.getCommentsByCollectionId(collectionId);
     }
 
+    @QueryMapping
+    @PreAuthorize("isAuthenticated()")
+    public Flux<Comment> getCommentsByUserId(@Argument Long userId){
+        return commentService.getCommentByUserId(userId);
+    }
+
     @MutationMapping
     @PreAuthorize("isAuthenticated()")
     public Mono<CommentResponse> addComment(@Argument @Valid AddCommentRequest input, @AuthenticationPrincipal UserDetails userDetails){
