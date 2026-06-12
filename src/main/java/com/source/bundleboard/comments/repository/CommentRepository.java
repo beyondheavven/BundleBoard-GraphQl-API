@@ -9,4 +9,6 @@ import reactor.core.publisher.Flux;
 public interface CommentRepository extends R2dbcRepository<Comment, Long> {
 
     Flux<Comment> findAllByCollectionIdOrderByCreatedAtDesc(Long collectionId);
+
+    Flux<Comment> findByUserId(Long userId);
 }
