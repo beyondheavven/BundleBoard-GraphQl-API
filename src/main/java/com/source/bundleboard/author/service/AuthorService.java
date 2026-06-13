@@ -4,8 +4,12 @@ package com.source.bundleboard.author.service;
 import com.source.bundleboard.author.dto.AuthorResponse;
 import com.source.bundleboard.author.dto.AuthorShortResponse;
 import com.source.bundleboard.author.dto.BaseAuthorResponse;
+import com.source.bundleboard.author.dto.SocialLinkInput;
 import com.source.bundleboard.author.model.Author;
+import com.source.bundleboard.user.dto.UserProfileResponse;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 public interface AuthorService {
 
@@ -20,4 +24,6 @@ public interface AuthorService {
     Mono<Author> findById(Long id);
 
     Mono<Author> findByUserId(Long userId);
+
+    Mono<UserProfileResponse> updateProfileDetails(String bio, List<SocialLinkInput> socialLinks);
 }

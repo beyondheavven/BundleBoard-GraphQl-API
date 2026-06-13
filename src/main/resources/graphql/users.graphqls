@@ -9,6 +9,13 @@ extend type Mutation {
     updateMe(input: UpdateUserRequest!): UserUpdateResponse!
     updateUserRole(input: UpdateUserRoleInput!): UpdateUserRoleResponse!
     updateAvatar(input: UpdateAvatarRequest!): UpdateAvatarResponse!
+    updateProfileDetails(bio: String, socialLinks: [SocialLinkInput!]): UserProfileResponse!
+}
+
+extend type UserProfileResponse {
+    bio: String
+    socialLinks: [SocialLink!]
+    stripeAccountId: String
 }
 
 type User {
@@ -53,6 +60,16 @@ type UpdateAvatarResponse {
     id: ID!
     avatarUrl: String!
     updatedAt: String!
+}
+
+type SocialLinkResponse {
+    platform: String!
+    url: String!
+}
+
+input SocialLinkInput {
+    platform: String!
+    url: String!
 }
 
 input UpdateAvatarRequest {

@@ -32,6 +32,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.source.bundleboard.utils.SocialLinksParser.parseSocialLinks;
+
 
 @Slf4j
 @Service
@@ -224,16 +226,43 @@ public class UserServiceImpl implements UserService {
                 .filter(Authentication::isAuthenticated)
                 .flatMap(auth -> userRepository.findByUsername(auth.getName()))
                 .switchIfEmpty(Mono.error(new UserNotFoundException()))
-                .map(user -> new UserProfileResponse(
-                        user.getId(),
-                        user.getUsername(),
-                        user.getEmail(),
-                        user.getAvatarUrl(),
-                        user.getStatus(),
-                        user.getRoles(),
-                        null,
-                        null
-                ));
+                .flatMap(user -> {
+                    if (user.getRoles().contains(UserRole.author)) {
+                        return authorRepository.findByUserId(user.getId())
+                                .map(author -> new UserProfileResponse(
+                                        user.getId(),
+                                        user.getUsername(),
+                                        user.getEmail(),
+                                        user.getAvatarUrl(),
+                                        user.getStatus(),
+                                        user.getRoles(),
+                                        null,
+                                        null,
+                                        author.getBio(),
+                                        parseSocialLinks(author.getSocialLinks()),
+                                        author.getStripeAccountId()
+                                ))
+                                .defaultIfEmpty(getBaseProfile(user));
+                    } else {
+                        return Mono.just(getBaseProfile(user));
+                    }
+                });
+    }
+
+    private UserProfileResponse getBaseProfile(User user) {
+        return new UserProfileResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getAvatarUrl(),
+                user.getStatus(),
+                user.getRoles(),
+                null,
+                null,
+                null,
+                null,
+                null
+        );
     }
 
     @Override

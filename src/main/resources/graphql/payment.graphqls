@@ -1,5 +1,6 @@
 extend type Mutation {
     createCheckoutSession(input: PaymentRequest!): String!
+    updateStripeAccount(stripeAccountId: String!): UserProfileResponse!
 }
 
 input PaymentRequest {
