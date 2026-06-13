@@ -76,6 +76,11 @@ type CreateCollectionResponse {
     success: Boolean!
 }
 
+type CollectionCommentResponse {
+    id: ID!
+    name: String!
+}
+
 input CollectionFilterInput {
     tagName: String!
     page: Int!

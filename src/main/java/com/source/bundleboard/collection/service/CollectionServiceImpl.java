@@ -282,6 +282,18 @@ public class CollectionServiceImpl implements CollectionService {
                 .map(collectionMapper::toDto);
     }
 
+    @Override
+    public Mono<CollectionCommentResponse> getCollectionCommentResponseById(Long collectionId) {
+        if (collectionId == null) {
+            return Mono.error(new CollectionNotFoundException());
+        }
+        return collectionRepository.findById(collectionId)
+                .map(collection -> new CollectionCommentResponse(
+                        collection.getId(),
+                        collection.getName()
+                ));
+    }
+
 
     @Transactional
     @Override
