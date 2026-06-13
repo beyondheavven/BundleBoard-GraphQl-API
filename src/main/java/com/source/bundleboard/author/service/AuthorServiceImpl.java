@@ -1,25 +1,24 @@
 package com.source.bundleboard.author.service;
 
 import com.source.bundleboard.api.exception.AuthorNotFoundException;
-import com.source.bundleboard.author.dto.AuthorResponse;
-import com.source.bundleboard.author.dto.AuthorShortResponse;
-import com.source.bundleboard.author.dto.BaseAuthorResponse;
-import com.source.bundleboard.author.dto.SocialLink;
+import com.source.bundleboard.author.dto.*;
 import com.source.bundleboard.author.mapper.AuthorMapper;
 import com.source.bundleboard.author.model.Author;
 import com.source.bundleboard.author.repository.AuthorRepository;
-import com.source.bundleboard.user.repository.UserRepository;
+import com.source.bundleboard.user.dto.UserProfileResponse;
 import com.source.bundleboard.user.service.UserService;
 import io.r2dbc.postgresql.codec.Json;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+
+import static com.source.bundleboard.utils.SocialLinksParser.parseSocialLinks;
 
 
 @Slf4j
@@ -94,27 +93,27 @@ public class AuthorServiceImpl implements AuthorService {
                 .switchIfEmpty(Mono.error(new AuthorNotFoundException()));
     }
 
-    private List<SocialLink> parseSocialLinks(Json json) {
-        if (json == null) {
-            return new ArrayList<>();
-        }
-
-        String jsonStr = json.asString();
-
-        if (jsonStr.isBlank() || jsonStr.trim().equals("{}")) {
-            return new ArrayList<>();
-        }
-
-        try {
-            return objectMapper.readValue(
-                    jsonStr,
-                    new TypeReference<>() {}
-            );
-        } catch (Exception e) {
-            log.error("🔴 [JSON_PARSE_ERROR]: Failed to decode social links. Data: {}", jsonStr, e);
-            return new ArrayList<>();
-        }
+    @Override
+    public Mono<UserProfileResponse> updateProfileDetails(String bio, List<SocialLinkInput> socialLinks) {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(ctx -> Objects.requireNonNull(ctx.getAuthentication()).getName())
+                .flatMap(this::findByUsername)
+                .flatMap(author -> {
+                    author.setBio(bio);
+                    try {
+                        if(socialLinks != null) {
+                            String jsonLinks = objectMapper.writeValueAsString(socialLinks);
+                            author.setSocialLinks(Json.of(jsonLinks));
+                        }else {
+                            author.setSocialLinks(null);
+                        }
+                    }catch (Exception e){
+                        log.error("🔴 [JSON_SERIALIZE_ERROR]: Failed to encode social links.", e);
+                        return Mono.error(new RuntimeException("Failed to serialize social links", e));
+                    }
+                    return authorRepository.save(author);
+                })
+                .flatMap(savedAuthor -> userService.getUserProfile());
     }
-
 
 }

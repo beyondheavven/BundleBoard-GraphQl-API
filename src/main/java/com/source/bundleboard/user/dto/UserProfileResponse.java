@@ -1,5 +1,6 @@
 package com.source.bundleboard.user.dto;
 
+import com.source.bundleboard.author.dto.SocialLink;
 import com.source.bundleboard.collection.dto.AuthoredCollectionResponse;
 import com.source.bundleboard.purchase.dto.PurchaseBaseResponse;
 import com.source.bundleboard.user.model.UserRole;
@@ -23,6 +24,12 @@ public record UserProfileResponse(
 
         List<AuthoredCollectionResponse> authoredCollections,
 
-        List<PurchaseBaseResponse> purchases
+        List<PurchaseBaseResponse> purchases,
+
+        String bio,
+
+        List<SocialLink> socialLinks,
+
+        String stripeAccountId
 ) {
 }
