@@ -1,5 +1,6 @@
 package com.source.bundleboard.user.controller;
 
+import com.source.bundleboard.author.dto.SocialLinkInput;
 import com.source.bundleboard.author.service.AuthorService;
 import com.source.bundleboard.collection.dto.AuthoredCollectionResponse;
 import com.source.bundleboard.collection.service.CollectionService;
@@ -74,6 +75,12 @@ public class UserController {
     @PreAuthorize("hasAnyRole('CLIENT', 'AUTHOR')")
     public Mono<UpdateAvatarResponse> updateAvatar(@Argument UpdateAvatarRequest input){
         return userService.updateUserAvatar(input);
+    }
+
+    @MutationMapping
+    @PreAuthorize("hasAnyRole('CLIENT', 'AUTHOR')")
+    public Mono<UserProfileResponse> updateProfileDetails(@Argument String bio, @Argument List<SocialLinkInput> socialLinks){
+        return authorService.updateProfileDetails(bio, socialLinks);
     }
 
     @QueryMapping
