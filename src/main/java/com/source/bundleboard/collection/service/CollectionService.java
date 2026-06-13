@@ -42,4 +42,6 @@ public interface CollectionService {
     Flux<CollectionResponse> searchByName(String query, int page, int size);
 
     Flux<CollectionResponse> getTopLikedCollections(int limit);
+
+    Mono<CollectionCommentResponse> getCollectionCommentResponseById(Long collectionId);
 }
