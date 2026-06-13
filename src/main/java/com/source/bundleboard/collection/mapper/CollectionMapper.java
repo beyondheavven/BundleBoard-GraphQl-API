@@ -11,6 +11,9 @@ import org.mapstruct.MappingTarget;
 public interface CollectionMapper {
 
     @Mapping(target = "authorId", source = "authorId")
+    @Mapping(target = "likesCount", ignore = true)
+    @Mapping(target = "isLiked", ignore = true)
+    @Mapping(target = "galleryImages", ignore = true)
     CollectionResponse toDto(Collection collection);
 
     @Mapping(target = "authorId", source = "authorId")

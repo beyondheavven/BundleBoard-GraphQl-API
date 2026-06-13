@@ -277,6 +277,12 @@ public class CollectionServiceImpl implements CollectionService {
     }
 
     @Override
+    public Flux<CollectionResponse> getTopLikedCollections(int limit) {
+        return collectionRepository.findTopLikedCollections(limit)
+                .map(collectionMapper::toDto);
+    }
+
+    @Override
     public Mono<CollectionCommentResponse> getCollectionCommentResponseById(Long collectionId) {
         if (collectionId == null) {
             return Mono.error(new CollectionNotFoundException());
