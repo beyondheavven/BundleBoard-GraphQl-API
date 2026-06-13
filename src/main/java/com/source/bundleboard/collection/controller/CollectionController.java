@@ -72,6 +72,13 @@ public class CollectionController {
         return collectionService.deleteCollection(id, folderPath);
     }
 
+    @PreAuthorize("permitAll()")
+    @QueryMapping
+    public Flux<CollectionResponse> getTopLikedCollections(@Argument Integer limit) {
+        int actualLimit = (limit != null && limit > 0) ? limit : 10;
+        return collectionService.getTopLikedCollections(actualLimit);
+    }
+
     @PreAuthorize("hasAnyRole('ADMIN', 'AUTHOR')")
     @QueryMapping
     public Flux<CollectionResponse> getLikedCollections() {
