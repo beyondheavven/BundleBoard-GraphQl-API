@@ -49,4 +49,16 @@ public interface CollectionRepository extends R2dbcRepository<Collection, Long> 
     Flux<Collection> findLikedCollectionsByAuthorId(Long authorId);
 
     Flux<Collection> findByNameContainingIgnoreCase(String name, Pageable pageable);
+
+    @Query("""
+    SELECT c.*, COUNT(cl.id) as likes_count
+    FROM collections c
+    LEFT JOIN collection_likes cl ON c.id = cl.collection_id
+    GROUP BY c.id
+    ORDER BY likes_count DESC
+    LIMIT :limit
+    """)
+    Flux<Collection> findTopLikedCollections(int limit);
+
+
 }

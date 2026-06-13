@@ -276,6 +276,12 @@ public class CollectionServiceImpl implements CollectionService {
                 ));
     }
 
+    @Override
+    public Flux<CollectionResponse> getTopLikedCollections(int limit) {
+        return collectionRepository.findTopLikedCollections(limit)
+                .map(collectionMapper::toDto);
+    }
+
 
     @Transactional
     @Override
