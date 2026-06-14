@@ -4,6 +4,7 @@ extend type Query {
     getCollectionsByTag(input: CollectionFilterInput!): CollectionByTagResponse!
     getTopLikedCollections(limit: Int!): [CollectionResponse!]!
     searchCollections(query: String!, page: Int!, size: Int!): [CollectionResponse!]!
+    getLatestCollections(limit: Int!): [CollectionResponse!]
 }
 
 extend type Mutation {
