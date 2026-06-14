@@ -44,4 +44,6 @@ public interface CollectionService {
     Flux<CollectionResponse> getTopLikedCollections(int limit);
 
     Mono<CollectionCommentResponse> getCollectionCommentResponseById(Long collectionId);
+
+    Flux<CollectionResponse> getLatestCollections(Integer limit);
 }

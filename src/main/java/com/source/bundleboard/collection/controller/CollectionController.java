@@ -87,6 +87,13 @@ public class CollectionController {
 
     @PreAuthorize("permitAll()")
     @QueryMapping
+    public Flux<CollectionResponse> getLatestCollections(@Argument Integer limit){
+        int actualLimit = (limit != null && limit > 0) ? limit : 10;
+        return collectionService.getLatestCollections(limit);
+    }
+
+    @PreAuthorize("permitAll()")
+    @QueryMapping
     public Flux<CollectionResponse> searchCollections(@Argument String query,
                                                       @Argument int size,
                                                       @Argument int page){
