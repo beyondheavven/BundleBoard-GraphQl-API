@@ -47,5 +47,5 @@ public interface CollectionService {
 
     Flux<CollectionResponse> getLatestCollections(Integer limit);
 
-    Flux<CollectionResponse> getSortedCollections(int page, int size, String sortBy);
+    Flux<CollectionResponse> getSortedCollections(int page, int size, String sortBy, List<String> mimeTypes);
 }

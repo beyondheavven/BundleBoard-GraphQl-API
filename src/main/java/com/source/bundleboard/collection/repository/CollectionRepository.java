@@ -2,12 +2,15 @@ package com.source.bundleboard.collection.repository;
 
 import com.source.bundleboard.collection.dto.CollectionRow;
 import com.source.bundleboard.collection.model.Collection;
+import com.source.bundleboard.mediaresource.model.MimeType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 
 @Repository
@@ -84,6 +87,72 @@ public interface CollectionRepository extends R2dbcRepository<Collection, Long> 
         LIMIT :size OFFSET :offset
     """)
     Flux<Collection> findAllSortedByAuthorSales(int size, int offset);
+
+    @Query("""
+        SELECT c.* FROM collections c
+        INNER JOIN media_resources m ON c.project_file_id = m.id
+        WHERE m.mime_type::text IN (:mimeTypes)
+        ORDER BY c.id DESC
+        LIMIT :size OFFSET :offset
+    """)
+    Flux<Collection> findFilteredByMimeTypesSortedByLatest(List<MimeType> mimeTypes, int size, int offset);
+
+    @Query("SELECT * FROM collections ORDER BY id DESC LIMIT :size OFFSET :offset")
+    Flux<Collection> findAllSortedByLatest(int size, int offset);
+
+    @Query("""
+        SELECT c.* FROM collections c
+        INNER JOIN media_resources m ON c.project_file_id = m.id
+        WHERE m.mime_type::text IN (:mimeTypes)
+        ORDER BY c.id ASC
+        LIMIT :size OFFSET :offset
+    """)
+    Flux<Collection> findFilteredByMimeTypesSortedByOldest(List<MimeType> mimeTypes, int size, int offset);
+
+    @Query("SELECT * FROM collections ORDER BY id ASC LIMIT :size OFFSET :offset")
+    Flux<Collection> findAllSortedByOldest(int size, int offset);
+
+    @Query("""
+        SELECT c.* FROM collections c
+        INNER JOIN media_resources m ON c.project_file_id = m.id
+        WHERE m.mime_type::text IN (:mimeTypes)
+        ORDER BY c.name ASC
+        LIMIT :size OFFSET :offset
+    """)
+    Flux<Collection> findFilteredByMimeTypesSortedByAlphabetical(List<MimeType> mimeTypes, int size, int offset);
+
+    @Query("SELECT * FROM collections ORDER BY name ASC LIMIT :size OFFSET :offset")
+    Flux<Collection> findAllSortedByAlphabetical(int size, int offset);
+
+    @Query("""
+        SELECT c.* FROM collections c
+        LEFT JOIN collection_likes cl ON c.id = cl.collection_id
+        INNER JOIN media_resources m ON c.project_file_id = m.id
+        WHERE m.mime_type::text IN (:mimeTypes)
+        GROUP BY c.id, m.file_size
+        ORDER BY COUNT(cl.id) DESC, c.id DESC
+        LIMIT :size OFFSET :offset
+    """)
+    Flux<Collection> findFilteredByMimeTypesSortedByLikes(List<MimeType> mimeTypes, int size, int offset);
+
+    @Query("""
+        SELECT c.* FROM collections c
+        INNER JOIN media_resources m ON c.project_file_id = m.id
+        WHERE m.mime_type::text IN (:mimeTypes)
+        ORDER BY m.file_size ASC NULLS LAST, c.id DESC
+        LIMIT :size OFFSET :offset
+    """)
+    Flux<Collection> findFilteredByMimeTypesSortedBySizeAsc(List<MimeType> mimeTypes, int size, int offset);
+
+    @Query("""
+        SELECT c.* FROM collections c
+        LEFT JOIN authors a ON c.authors_id = a.id
+        INNER JOIN media_resources m ON c.project_file_id = m.id
+        WHERE m.mime_type::text IN (:mimeTypes)
+        ORDER BY a.total_sales DESC NULLS LAST, c.id DESC
+        LIMIT :size OFFSET :offset
+    """)
+    Flux<Collection> findFilteredByMimeTypesSortedByAuthorSales(List<MimeType> mimeTypes, int size, int offset);
 
 
 }

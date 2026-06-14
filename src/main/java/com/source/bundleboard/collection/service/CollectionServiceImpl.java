@@ -301,32 +301,52 @@ public class CollectionServiceImpl implements CollectionService {
     }
 
     @Override
-    public Flux<CollectionResponse> getSortedCollections(int page, int size, String sortBy){
+    public Flux<CollectionResponse> getSortedCollections(int page, int size, String sortBy, List<String> mimeTypeStrings){
         int offset = page * size;
+        List<MimeType> mimeTypes = null;
 
-        if ("likes".equalsIgnoreCase(sortBy)) {
-            return collectionRepository.findAllSortedByLikes(size, offset)
-                    .map(collectionMapper::toDto);
+        if (mimeTypeStrings != null && !mimeTypeStrings.isEmpty()) {
+            mimeTypes = mimeTypeStrings.stream()
+                    .map(String::toLowerCase)
+                    .map(MimeType::valueOf)
+                    .toList();
         }
 
-        if ("size-asc".equalsIgnoreCase(sortBy)) {
-            return collectionRepository.findAllSortedBySizeAsc(size, offset)
-                    .map(collectionMapper::toDto);
-        }
+        boolean hasFilter = mimeTypes != null && !mimeTypes.isEmpty();
+        String sortKey = sortBy != null ? sortBy.toUpperCase() : "LATEST";
 
-        if ("author-rating".equalsIgnoreCase(sortBy)) {
-            return collectionRepository.findAllSortedByAuthorSales(size, offset)
-                    .map(collectionMapper::toDto);
-        }
+        Flux<Collection> collectionsFlux = switch (sortKey) {
 
-        Sort sort = switch (sortBy) {
-            case "alpha" -> Sort.by(Sort.Direction.ASC, "name");
-            case "oldest" -> Sort.by(Sort.Direction.ASC, "id");
-            default -> Sort.by(Sort.Direction.DESC, "id");
+            case "SIZE_ASC", "LIGHTEST" -> hasFilter
+                    ? collectionRepository.findFilteredByMimeTypesSortedBySizeAsc(mimeTypes, size, offset)
+                    : collectionRepository.findAllSortedBySizeAsc(size, offset);
+
+            case "AUTHOR_SALES", "TOP_CREATORS" -> hasFilter
+                    ? collectionRepository.findFilteredByMimeTypesSortedByAuthorSales(mimeTypes, size, offset)
+                    : collectionRepository.findAllSortedByAuthorSales(size, offset);
+
+            case "LIKES", "TOP_RATED" -> hasFilter
+                    ? collectionRepository.findFilteredByMimeTypesSortedByLikes(mimeTypes, size, offset)
+                    : collectionRepository.findAllSortedByLikes(size, offset);
+
+            case "OLDEST", "DATE_ASC" -> hasFilter
+                    ? collectionRepository.findFilteredByMimeTypesSortedByOldest(mimeTypes, size, offset)
+                    : collectionRepository.findAllSortedByOldest(size, offset);
+
+            case "ALPHABETICAL", "NAME_ASC" -> hasFilter
+                    ? collectionRepository.findFilteredByMimeTypesSortedByAlphabetical(mimeTypes, size, offset)
+                    : collectionRepository.findAllSortedByAlphabetical(size, offset);
+
+            case "LATEST", "NEWEST", "LATEST_INIT" -> hasFilter
+                    ? collectionRepository.findFilteredByMimeTypesSortedByLatest(mimeTypes, size, offset)
+                    : collectionRepository.findAllSortedByLatest(size, offset);
+
+            default -> hasFilter
+                    ? collectionRepository.findFilteredByMimeTypesSortedByLatest(mimeTypes, size, offset)
+                    : collectionRepository.findAllSortedByLatest(size, offset);
         };
 
-        Pageable pageable = PageRequest.of(page, size, sort);
-        return collectionRepository.findAllBy(pageable).map(collectionMapper::toDto);
+        return collectionsFlux.map(collectionMapper::toDto);
     }
 
 
