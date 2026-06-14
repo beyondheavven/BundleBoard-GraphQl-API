@@ -60,5 +60,30 @@ public interface CollectionRepository extends R2dbcRepository<Collection, Long> 
     """)
     Flux<Collection> findTopLikedCollections(int limit);
 
+    @Query("""
+        SELECT c.* FROM collections c
+        LEFT JOIN collection_likes cl ON c.id = cl.collection_id
+        GROUP BY c.id
+        ORDER BY COUNT(cl.id) DESC, c.id DESC
+        LIMIT :size OFFSET :offset
+    """)
+    Flux<Collection> findAllSortedByLikes(int size, int offset);
+
+    @Query("""
+        SELECT c.* FROM collections c
+        LEFT JOIN media_resources m ON c.project_file_id = m.id
+        ORDER BY m.file_size ASC NULLS LAST, c.id DESC
+        LIMIT :size OFFSET :offset
+    """)
+    Flux<Collection> findAllSortedBySizeAsc(int size, int offset);
+
+    @Query("""
+        SELECT c.* FROM collections c
+        LEFT JOIN authors a ON c.authors_id = a.id
+        ORDER BY a.total_sales DESC NULLS LAST, c.id DESC
+        LIMIT :size OFFSET :offset
+    """)
+    Flux<Collection> findAllSortedByAuthorSales(int size, int offset);
+
 
 }
