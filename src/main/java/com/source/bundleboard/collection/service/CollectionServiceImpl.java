@@ -294,6 +294,12 @@ public class CollectionServiceImpl implements CollectionService {
                 ));
     }
 
+    @Override
+    public Flux<CollectionResponse> getLatestCollections(Integer limit) {
+        Pageable pageable = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "id"));
+        return collectionRepository.findAllBy(pageable).map(collectionMapper::toDto);
+    }
+
 
     @Transactional
     @Override
