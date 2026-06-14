@@ -300,6 +300,35 @@ public class CollectionServiceImpl implements CollectionService {
         return collectionRepository.findAllBy(pageable).map(collectionMapper::toDto);
     }
 
+    @Override
+    public Flux<CollectionResponse> getSortedCollections(int page, int size, String sortBy){
+        int offset = page * size;
+
+        if ("likes".equalsIgnoreCase(sortBy)) {
+            return collectionRepository.findAllSortedByLikes(size, offset)
+                    .map(collectionMapper::toDto);
+        }
+
+        if ("size-asc".equalsIgnoreCase(sortBy)) {
+            return collectionRepository.findAllSortedBySizeAsc(size, offset)
+                    .map(collectionMapper::toDto);
+        }
+
+        if ("author-rating".equalsIgnoreCase(sortBy)) {
+            return collectionRepository.findAllSortedByAuthorSales(size, offset)
+                    .map(collectionMapper::toDto);
+        }
+
+        Sort sort = switch (sortBy) {
+            case "alpha" -> Sort.by(Sort.Direction.ASC, "name");
+            case "oldest" -> Sort.by(Sort.Direction.ASC, "id");
+            default -> Sort.by(Sort.Direction.DESC, "id");
+        };
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+        return collectionRepository.findAllBy(pageable).map(collectionMapper::toDto);
+    }
+
 
     @Transactional
     @Override

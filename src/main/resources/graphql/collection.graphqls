@@ -5,6 +5,7 @@ extend type Query {
     getTopLikedCollections(limit: Int!): [CollectionResponse!]!
     searchCollections(query: String!, page: Int!, size: Int!): [CollectionResponse!]!
     getLatestCollections(limit: Int!): [CollectionResponse!]
+    getSortedCollections(page: Int!, size: Int!, sortBy: String!): [CollectionResponse!]!
 }
 
 extend type Mutation {
