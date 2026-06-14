@@ -22,6 +22,8 @@ import org.springframework.stereotype.Controller;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 @Controller
 @RequiredArgsConstructor
 public class CollectionController {
@@ -94,8 +96,8 @@ public class CollectionController {
 
     @PreAuthorize("permitAll()")
     @QueryMapping
-    public Flux<CollectionResponse> getSortedCollections(@Argument int page, @Argument int size, @Argument String sortBy){
-        return collectionService.getSortedCollections(page, size, sortBy);
+    public Flux<CollectionResponse> getSortedCollections(@Argument int page, @Argument int size, @Argument String sortBy, @Argument List<String> mimeTypes){
+        return collectionService.getSortedCollections(page, size, sortBy, mimeTypes);
     }
 
     @PreAuthorize("permitAll()")
