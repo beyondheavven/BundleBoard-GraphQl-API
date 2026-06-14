@@ -1,6 +1,7 @@
 package com.source.bundleboard.config;
 
 import com.source.bundleboard.config.properties.R2dbcProperties;
+import com.source.bundleboard.mediaresource.model.MimeType;
 import com.source.bundleboard.user.model.UserRole;
 import com.source.bundleboard.user.model.UserStatus;
 import io.r2dbc.pool.ConnectionPool;
@@ -37,6 +38,7 @@ public class R2dbcConfig extends AbstractR2dbcConfiguration {
                         .password(r2dbcProperties.getPassword())
                         .preparedStatementCacheQueries(0)
                         .codecRegistrar(EnumCodec.builder()
+                                .withEnum("media_mime_type", MimeType.class)
                                 .withEnum("user_role", UserRole.class)
                                 .withEnum("user_status", UserStatus.class)
                                 .build())
