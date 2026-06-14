@@ -1,0 +1,1 @@
+UPDATE collections SET price = 0;
