@@ -46,4 +46,6 @@ public interface CollectionService {
     Mono<CollectionCommentResponse> getCollectionCommentResponseById(Long collectionId);
 
     Flux<CollectionResponse> getLatestCollections(Integer limit);
+
+    Flux<CollectionResponse> getSortedCollections(int page, int size, String sortBy);
 }
