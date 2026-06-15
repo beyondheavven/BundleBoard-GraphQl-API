@@ -23,6 +23,7 @@ import reactor.core.publisher.Mono;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -115,7 +116,7 @@ public class PurchaseServiceImpl implements PurchaseService {
     @Override
     public Mono<DownloadVerificationResponse> verifyPurchaseForDownload(Long collectionId) {
         return ReactiveSecurityContextHolder.getContext()
-                .map(securityContext -> securityContext.getAuthentication().getPrincipal())
+                .mapNotNull(securityContext -> Objects.requireNonNull(securityContext.getAuthentication()).getPrincipal())
                 .flatMap(principal -> {
                     if (principal instanceof User user) {
                         return purchaseRepository.findByUserIdAndCollectionId(user.getId(), collectionId)
