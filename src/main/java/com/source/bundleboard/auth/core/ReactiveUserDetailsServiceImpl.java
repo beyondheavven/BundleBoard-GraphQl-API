@@ -1,7 +1,5 @@
 package com.source.bundleboard.auth.core;
 
-import com.source.bundleboard.user.model.User;
-import com.source.bundleboard.user.model.UserRole;
 import com.source.bundleboard.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
@@ -17,36 +15,17 @@ public class ReactiveUserDetailsServiceImpl implements ReactiveUserDetailsServic
 
     private final UserRepository userRepository;
 
-
     @Override
     public Mono<UserDetails> findByUsername(String username) {
         return userRepository.findByUsername(username)
-                .switchIfEmpty(Mono.error(
-                        new UsernameNotFoundException("User not found: " + username)
-                ))
-                .map(this::toUserDetails);
+                .switchIfEmpty(Mono.error(new UsernameNotFoundException("User not found: " + username)))
+                .cast(UserDetails.class);
     }
 
     public Mono<UserDetails> loadUserById(Long id) {
         return userRepository.findById(id)
                 .switchIfEmpty(Mono.error(
-                        new UsernameNotFoundException("User node not found by ID: " + id)
-                ))
-                .map(this::toUserDetails);
+                        new UsernameNotFoundException("User node not found by ID: " + id)))
+                .cast(UserDetails.class);
     }
-
-    private UserDetails toUserDetails(User user) {
-        return org.springframework.security.core.userdetails.User.builder()
-                .username(user.getUsername())
-                .password(user.getPasswordHash())
-                .authorities(UserRole.toAuthorities(user.getRoles()))
-                .accountExpired(false)
-                .accountLocked(false)
-                .credentialsExpired(false)
-                .disabled(false)
-                .build();
-
-    }
-
-
 }
