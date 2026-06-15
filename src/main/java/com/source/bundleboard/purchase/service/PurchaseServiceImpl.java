@@ -10,7 +10,9 @@ import com.source.bundleboard.purchase.mapper.PurchaseMapper;
 import com.source.bundleboard.purchase.model.Purchase;
 import com.source.bundleboard.purchase.model.PurchaseStatus;
 import com.source.bundleboard.purchase.repository.PurchaseRepository;
+import com.source.bundleboard.user.model.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
@@ -107,6 +109,21 @@ public class PurchaseServiceImpl implements PurchaseService {
                 .collectList()
                 .flatMap(items -> createPurchaseWithItems(purchase, items));
     }
+
+    @Override
+    public Mono<PurchaseBaseResponse> findByUserIdAndCollectionId(Long collectionId) {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(securityContext -> securityContext.getAuthentication().getPrincipal())
+                .flatMap(principal -> {
+                    if (principal instanceof User user) {
+                        return purchaseRepository.findByUserIdAndCollectionId(user.getId(), collectionId).flatMap(this::enrichPurchaseWithAsset);
+                    } else {
+                        return Mono.error(new RuntimeException("Unauthorized: Invalid User Principal"));
+                    }
+                })
+                .switchIfEmpty(Mono.error(new RuntimeException("Purchase not found")));
+    }
+
     private Mono<PurchaseBaseResponse> enrichPurchaseWithAsset(Purchase purchase) {
         return purchaseItemService.findAllByPurchaseId(purchase.getId())
                 .flatMap(itemDto ->

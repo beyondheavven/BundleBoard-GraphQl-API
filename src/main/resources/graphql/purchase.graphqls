@@ -1,3 +1,7 @@
+extend type Query {
+    getPurchaseByAsset(assetId: ID!):PurchaseBaseResponse!
+}
+
 type Purchase {
     id: ID!
     userId: String!
