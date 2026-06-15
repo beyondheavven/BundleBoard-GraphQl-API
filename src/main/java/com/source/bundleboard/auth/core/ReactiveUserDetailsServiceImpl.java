@@ -17,7 +17,6 @@ public class ReactiveUserDetailsServiceImpl implements ReactiveUserDetailsServic
 
     private final UserRepository userRepository;
 
-
     @Override
     public Mono<UserDetails> findByUsername(String username) {
         return userRepository.findByUsername(username)

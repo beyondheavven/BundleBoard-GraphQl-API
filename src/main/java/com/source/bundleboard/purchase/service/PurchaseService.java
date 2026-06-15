@@ -22,4 +22,6 @@ public interface PurchaseService {
     Mono<List<PurchaseBaseResponse>> findAllLightweightByUserId(Long userId);
 
     Mono<Purchase> createFreePurchase(Long userId, List<Long> collectionIds);
+
+    Mono<PurchaseBaseResponse> findByUserIdAndCollectionId(Long collectionId);
 }
