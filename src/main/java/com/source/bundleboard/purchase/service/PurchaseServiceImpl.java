@@ -144,8 +144,7 @@ public class PurchaseServiceImpl implements PurchaseService {
                     } else {
                         return Mono.error(new RuntimeException("Unauthorized: Invalid User Principal"));
                     }
-                })
-                .switchIfEmpty(Mono.error(new RuntimeException("Purchase not found")));
+                });
     }
 
     private Mono<PurchaseBaseResponse> enrichPurchaseWithAsset(Purchase purchase) {

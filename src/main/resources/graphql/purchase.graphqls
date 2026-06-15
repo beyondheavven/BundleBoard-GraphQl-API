@@ -1,5 +1,5 @@
 extend type Query {
-    getPurchaseByAsset(assetId: ID!):DownloadVerificationResponse!
+    getPurchaseByAsset(assetId: ID!):DownloadVerificationResponse
 }
 
 type Purchase {

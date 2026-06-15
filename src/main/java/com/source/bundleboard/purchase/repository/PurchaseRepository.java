@@ -17,9 +17,9 @@ public interface PurchaseRepository extends R2dbcRepository<Purchase, Long> {
 
     Mono<Purchase> findByStripeSessionId(String stripeSessionId);
 
-    @Query("SELECT p.* FROM purchase p " +
-            "JOIN purchase_item pi ON p.id = pi.purchase_id " +
+    @Query("SELECT p.* FROM purchases p " +
+            "JOIN purchase_items pi ON p.id = pi.purchase_id " +
             "WHERE p.user_id = :userId AND pi.collection_id = :collectionId " +
             "LIMIT 1")
-    Mono<Purchase> findByUserIdAndCollectionId(@Param("userId") Long userId, @Param("collectionId") Long collectionId);
+    Mono<Purchase> findByUserIdAndCollectionId(Long userId, Long collectionId);
 }
