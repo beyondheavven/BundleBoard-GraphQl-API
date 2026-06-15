@@ -1,5 +1,6 @@
 package com.source.bundleboard.purchase.service;
 
+import com.source.bundleboard.purchase.dto.DownloadVerificationResponse;
 import com.source.bundleboard.purchase.dto.PurchaseBaseResponse;
 import com.source.bundleboard.purchase.item.model.PurchaseItem;
 import com.source.bundleboard.purchase.model.Purchase;
@@ -23,5 +24,5 @@ public interface PurchaseService {
 
     Mono<Purchase> createFreePurchase(Long userId, List<Long> collectionIds);
 
-    Mono<PurchaseBaseResponse> findByUserIdAndCollectionId(Long collectionId);
+    Mono<DownloadVerificationResponse> verifyPurchaseForDownload(Long collectionId);
 }
