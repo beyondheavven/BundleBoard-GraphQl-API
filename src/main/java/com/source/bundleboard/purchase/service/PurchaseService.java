@@ -20,4 +20,6 @@ public interface PurchaseService {
     Mono<Purchase> createPurchaseWithItems(Purchase purchase, List<PurchaseItem> items);
 
     Mono<List<PurchaseBaseResponse>> findAllLightweightByUserId(Long userId);
+
+    Mono<Purchase> createFreePurchase(Long userId, List<Long> collectionIds);
 }

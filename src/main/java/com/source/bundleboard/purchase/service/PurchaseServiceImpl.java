@@ -8,12 +8,18 @@ import com.source.bundleboard.purchase.item.model.PurchaseItem;
 import com.source.bundleboard.purchase.item.service.PurchaseItemService;
 import com.source.bundleboard.purchase.mapper.PurchaseMapper;
 import com.source.bundleboard.purchase.model.Purchase;
+import com.source.bundleboard.purchase.model.PurchaseStatus;
 import com.source.bundleboard.purchase.repository.PurchaseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -76,6 +82,31 @@ public class PurchaseServiceImpl implements PurchaseService {
                 .collectList();
     }
 
+    @Override
+    @Transactional
+    public Mono<Purchase> createFreePurchase(Long userId, List<Long> collectionIds) {
+        Purchase purchase = new Purchase();
+        purchase.setUserId(userId);
+        purchase.setStripeSessionId("FREE_" + UUID.randomUUID().toString());
+        purchase.setStripePaymentIntentId("FREE_" + UUID.randomUUID().toString());
+        purchase.setAmount(BigDecimal.ZERO);
+        purchase.setCurrency("USD");
+        purchase.setStatus(PurchaseStatus.succeeded);
+        purchase.setCreatedAt(Instant.now());
+        purchase.setUpdatedAt(Instant.now());
+
+        return Flux.fromIterable(collectionIds)
+                .flatMap(collectionId -> collectionService.findById(collectionId)
+                        .map(collection -> {
+                            PurchaseItem item = new PurchaseItem();
+                            item.setCollectionId(collectionId);
+                            item.setSnapshotPrice(BigDecimal.ZERO);
+                            return item;
+                        })
+                )
+                .collectList()
+                .flatMap(items -> createPurchaseWithItems(purchase, items));
+    }
     private Mono<PurchaseBaseResponse> enrichPurchaseWithAsset(Purchase purchase) {
         return purchaseItemService.findAllByPurchaseId(purchase.getId())
                 .flatMap(itemDto ->
