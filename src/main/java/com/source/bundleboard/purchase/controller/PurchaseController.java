@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.graphql.data.method.annotation.SchemaMapping;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -27,6 +28,7 @@ public class PurchaseController {
     private final PurchaseService purchaseService;
 
     @QueryMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'CLIENT', 'AUTHOR')")
     public Mono<DownloadVerificationResponse> getPurchaseByAsset(@Argument Long assetId) {
         return purchaseService.verifyPurchaseForDownload(assetId);
     }
