@@ -3,6 +3,7 @@ package com.source.bundleboard.payment.service;
 import com.source.bundleboard.collection.service.CollectionService;
 import com.source.bundleboard.config.properties.StripeProperties;
 import com.source.bundleboard.payment.dto.PaymentRequest;
+import com.source.bundleboard.purchase.service.PurchaseService;
 import com.stripe.model.checkout.Session;
 import com.stripe.param.checkout.SessionCreateParams;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,8 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final CollectionService collectionService;
 
+    private final PurchaseService purchaseService;
+
     @Override
     public Mono<String> createCheckoutSession(PaymentRequest input) {
         return collectionService.findAllByIds(input.collectionIds())
@@ -30,6 +33,15 @@ public class PaymentServiceImpl implements PaymentService {
                 .flatMap(collections -> {
                     if (collections.isEmpty()){
                         return Mono.error(new IllegalArgumentException("No collections found"));
+                    }
+
+                    long totalAmountInCents = collections.stream()
+                            .mapToLong(collection -> collection.getPrice().multiply(BigDecimal.valueOf(100)).longValue())
+                            .sum();
+
+                    if (totalAmountInCents == 0) {
+                        return purchaseService.createFreePurchase(input.userId(), input.collectionIds())
+                                .map(purchase -> stripeProperties.getPaymentSuccessUrl());
                     }
 
                     return Mono.fromCallable(() -> {
