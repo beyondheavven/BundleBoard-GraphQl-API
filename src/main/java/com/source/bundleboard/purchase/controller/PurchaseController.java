@@ -3,6 +3,7 @@ package com.source.bundleboard.purchase.controller;
 import com.source.bundleboard.api.exception.CollectionNotFoundException;
 import com.source.bundleboard.collection.dto.CollectionShortResponse;
 import com.source.bundleboard.collection.service.CollectionService;
+import com.source.bundleboard.purchase.dto.DownloadVerificationResponse;
 import com.source.bundleboard.purchase.dto.PurchaseBaseResponse;
 import com.source.bundleboard.purchase.item.dto.PurchaseItemBaseResponse;
 import com.source.bundleboard.purchase.item.service.PurchaseItemService;
@@ -26,8 +27,8 @@ public class PurchaseController {
     private final PurchaseService purchaseService;
 
     @QueryMapping
-    public Mono<PurchaseBaseResponse> getPurchaseByAsset(@Argument Long assetId) {
-        return purchaseService.findByUserIdAndCollectionId(assetId);
+    public Mono<DownloadVerificationResponse> getPurchaseByAsset(@Argument Long assetId) {
+        return purchaseService.verifyPurchaseForDownload(assetId);
     }
 
     @SchemaMapping(typeName = "PurchaseBaseResponse", field = "items")

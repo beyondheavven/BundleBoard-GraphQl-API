@@ -1,6 +1,8 @@
 package com.source.bundleboard.purchase.service;
 
 import com.source.bundleboard.collection.service.CollectionService;
+import com.source.bundleboard.mediaresource.service.MediaResourceService;
+import com.source.bundleboard.purchase.dto.DownloadVerificationResponse;
 import com.source.bundleboard.purchase.dto.PurchaseBaseResponse;
 import com.source.bundleboard.purchase.item.dto.PurchaseItemBaseResponse;
 import com.source.bundleboard.purchase.item.mapper.PurchaseItemMapper;
@@ -35,7 +37,7 @@ public class PurchaseServiceImpl implements PurchaseService {
 
     private final PurchaseItemService purchaseItemService;
 
-    private final PurchaseItemMapper purchaseItemMapper;
+    private final MediaResourceService mediaResourceService;
 
     @Override
     public Mono<List<PurchaseBaseResponse>> findAllByUserId(Long userId) {
@@ -111,12 +113,34 @@ public class PurchaseServiceImpl implements PurchaseService {
     }
 
     @Override
-    public Mono<PurchaseBaseResponse> findByUserIdAndCollectionId(Long collectionId) {
+    public Mono<DownloadVerificationResponse> verifyPurchaseForDownload(Long collectionId) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> securityContext.getAuthentication().getPrincipal())
                 .flatMap(principal -> {
                     if (principal instanceof User user) {
-                        return purchaseRepository.findByUserIdAndCollectionId(user.getId(), collectionId).flatMap(this::enrichPurchaseWithAsset);
+                        return purchaseRepository.findByUserIdAndCollectionId(user.getId(), collectionId)
+                                .flatMap(purchase -> {
+
+                                    if (purchase.getStatus() != PurchaseStatus.succeeded) {
+                                        return Mono.just(new DownloadVerificationResponse(purchase.getStatus(), null));
+                                    }
+
+                                    return collectionService.findById(collectionId)
+                                            .flatMap(collection -> {
+                                                if (collection.getMediaResourceId() == null) {
+                                                    return Mono.just(new DownloadVerificationResponse(purchase.getStatus(), null));
+                                                }
+
+                                                return mediaResourceService.findById(collection.getMediaResourceId())
+                                                        .map(mediaResource -> new DownloadVerificationResponse(
+                                                                purchase.getStatus(),
+                                                                mediaResource.getFilePath()
+                                                        ))
+                                                        .defaultIfEmpty(new DownloadVerificationResponse(purchase.getStatus(), null));
+                                            })
+                                            .defaultIfEmpty(new DownloadVerificationResponse(purchase.getStatus(), null));
+                                });
+
                     } else {
                         return Mono.error(new RuntimeException("Unauthorized: Invalid User Principal"));
                     }
