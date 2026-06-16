@@ -93,13 +93,16 @@ public class CollectionServiceTest {
         sampleCollection.setPrice(new BigDecimal("10.00"));
         sampleCollection.setMediaResourceId(200L);
         sampleCollection.setAuthorId(42L);
+        sampleCollection.setExternalLink(null);
 
+        // 💡 ИСПРАВЛЕНО: Добавлен null для externalLink (6-й аргумент)
         sampleGetDto = new GetCollectionByIdResponse(
                 1L,
                 "Java Bundle",
                 validDescription,
                 new BigDecimal("10.00"),
                 "http://tutorials.com/1",
+                null,
                 42L,
                 200L
         );
@@ -135,6 +138,7 @@ public class CollectionServiceTest {
                 "Java Bundle",
                 "Desc",
                 new BigDecimal("10.00"),
+                null,
                 42L,
                 null,
                 0L,
@@ -177,6 +181,54 @@ public class CollectionServiceTest {
                 .verifyComplete();
     }
 
+    @Test
+    void createCollection_WithExternalLink_Success() {
+        ImageShortInput imageInput = new ImageShortInput("img.png", "/path/img", MimeType.png, 1920, 1080, 204857L);
+        CreateNewCollectionInput inputDto = new CreateNewCollectionInput(
+                "External Pack",
+                validDescription,
+                new BigDecimal("0.00"),
+                null,
+                "https://example.com/download",
+                List.of(1L, 2L),
+                List.of(imageInput),
+                null
+        );
+
+        PreviewImage mockImage = new PreviewImage();
+        mockImage.setId(100L);
+
+        CollectionImage mockRelation = new CollectionImage(1L, 1L, 100L);
+
+        when(authorService.findByUsername(username)).thenReturn(Mono.just(sampleAuthor));
+        when(collectionRepository.save(any(Collection.class))).thenReturn(Mono.just(sampleCollection));
+        when(previewImageService.saveAll(anyList())).thenReturn(Flux.just(mockImage));
+        when(collectionImageRepository.saveAll(anyIterable())).thenReturn(Flux.just(mockRelation));
+        when(collectionTagService.saveAll(anyList())).thenReturn(Flux.empty());
+
+        StepVerifier.create(collectionService.createCollection(inputDto, username))
+                .assertNext(response -> assertTrue(response.success()))
+                .verifyComplete();
+    }
+
+    @Test
+    void createCollection_NoMediaAndNoExternalLink_ThrowsException() {
+        CreateNewCollectionInput inputDto = new CreateNewCollectionInput(
+                "Pack",
+                validDescription,
+                new BigDecimal("10.00"),
+                null,
+                null,
+                List.of(),
+                List.of(),
+                null
+        );
+
+        StepVerifier.create(collectionService.createCollection(inputDto, username))
+                .expectError(DescriptionException.class)
+                .verify();
+    }
+
     private @NotNull CreateNewCollectionInput getCreateNewCollectionInput() {
         MediaResourceInput mediaInput = new MediaResourceInput("file.zip", "/path", MimeType.zip, Provider.local, 1000L);
         ImageShortInput imageInput = new ImageShortInput("img.png", "/path/img", MimeType.png, 1920, 1080, 204857L);
@@ -186,6 +238,7 @@ public class CollectionServiceTest {
                 validDescription,
                 new BigDecimal("15.00"),
                 "http://url",
+                null,
                 List.of(1L, 2L),
                 List.of(imageInput),
                 mediaInput
@@ -199,6 +252,7 @@ public class CollectionServiceTest {
                 validDescription,
                 new BigDecimal("10.00"),
                 null,
+                "https://external.link",
                 List.of(),
                 List.of(),
                 null
@@ -213,7 +267,13 @@ public class CollectionServiceTest {
 
     @Test
     void updateCollection_Success_NoImagesProvided() {
-        UpdateCollectionRequest updateDto = new UpdateCollectionRequest("Updated Name", validDescription, new BigDecimal("6.00"), List.of());
+        UpdateCollectionRequest updateDto = new UpdateCollectionRequest(
+                "Updated Name",
+                validDescription,
+                new BigDecimal("6.00"),
+                List.of(),
+                null
+        );
 
         when(collectionRepository.findCollectionById(1L)).thenReturn(Mono.just(sampleCollection));
         when(collectionRepository.save(sampleCollection)).thenReturn(Mono.just(sampleCollection));
@@ -229,7 +289,13 @@ public class CollectionServiceTest {
 
     @Test
     void updateCollection_InvalidDescription_ThrowsDescriptionException() {
-        UpdateCollectionRequest updateDto = new UpdateCollectionRequest("Updated Name", "Too short", new BigDecimal("10.00"), null);
+        UpdateCollectionRequest updateDto = new UpdateCollectionRequest(
+                "Updated Name",
+                "Too short",
+                new BigDecimal("10.00"),
+                null,
+                null
+        );
 
         when(collectionRepository.findCollectionById(1L)).thenReturn(Mono.just(sampleCollection));
 
