@@ -3,6 +3,7 @@ package com.source.bundleboard.collection.service;
 import com.source.bundleboard.api.exception.AuthorNotFoundException;
 import com.source.bundleboard.api.exception.CollectionNotFoundException;
 import com.source.bundleboard.api.exception.DescriptionException;
+import com.source.bundleboard.author.model.Author;
 import com.source.bundleboard.author.service.AuthorService;
 import com.source.bundleboard.collection.dto.*;
 import com.source.bundleboard.collection.mapper.CollectionMapper;
@@ -32,8 +33,8 @@ import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -67,7 +68,7 @@ public class CollectionServiceImpl implements CollectionService {
     @Override
     public Flux<CollectionResponse> getAllCollections(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
-            return collectionRepository.findAllBy(pageable)
+        return collectionRepository.findAllBy(pageable)
                 .map(collectionMapper::toDto);
     }
 
@@ -75,27 +76,32 @@ public class CollectionServiceImpl implements CollectionService {
     @Override
     public Mono<CreateCollectionResponse> createCollection(CreateNewCollectionInput input, String username) {
         return Mono.defer(() -> {
+            if (input.mediaResource() == null && (input.externalLink() == null || input.externalLink().isBlank())) {
+                return Mono.error(new DescriptionException("You must provide either a project file or an external link"));
+            }
+
             return authorService.findByUsername(username)
                     .switchIfEmpty(Mono.error(new AuthorNotFoundException()))
                     .flatMap(author -> {
-                        MediaResource mediaResource = new MediaResource();
-                        mediaResource.setFileName(input.mediaResource().fileName());
-                        mediaResource.setFilePath(input.mediaResource().filePath());
-                        mediaResource.setMimeType(input.mediaResource().mimeType());
-                        mediaResource.setProvider(input.mediaResource().provider());
-                        mediaResource.setFileSize(input.mediaResource().fileSize());
-                        mediaResource.setFileType(MediaFileType.archive);
 
-                        return mediaResourceRepository.save(mediaResource)
-                                .flatMap(savedResource -> {
-                                    Collection collection = new Collection();
-                                    collection.setName(input.name());
-                                    collection.setDescription(input.description());
-                                    collection.setPrice(input.price());
-                                    collection.setVideoTutorialUrl(input.videoTutorialUrl());
-                                    collection.setMediaResourceId(savedResource.getId());
-                                    collection.setAuthorId(author.getId());
+                        Mono<Long> processMediaMono = Mono.justOrEmpty(input.mediaResource())
+                                .flatMap(mrInput -> {
+                                    MediaResource mediaResource = new MediaResource();
+                                    mediaResource.setFileName(mrInput.fileName());
+                                    mediaResource.setFilePath(mrInput.filePath());
+                                    mediaResource.setMimeType(mrInput.mimeType());
+                                    mediaResource.setProvider(mrInput.provider());
+                                    mediaResource.setFileSize(mrInput.fileSize());
+                                    mediaResource.setFileType(MediaFileType.archive);
 
+                                    return mediaResourceRepository.save(mediaResource).map(MediaResource::getId);
+                                });
+
+                        return processMediaMono.map(Optional::of).defaultIfEmpty(Optional.empty())
+                                .flatMap(optMediaId -> {
+
+                                    Collection collection = getCollection(input, author);
+                                    optMediaId.ifPresent(collection::setMediaResourceId);
                                     return collectionRepository.save(collection)
                                             .flatMap(savedCollection -> {
                                                 List<PreviewImage> newImages = input.galleryImages().stream()
@@ -135,14 +141,11 @@ public class CollectionServiceImpl implements CollectionService {
                                                                         return collectionRepository.save(savedCollection)
                                                                                 .flatMap(updatedCollection ->
                                                                                         collectionTagService.saveAll(tagRelations).collectList()
-                                                                                                .then(Mono.fromSupplier(() -> {
-                                                                                                    CreateCollectionResponse response = new CreateCollectionResponse(
-                                                                                                            savedCollection.getId(),
-                                                                                                            savedCollection.getName(),
-                                                                                                            true
-                                                                                                    );
-                                                                                                    return response;
-                                                                                                }))
+                                                                                                .thenReturn(new CreateCollectionResponse(
+                                                                                                        savedCollection.getId(),
+                                                                                                        savedCollection.getName(),
+                                                                                                        true
+                                                                                                ))
                                                                                 );
                                                                     });
                                                         });
@@ -150,6 +153,17 @@ public class CollectionServiceImpl implements CollectionService {
                                 });
                     });
         });
+    }
+
+    private static Collection getCollection(CreateNewCollectionInput input, Author author) {
+        Collection collection = new Collection();
+        collection.setName(input.name());
+        collection.setDescription(input.description());
+        collection.setPrice(input.price());
+        collection.setVideoTutorialUrl(input.videoTutorialUrl());
+        collection.setAuthorId(author.getId());
+        collection.setExternalLink(input.externalLink());
+        return collection;
     }
 
     @Transactional
@@ -162,9 +176,7 @@ public class CollectionServiceImpl implements CollectionService {
                     if(collection.description().length() < 100 || collection.description().length() > 2000){
                         return Mono.error(new DescriptionException("Description must be between 100 and 2000 characters"));
                     }
-
                     collectionMapper.updateEntityFromDto(collection, entity);
-
                     return collectionRepository.save(entity)
                             .flatMap(savedCollection -> {
                                 if (collection.galleryImages() == null || collection.galleryImages().isEmpty()) {
@@ -258,6 +270,7 @@ public class CollectionServiceImpl implements CollectionService {
                         collection.getName(),
                         collection.getDescription(),
                         collection.getPrice(),
+                        collection.getExternalLink(),
                         collection.getAuthorId(),
                         null,
                         null,
@@ -435,6 +448,5 @@ public class CollectionServiceImpl implements CollectionService {
     public Mono<Collection> findById(Long collectionId) {
         return collectionRepository.findById(collectionId).switchIfEmpty(Mono.empty());
     }
-
 
 }

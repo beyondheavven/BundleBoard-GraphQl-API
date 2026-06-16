@@ -39,4 +39,7 @@ public class Collection {
     @Column("project_file_id")
     Long mediaResourceId;
 
+    @Column("external_link")
+    String externalLink;
+
 }

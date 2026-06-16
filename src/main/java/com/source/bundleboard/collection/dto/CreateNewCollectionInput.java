@@ -31,6 +31,9 @@ public record CreateNewCollectionInput(
         @Pattern(regexp = "^(https?://.*)?$", message = "invalid video tutorial format")
         String videoTutorialUrl,
 
+        @Pattern(regexp = "^(https?://.*)?$", message = "invalid external link format")
+        String externalLink,
+
         @NotEmpty(message = "at least one tag required")
         List<Long> tagIds,
 
@@ -39,7 +42,6 @@ public record CreateNewCollectionInput(
         List<ImageShortInput> galleryImages,
 
         @NotNull(message = "metadata is required")
-        @Valid
         MediaResourceInput mediaResource
 ) {
 }
