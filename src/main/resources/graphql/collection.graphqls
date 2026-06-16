@@ -70,6 +70,7 @@ type AuthoredCollectionResponse {
     galleryImages: [ImageShortResponse!]!
     likesCount: Int!
     isLiked: Boolean!
+    downloadCount: Int
 }
 
 type CreateCollectionResponse {
