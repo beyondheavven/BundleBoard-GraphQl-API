@@ -14,11 +14,18 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.util.Collections;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
 public class PreviewImageServiceTest {
@@ -42,6 +49,7 @@ public class PreviewImageServiceTest {
         sampleImage.setFilePath("/uploads/images/preview_cat.png");
     }
 
+    // --- findByImageId TESTS ---
 
     @Test
     void findByImageId_Success() {
@@ -57,6 +65,7 @@ public class PreviewImageServiceTest {
 
         when(previewImageRepository.findById(100L)).thenReturn(Mono.just(sampleImage));
         when(previewImageMapper.toDto(sampleImage)).thenReturn(mockResponse);
+
         StepVerifier.create(previewImageService.findByImageId(100L))
                 .expectNext(mockResponse)
                 .verifyComplete();
@@ -68,6 +77,7 @@ public class PreviewImageServiceTest {
     @Test
     void findByImageId_NotFound_ThrowsImageNotFoundException() {
         when(previewImageRepository.findById(100L)).thenReturn(Mono.empty());
+
         StepVerifier.create(previewImageService.findByImageId(100L))
                 .expectError(ImageNotFoundException.class)
                 .verify();
@@ -76,10 +86,12 @@ public class PreviewImageServiceTest {
         verifyNoInteractions(previewImageMapper);
     }
 
+    // --- save TESTS ---
 
     @Test
     void save_Success() {
         when(previewImageRepository.save(any(PreviewImage.class))).thenReturn(Mono.just(sampleImage));
+
         StepVerifier.create(previewImageService.save(sampleImage))
                 .expectNext(sampleImage)
                 .verifyComplete();
@@ -96,6 +108,7 @@ public class PreviewImageServiceTest {
                 .verify();
     }
 
+    // --- findShortResponseById TESTS ---
 
     @Test
     void findShortResponseById_Success() {
@@ -106,6 +119,7 @@ public class PreviewImageServiceTest {
 
         when(previewImageRepository.findById(100L)).thenReturn(Mono.just(sampleImage));
         when(previewImageMapper.toShortDto(sampleImage)).thenReturn(mockShortResponse);
+
         StepVerifier.create(previewImageService.findShortResponseById(100L))
                 .assertNext(response -> {
                     assertEquals("preview_cat.png", response.fileName());
@@ -120,8 +134,120 @@ public class PreviewImageServiceTest {
     @Test
     void findShortResponseById_NotFound_ThrowsImageNotFoundException() {
         when(previewImageRepository.findById(100L)).thenReturn(Mono.empty());
+
         StepVerifier.create(previewImageService.findShortResponseById(100L))
                 .expectError(ImageNotFoundException.class)
                 .verify();
+    }
+
+    // --- saveAll TESTS ---
+
+    @Test
+    void saveAll_Success() {
+        List<PreviewImage> images = List.of(sampleImage);
+        when(previewImageRepository.saveAll(images)).thenReturn(Flux.fromIterable(images));
+
+        StepVerifier.create(previewImageService.saveAll(images))
+                .expectNext(sampleImage)
+                .verifyComplete();
+
+        verify(previewImageRepository).saveAll(images);
+    }
+
+    @Test
+    void saveAll_EmptyOrNullList_ReturnsEmptyFlux() {
+        StepVerifier.create(previewImageService.saveAll(Collections.emptyList()))
+                .verifyComplete();
+
+        StepVerifier.create(previewImageService.saveAll(null))
+                .verifyComplete();
+
+        verifyNoInteractions(previewImageRepository);
+    }
+
+    // --- findAllByCollectionId TESTS ---
+
+    @Test
+    void findAllByCollectionId_Success() {
+        Long collectionId = 1L;
+        when(previewImageRepository.findAllByCollectionId(collectionId)).thenReturn(Flux.just(sampleImage));
+
+        StepVerifier.create(previewImageService.findAllByCollectionId(collectionId))
+                .expectNext(sampleImage)
+                .verifyComplete();
+    }
+
+    @Test
+    void findAllByCollectionId_NullId_ReturnsEmptyFlux() {
+        StepVerifier.create(previewImageService.findAllByCollectionId(null))
+                .verifyComplete();
+
+        verifyNoInteractions(previewImageRepository);
+    }
+
+    // --- deleteById TESTS ---
+
+    @Test
+    void deleteById_Success() {
+        when(previewImageRepository.deleteById(100L)).thenReturn(Mono.empty());
+
+        StepVerifier.create(previewImageService.deleteById(100L))
+                .verifyComplete();
+
+        verify(previewImageRepository).deleteById(100L);
+    }
+
+    @Test
+    void deleteById_NullId_ReturnsEmptyMono() {
+        StepVerifier.create(previewImageService.deleteById(null))
+                .verifyComplete();
+
+        verifyNoInteractions(previewImageRepository);
+    }
+
+    // --- findAllShortResponsesByCollectionId TESTS ---
+
+    @Test
+    void findAllShortResponsesByCollectionId_Success() {
+        Long collectionId = 1L;
+        when(previewImageRepository.findAllByCollectionId(collectionId)).thenReturn(Flux.just(sampleImage));
+
+        StepVerifier.create(previewImageService.findAllShortResponsesByCollectionId(collectionId))
+                .assertNext(response -> {
+                    assertEquals(sampleImage.getFilePath(), response.filePath());
+                    assertEquals(sampleImage.getFileName(), response.fileName());
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    void findAllShortResponsesByCollectionId_NullId_ReturnsEmptyFlux() {
+        StepVerifier.create(previewImageService.findAllShortResponsesByCollectionId(null))
+                .verifyComplete();
+
+        verifyNoInteractions(previewImageRepository);
+    }
+
+    // --- findByFilePath TESTS ---
+
+    @Test
+    void findByFilePath_Success() {
+        String filePath = "/uploads/images/preview_cat.png";
+        when(previewImageRepository.findByFilePath(filePath)).thenReturn(Flux.just(sampleImage));
+
+        StepVerifier.create(previewImageService.findByFilePath(filePath))
+                .expectNext(sampleImage)
+                .verifyComplete();
+    }
+
+    @Test
+    void findByFilePath_NullOrBlank_ReturnsEmptyFlux() {
+        StepVerifier.create(previewImageService.findByFilePath(null))
+                .verifyComplete();
+
+        StepVerifier.create(previewImageService.findByFilePath("   "))
+                .verifyComplete();
+
+        verifyNoInteractions(previewImageRepository);
     }
 }

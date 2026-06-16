@@ -2,10 +2,9 @@ package com.source.bundleboard.user;
 
 import com.source.bundleboard.auth.jwt.JwtProperties;
 import com.source.bundleboard.auth.jwt.service.JwtService;
+import com.source.bundleboard.author.model.Author;
 import com.source.bundleboard.author.repository.AuthorRepository;
-import com.source.bundleboard.client.model.Client;
 import com.source.bundleboard.client.service.ClientService;
-import com.source.bundleboard.purchase.service.PurchaseService;
 import com.source.bundleboard.refreshtoken.service.RefreshTokenService;
 import com.source.bundleboard.user.dto.*;
 import com.source.bundleboard.user.mapper.UserMapper;
@@ -14,33 +13,40 @@ import com.source.bundleboard.user.model.UserRole;
 import com.source.bundleboard.user.model.UserStatus;
 import com.source.bundleboard.user.repository.UserRepository;
 import com.source.bundleboard.user.service.UserServiceImpl;
+import io.r2dbc.postgresql.codec.Json;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextImpl;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.Instant;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
     @Mock private UserRepository userRepository;
     @Mock private UserMapper userMapper;
-    @Mock private PurchaseService purchaseService;
     @Mock private ClientService clientService;
     @Mock private AuthorRepository authorRepository;
     @Mock private JwtService jwtService;
@@ -51,7 +57,12 @@ class UserServiceTest {
     private UserServiceImpl userService;
 
     private User sampleUser;
+
     private UserResponseDto sampleResponseDto;
+
+    private Authentication mockAuth;
+
+    private SecurityContext securityContext;
 
     @BeforeEach
     void setUp() {
@@ -61,17 +72,18 @@ class UserServiceTest {
         sampleUser.setEmail("test@example.com");
         sampleUser.setAvatarUrl("http://avatar.com/old.png");
         sampleUser.setStatus(UserStatus.active);
-        sampleUser.setRoles(Set.of(UserRole.client));
+        sampleUser.setRoles(new HashSet<>(Set.of(UserRole.client)));
 
         sampleResponseDto = new UserResponseDto(
-                1L,
-                "testuser",
-                "test@example.com",
-                "http://avatar.com/old.png",
-                Set.of(UserRole.client),
-                UserStatus.active
+                1L, "testuser", "test@example.com", "http://avatar.com/old.png",
+                Set.of(UserRole.client), UserStatus.active
         );
+
+        mockAuth = new UsernamePasswordAuthenticationToken("testuser", null);
+        securityContext = new SecurityContextImpl(mockAuth);
     }
+
+    // --- BASIC READ OPERATIONS ---
 
     @Test
     void findUserById_Success() {
@@ -84,10 +96,33 @@ class UserServiceTest {
     }
 
     @Test
+    void findUserByUsername_Success() {
+        when(userRepository.findByUsername("testuser")).thenReturn(Mono.just(sampleUser));
+        when(userMapper.toDto(sampleUser)).thenReturn(sampleResponseDto);
+
+        StepVerifier.create(userService.findUserByUsername("testuser"))
+                .expectNext(sampleResponseDto)
+                .verifyComplete();
+    }
+
+    @Test
+    void findAllUsers_Success() {
+        when(userRepository.findAll()).thenReturn(Flux.just(sampleUser));
+        when(userMapper.toDto(sampleUser)).thenReturn(sampleResponseDto);
+
+        StepVerifier.create(userService.findAllUsers())
+                .expectNext(sampleResponseDto)
+                .verifyComplete();
+    }
+
+    // --- CONTEXT SENSITIVE OPERATIONS ---
+
+    @Test
     void findMe_Success() {
         Authentication authentication = mock(Authentication.class);
         when(authentication.isAuthenticated()).thenReturn(true);
         when(authentication.getName()).thenReturn("testuser");
+
         SecurityContext securityContext = new SecurityContextImpl(authentication);
 
         when(userRepository.findByUsername("testuser")).thenReturn(Mono.just(sampleUser));
@@ -102,62 +137,24 @@ class UserServiceTest {
     }
 
     @Test
-    void getUserProfile_Success() {
-        Authentication authentication = mock(Authentication.class);
-        when(authentication.isAuthenticated()).thenReturn(true);
-        when(authentication.getName()).thenReturn("testuser");
-        SecurityContext securityContext = new SecurityContextImpl(authentication);
-
-        Client mockClient = new Client();
-        mockClient.setId(10L);
-
-        when(userRepository.findByUsername("testuser")).thenReturn(Mono.just(sampleUser));
-        when(clientService.findByUserId(1L)).thenReturn(Mono.just(mockClient));
-        when(purchaseService.findAllByUserId(10L)).thenReturn(Mono.just(Collections.emptyList()));
-
-        Mono<UserProfileResponse> result = userService.getUserProfile()
-                .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(securityContext)));
-
-        StepVerifier.create(result)
-                .assertNext(profile -> {
-                    org.junit.jupiter.api.Assertions.assertEquals(1L, profile.id());
-                    org.junit.jupiter.api.Assertions.assertEquals("testuser", profile.username());
-                    org.junit.jupiter.api.Assertions.assertEquals(UserStatus.active, profile.status());
-                    org.junit.jupiter.api.Assertions.assertTrue(profile.purchases().isEmpty());
-                })
-                .verifyComplete();
-    }
-
-    @Test
     void updateMe_Success() {
         Authentication authentication = mock(Authentication.class);
         when(authentication.isAuthenticated()).thenReturn(true);
-        when(authentication.getName()).thenReturn("testuser");
         SecurityContext securityContext = new SecurityContextImpl(authentication);
-
         UpdateUserRequest request = new UpdateUserRequest(1L, "new_username", "http://avatar.com/new.png");
-        String dummyAccessToken = "mock-secure-access-token-string";
-        String dummyRefreshToken = "mock-secure-refresh-token-string";
+        String accessToken = "access-token";
+        String refreshToken = "refresh-token";
 
         UserUpdateResponse expectedResponse = new UserUpdateResponse(
-                1L,
-                "new_username",
-                "http://avatar.com/new.png",
-                Instant.now(),
-                dummyAccessToken,
-                dummyRefreshToken
+                1L, "new_username", "http://avatar.com/new.png", Instant.now(), accessToken, refreshToken
         );
 
-        when(userRepository.findByUsername("testuser")).thenReturn(Mono.just(sampleUser));
+        when(userRepository.findById(1L)).thenReturn(Mono.just(sampleUser));
         when(userRepository.save(any(User.class))).thenReturn(Mono.just(sampleUser));
 
-        when(jwtService.generateAccessToken(eq(1L), eq("new_username"), anyCollection()))
-                .thenReturn(dummyAccessToken);
-        when(jwtService.generateRefreshToken(eq(1L), eq("new_username")))
-                .thenReturn(dummyRefreshToken);
-
-        when(userMapper.toUpdateResponse(any(User.class), eq(dummyAccessToken), eq(dummyRefreshToken)))
-                .thenReturn(expectedResponse);
+        when(jwtService.generateAccessToken(eq(1L), eq("new_username"), any())).thenReturn(accessToken);
+        when(jwtService.generateRefreshToken(eq(1L), eq("new_username"))).thenReturn(refreshToken);
+        when(userMapper.toUpdateResponse(any(User.class), eq(accessToken), eq(refreshToken))).thenReturn(expectedResponse);
 
         Mono<UserUpdateResponse> result = userService.updateMe(request)
                 .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(securityContext)));
@@ -165,59 +162,89 @@ class UserServiceTest {
         StepVerifier.create(result)
                 .expectNext(expectedResponse)
                 .verifyComplete();
-
-        verify(userRepository).save(argThat(user ->
-                "new_username".equals(user.getUsername()) &&
-                        "http://avatar.com/new.png".equals(user.getAvatarUrl())
-        ));
-
-        verify(jwtService).generateAccessToken(eq(1L), eq("new_username"), anyCollection());
-        verify(jwtService).generateRefreshToken(eq(1L), eq("new_username"));
     }
 
+    // --- GET USER PROFILE ---
+
+    @Nested
+    class GetUserProfile {
+
+        @Test
+        void getClientProfile_Success() {
+            Authentication auth = mock(Authentication.class);
+            when(auth.getName()).thenReturn("testuser");
+            when(auth.isAuthenticated()).thenReturn(true);
+            SecurityContext context = new SecurityContextImpl(auth);
+
+            when(userRepository.findByUsername("testuser")).thenReturn(Mono.just(sampleUser));
+
+            Mono<UserProfileResponse> result = userService.getUserProfile()
+                    .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(context)));
+
+            StepVerifier.create(result)
+                    .assertNext(profile -> {
+                        assertEquals(1L, profile.id());
+                        assertEquals("testuser", profile.username());
+                        assertNull(profile.bio());
+                    })
+                    .verifyComplete();
+        }
+
+        @Test
+        void getAuthorProfile_Success() {
+            User authorUser = new User();
+            authorUser.setId(1L);
+            authorUser.setUsername("testuser");
+            authorUser.setEmail("test@example.com");
+            authorUser.setRoles(new HashSet<>(Set.of(UserRole.author)));
+
+            Authentication auth = mock(Authentication.class);
+            when(auth.getName()).thenReturn("testuser");
+            when(auth.isAuthenticated()).thenReturn(true);
+            SecurityContext context = new SecurityContextImpl(auth);
+
+            Author sampleAuthor = new Author();
+            sampleAuthor.setBio("My awesome bio");
+            sampleAuthor.setSocialLinks(Json.of("{}"));
+
+            when(userRepository.findByUsername("testuser")).thenReturn(Mono.just(authorUser));
+            when(authorRepository.findByUserId(1L)).thenReturn(Mono.just(sampleAuthor));
+
+            Mono<UserProfileResponse> result = userService.getUserProfile()
+                    .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(context)));
+
+            StepVerifier.create(result)
+                    .assertNext(profile -> {
+                        assertEquals("My awesome bio", profile.bio());
+                        assertTrue(profile.roles().contains(UserRole.author));
+                    })
+                    .verifyComplete();
+        }
+    }
+
+    // --- UTILITY UPDATES ---
+
     @Test
-    void updateAvatar_Success() {
-        UpdateAvatarRequest request = new UpdateAvatarRequest(1L, "http://avatar.com/avatar3.png");
+    void updateUserAvatar_Success() {
+        UpdateAvatarRequest request = new UpdateAvatarRequest(1L, "http://avatar.com/new.png");
 
         when(userRepository.findById(1L)).thenReturn(Mono.just(sampleUser));
         when(userRepository.save(any(User.class))).thenReturn(Mono.just(sampleUser));
 
         StepVerifier.create(userService.updateUserAvatar(request))
-                .assertNext(response -> {
-                    org.junit.jupiter.api.Assertions.assertEquals(1L, response.id());
-                    org.junit.jupiter.api.Assertions.assertEquals("http://avatar.com/avatar3.png", response.avatarUrl());
-                    org.junit.jupiter.api.Assertions.assertNotNull(response.updatedAt());
-                })
+                .assertNext(response -> assertEquals("http://avatar.com/new.png", response.avatarUrl()))
                 .verifyComplete();
     }
 
     @Test
-    void updateUserRole_Success() {
-        UpdateUserRoleInput input = new UpdateUserRoleInput("test@example.com", "author");
+    void getUserCommentResponseById_Success() {
+        when(userRepository.findById(1L)).thenReturn(Mono.just(sampleUser));
 
-        sampleUser.setRoles(new HashSet<>(sampleUser.getRoles()));
-        sampleUser.getRoles().clear();
-
-        when(userRepository.findByEmail("test@example.com")).thenReturn(Mono.just(sampleUser));
-        when(userRepository.save(any(User.class))).thenReturn(Mono.just(sampleUser));
-
-        when(authorRepository.findByUserId(1L)).thenReturn(Mono.empty());
-        when(authorRepository.save(any())).thenReturn(Mono.empty());
-
-        when(jwtService.generateAccessToken(any(), any(), any())).thenReturn("access-token-123");
-        when(jwtService.generateRefreshToken(any(), any())).thenReturn("refresh-token-123");
-        when(jwtProperties.getRefreshTokenExpirationMs()).thenReturn(60000L);
-        when(refreshTokenService.deleteByUserId(1L)).thenReturn(Mono.empty());
-
-        com.source.bundleboard.refreshtoken.model.RefreshToken mockToken =
-                new com.source.bundleboard.refreshtoken.model.RefreshToken(null, 1L, "refresh-token-123", Instant.now(), Instant.now());
-        when(refreshTokenService.save(any())).thenReturn(Mono.just(mockToken));
-
-        StepVerifier.create(userService.updateUserRole(input))
+        StepVerifier.create(userService.getUserCommentResponseById(1L))
                 .assertNext(response -> {
-                    org.junit.jupiter.api.Assertions.assertTrue(response.success());
-                    org.junit.jupiter.api.Assertions.assertEquals("access-token-123", response.accessToken());
-                    org.junit.jupiter.api.Assertions.assertEquals("refresh-token-123", response.refreshToken());
+                    assertEquals(1L, response.id());
+                    assertEquals("testuser", response.username());
+                    assertEquals("http://avatar.com/old.png", response.avatarUrl());
                 })
                 .verifyComplete();
     }

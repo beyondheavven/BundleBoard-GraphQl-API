@@ -33,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -390,7 +391,7 @@ public class CollectionServiceImpl implements CollectionService {
                 .map(collection -> new CollectionShortResponse(
                         collection.getId(),
                         collection.getName(),
-                        null
+                        Collections.emptyList()
                 ));
     }
 
