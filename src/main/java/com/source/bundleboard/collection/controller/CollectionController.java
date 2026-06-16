@@ -10,6 +10,8 @@ import com.source.bundleboard.image.dto.ImageShortResponse;
 import com.source.bundleboard.image.service.PreviewImageService;
 import com.source.bundleboard.mediaresource.dto.GetMediaResourceByIdResponse;
 import com.source.bundleboard.mediaresource.service.MediaResourceService;
+import com.source.bundleboard.purchase.model.PurchaseStatus;
+import com.source.bundleboard.purchase.service.PurchaseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.graphql.data.method.annotation.Argument;
@@ -35,6 +37,8 @@ public class CollectionController {
     private final PreviewImageService imageService;
 
     private final MediaResourceService mediaResourceService;
+
+    private final PurchaseService purchaseService;
 
     @PreAuthorize("permitAll()")
     @QueryMapping
@@ -124,6 +128,12 @@ public class CollectionController {
     @SchemaMapping(typeName = "Collection", field = "author")
     public Mono<AuthorResponse> getAuthor(Collection collection) {
         return authorService.findFullAuthorById(collection.getAuthorId());
+    }
+
+    @SchemaMapping(typeName = "AuthorResponse", field = "downloadCount")
+    public Mono<Long> getAuthorDownloadCount(AuthorResponse author) {
+        return purchaseService.countByCollectionIdAndStatus(author.id(), PurchaseStatus.succeeded)
+                .defaultIfEmpty(0L);
     }
 
     @SchemaMapping(typeName = "CollectionResponse", field = "galleryImages")
