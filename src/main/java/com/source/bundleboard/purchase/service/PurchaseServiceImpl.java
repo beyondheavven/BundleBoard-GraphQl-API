@@ -161,7 +161,7 @@ public class PurchaseServiceImpl implements PurchaseService {
                                     return collectionService.findById(collectionId)
                                             .flatMap(collection -> {
                                                 if (collection.getMediaResourceId() == null) {
-                                                    return Mono.just(new DownloadVerificationResponse(purchase.getStatus(), null));
+                                                    return Mono.just(new DownloadVerificationResponse(purchase.getStatus(), collection.getExternalLink()));
                                                 }
 
                                                 return mediaResourceService.findById(collection.getMediaResourceId())
@@ -169,7 +169,7 @@ public class PurchaseServiceImpl implements PurchaseService {
                                                                 purchase.getStatus(),
                                                                 mediaResource.getFilePath()
                                                         ))
-                                                        .defaultIfEmpty(new DownloadVerificationResponse(purchase.getStatus(), null));
+                                                        .defaultIfEmpty(new DownloadVerificationResponse(purchase.getStatus(), collection.getExternalLink()));
                                             })
                                             .defaultIfEmpty(new DownloadVerificationResponse(purchase.getStatus(), null));
                                 });

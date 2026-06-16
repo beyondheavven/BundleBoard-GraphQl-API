@@ -22,14 +22,18 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public Mono<Void> createClientByUserId(Long id) {
         return clientRepository.findByUserId(id)
-                .flatMap(existingClient -> Mono.empty())
-                .switchIfEmpty(Mono.defer(() -> {
-                    Client client = new Client();
-                    client.setUserId(id);
-                    client.setNewsLetterSubscription(false);
-                    client.setPreferredLanguage("en");
-                    return clientRepository.save(client);
-                }))
+                .hasElement()
+                .flatMap(exists -> {
+                    if (exists) {
+                        return Mono.empty();
+                    } else {
+                        Client client = new Client();
+                        client.setUserId(id);
+                        client.setNewsLetterSubscription(false);
+                        client.setPreferredLanguage("en");
+                        return clientRepository.save(client);
+                    }
+                })
                 .then();
     }
 }

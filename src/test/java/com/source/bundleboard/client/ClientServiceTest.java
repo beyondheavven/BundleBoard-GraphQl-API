@@ -15,7 +15,11 @@ import reactor.test.StepVerifier;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.never;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 
 @ExtendWith(MockitoExtension.class)
 public class ClientServiceTest {
@@ -37,7 +41,6 @@ public class ClientServiceTest {
         sampleClient.setNewsLetterSubscription(false);
         sampleClient.setPreferredLanguage("en");
     }
-
 
     @Test
     void findByUserId_Success() {
@@ -61,23 +64,22 @@ public class ClientServiceTest {
         verify(clientRepository).findByUserId(userId);
     }
 
-
     @Test
-    void createClientByUserId_ClientAlreadyExists_ExecutesSwitchIfEmptyDueToFlatMap() {
+    void createClientByUserId_ClientAlreadyExists_DoesNotSaveNewClient() {
         when(clientRepository.findByUserId(userId)).thenReturn(Mono.just(sampleClient));
-        when(clientRepository.save(any(Client.class))).thenReturn(Mono.just(sampleClient));
 
         StepVerifier.create(clientService.createClientByUserId(userId))
                 .verifyComplete();
 
         verify(clientRepository).findByUserId(userId);
-        verify(clientRepository, times(1)).save(any(Client.class));
+        verify(clientRepository, never()).save(any(Client.class));
     }
 
     @Test
     void createClientByUserId_ClientDoesNotExist_CreatesAndSavesNewClient() {
         when(clientRepository.findByUserId(userId)).thenReturn(Mono.empty());
         when(clientRepository.save(any(Client.class))).thenReturn(Mono.just(sampleClient));
+
         StepVerifier.create(clientService.createClientByUserId(userId))
                 .verifyComplete();
 

@@ -20,7 +20,10 @@ import reactor.test.StepVerifier;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 public class MediaResourceServiceTest {
@@ -62,12 +65,15 @@ public class MediaResourceServiceTest {
         );
     }
 
+    // --- findGetMediaResourceById TESTS ---
+
     @Test
     void findGetMediaResourceById_Success_ReturnsResponseDto() {
         Long resourceId = 1L;
 
         when(mediaResourceRepository.findById(resourceId)).thenReturn(Mono.just(sampleMediaResource));
         when(mediaResourceMapper.toDto(sampleMediaResource)).thenReturn(expectedResponse);
+
         Mono<GetMediaResourceByIdResponse> result = mediaResourceService.findGetMediaResourceById(resourceId);
 
         StepVerifier.create(result)
@@ -100,5 +106,38 @@ public class MediaResourceServiceTest {
 
         verify(mediaResourceRepository, times(1)).findById(resourceId);
         verifyNoInteractions(mediaResourceMapper);
+    }
+
+    // --- findById TESTS ---
+
+    @Test
+    void findById_Success() {
+        Long resourceId = 1L;
+        when(mediaResourceRepository.findById(resourceId)).thenReturn(Mono.just(sampleMediaResource));
+
+        StepVerifier.create(mediaResourceService.findById(resourceId))
+                .expectNext(sampleMediaResource)
+                .verifyComplete();
+
+        verify(mediaResourceRepository).findById(resourceId);
+    }
+
+    @Test
+    void findById_NotFound_ReturnsEmptyMono() {
+        Long resourceId = 999L;
+        when(mediaResourceRepository.findById(resourceId)).thenReturn(Mono.empty());
+
+        StepVerifier.create(mediaResourceService.findById(resourceId))
+                .verifyComplete();
+
+        verify(mediaResourceRepository).findById(resourceId);
+    }
+
+    @Test
+    void findById_NullId_ReturnsEmptyMono() {
+        StepVerifier.create(mediaResourceService.findById(null))
+                .verifyComplete();
+
+        verifyNoInteractions(mediaResourceRepository);
     }
 }
