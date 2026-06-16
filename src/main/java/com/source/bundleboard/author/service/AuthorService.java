@@ -26,4 +26,6 @@ public interface AuthorService {
     Mono<Author> findByUserId(Long userId);
 
     Mono<UserProfileResponse> updateProfileDetails(String bio, List<SocialLinkInput> socialLinks);
+
+    Mono<Void> incrementSalesAndRating(Long authorId);
 }

@@ -116,4 +116,13 @@ public class AuthorServiceImpl implements AuthorService {
                 .flatMap(savedAuthor -> userService.getUserProfile());
     }
 
+    @Override
+    public Mono<Void> incrementSalesAndRating(Long authorId) {
+        if (authorId == null) {
+            log.error("Author ID is null.");
+            return Mono.error(new RuntimeException("Author ID is null."));
+        }
+        return authorRepository.incrementSalesAndRating(authorId).then();
+    }
+
 }

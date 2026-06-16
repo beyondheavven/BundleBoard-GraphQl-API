@@ -1,5 +1,6 @@
 package com.source.bundleboard.purchase.service;
 
+import com.source.bundleboard.author.service.AuthorService;
 import com.source.bundleboard.collection.service.CollectionService;
 import com.source.bundleboard.mediaresource.service.MediaResourceService;
 import com.source.bundleboard.purchase.dto.DownloadVerificationResponse;
@@ -18,12 +19,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -38,6 +42,8 @@ public class PurchaseServiceImpl implements PurchaseService {
     private final PurchaseItemService purchaseItemService;
 
     private final MediaResourceService mediaResourceService;
+
+    private final AuthorService authorService;
 
     @Override
     public Mono<List<PurchaseBaseResponse>> findAllByUserId(Long userId) {
@@ -91,8 +97,8 @@ public class PurchaseServiceImpl implements PurchaseService {
     public Mono<Purchase> createFreePurchase(Long userId, List<Long> collectionIds) {
         Purchase purchase = new Purchase();
         purchase.setUserId(userId);
-        purchase.setStripeSessionId("FREE_" + UUID.randomUUID().toString());
-        purchase.setStripePaymentIntentId("FREE_" + UUID.randomUUID().toString());
+        purchase.setStripeSessionId("FREE_" + UUID.randomUUID());
+        purchase.setStripePaymentIntentId("FREE_" + UUID.randomUUID());
         purchase.setAmount(BigDecimal.ZERO);
         purchase.setCurrency("USD");
         purchase.setStatus(PurchaseStatus.succeeded);
@@ -105,11 +111,28 @@ public class PurchaseServiceImpl implements PurchaseService {
                             PurchaseItem item = new PurchaseItem();
                             item.setCollectionId(collectionId);
                             item.setSnapshotPrice(BigDecimal.ZERO);
-                            return item;
+                            return Tuples.of(item, collection.getAuthorId());
                         })
                 )
                 .collectList()
-                .flatMap(items -> createPurchaseWithItems(purchase, items));
+                .flatMap(tuples -> {
+                    List<PurchaseItem> items = tuples.stream()
+                            .map(Tuple2::getT1)
+                            .toList();
+
+                    List<Long> authorIds = tuples.stream()
+                            .map(Tuple2::getT2)
+                            .toList();
+
+                    return createPurchaseWithItems(purchase, items)
+                            .flatMap(savedPurchase -> {
+                                List<Mono<Void>> authorUpdated = authorIds.stream()
+                                        .map(authorService::incrementSalesAndRating)
+                                        .toList();
+
+                                return Mono.when(authorUpdated).thenReturn(savedPurchase);
+                            });
+                });
     }
 
     @Override
