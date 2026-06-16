@@ -25,7 +25,6 @@ public class ExceptionMapper {
         MAPPER.put(UserStatusException.class, ErrorCode.FORBIDDEN);
         MAPPER.put(UserAlreadyExistsException.class, ErrorCode.USER_ALREADY_EXISTS);
         MAPPER.put(UnmatchedPasswordsException.class, ErrorCode.USER_ALREADY_EXISTS);
-        MAPPER.put(MinimalPriceException.class, ErrorCode.INTERNAL_SERVER_ERROR);
         MAPPER.put(DescriptionException.class, ErrorCode.INTERNAL_SERVER_ERROR);
         MAPPER.put(AccessDeniedException.class, ErrorCode.FORBIDDEN);
         MAPPER.put(AuthenticationException.class, ErrorCode.UNAUTHORIZED);

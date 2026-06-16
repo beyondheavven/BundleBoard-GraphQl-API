@@ -1,6 +1,7 @@
 package com.source.bundleboard.purchase.repository;
 
 import com.source.bundleboard.purchase.model.Purchase;
+import com.source.bundleboard.purchase.model.PurchaseStatus;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.data.repository.query.Param;
@@ -22,4 +23,9 @@ public interface PurchaseRepository extends R2dbcRepository<Purchase, Long> {
             "WHERE p.user_id = :userId AND pi.collection_id = :collectionId " +
             "LIMIT 1")
     Mono<Purchase> findByUserIdAndCollectionId(Long userId, Long collectionId);
+
+    @Query("SELECT COUNT(p.id) FROM purchases p " +
+            "JOIN purchase_items pi ON p.id = pi.purchase_id " +
+            "WHERE pi.collection_id = :collectionId AND p.status = :purchaseStatus")
+    Mono<Long> countByCollectionIdAndStatus(Long collectionId, PurchaseStatus purchaseStatus);
 }

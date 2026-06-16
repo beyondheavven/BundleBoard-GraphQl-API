@@ -4,6 +4,8 @@ import com.source.bundleboard.purchase.dto.DownloadVerificationResponse;
 import com.source.bundleboard.purchase.dto.PurchaseBaseResponse;
 import com.source.bundleboard.purchase.item.model.PurchaseItem;
 import com.source.bundleboard.purchase.model.Purchase;
+import com.source.bundleboard.purchase.model.PurchaseStatus;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -25,4 +27,6 @@ public interface PurchaseService {
     Mono<Purchase> createFreePurchase(Long userId, List<Long> collectionIds);
 
     Mono<DownloadVerificationResponse> verifyPurchaseForDownload(Long collectionId);
+
+    Mono<Long> countByCollectionIdAndStatus(Long collectionId, PurchaseStatus purchaseStatus);
 }

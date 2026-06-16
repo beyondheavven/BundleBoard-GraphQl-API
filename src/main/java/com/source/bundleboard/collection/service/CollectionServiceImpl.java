@@ -3,7 +3,6 @@ package com.source.bundleboard.collection.service;
 import com.source.bundleboard.api.exception.AuthorNotFoundException;
 import com.source.bundleboard.api.exception.CollectionNotFoundException;
 import com.source.bundleboard.api.exception.DescriptionException;
-import com.source.bundleboard.api.exception.MinimalPriceException;
 import com.source.bundleboard.author.service.AuthorService;
 import com.source.bundleboard.collection.dto.*;
 import com.source.bundleboard.collection.mapper.CollectionMapper;
@@ -48,8 +47,6 @@ public class CollectionServiceImpl implements CollectionService {
 
     private final CollectionMapper collectionMapper;
 
-    private static final BigDecimal MIN_PRICE = new BigDecimal("5.00");
-
     private final PreviewImageService previewImageService;
 
     private final MediaResourceRepository mediaResourceRepository;
@@ -78,10 +75,6 @@ public class CollectionServiceImpl implements CollectionService {
     @Override
     public Mono<CreateCollectionResponse> createCollection(CreateNewCollectionInput input, String username) {
         return Mono.defer(() -> {
-            if (input.price().compareTo(MIN_PRICE) < 0) {
-                return Mono.error(new MinimalPriceException("Minimal price is 5 USD"));
-            }
-
             return authorService.findByUsername(username)
                     .switchIfEmpty(Mono.error(new AuthorNotFoundException()))
                     .flatMap(author -> {
@@ -165,10 +158,6 @@ public class CollectionServiceImpl implements CollectionService {
         return collectionRepository.findCollectionById(id)
                 .switchIfEmpty(Mono.error(new CollectionNotFoundException()))
                 .flatMap(entity -> {
-
-                    if(collection.price().compareTo(new BigDecimal("5.00")) < 0){
-                        return Mono.error(new MinimalPriceException("Minimal price is 5 USD"));
-                    }
 
                     if(collection.description().length() < 100 || collection.description().length() > 2000){
                         return Mono.error(new DescriptionException("Description must be between 100 and 2000 characters"));
