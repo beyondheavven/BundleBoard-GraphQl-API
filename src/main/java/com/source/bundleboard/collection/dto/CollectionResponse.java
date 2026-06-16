@@ -15,6 +15,8 @@ public record CollectionResponse(
 
         BigDecimal price,
 
+        String externalLink,
+
         Long authorId,
 
         List<ImageShortResponse> galleryImages,

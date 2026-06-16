@@ -14,6 +14,8 @@ public record GetCollectionByIdResponse(
 
         String videoTutorialUrl,
 
+        String externalLink,
+
         Long authorId,
 
         Long mediaResourceId
