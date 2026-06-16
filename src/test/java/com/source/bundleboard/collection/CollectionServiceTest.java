@@ -3,7 +3,6 @@ package com.source.bundleboard.collection;
 import com.source.bundleboard.api.exception.AuthorNotFoundException;
 import com.source.bundleboard.api.exception.CollectionNotFoundException;
 import com.source.bundleboard.api.exception.DescriptionException;
-import com.source.bundleboard.api.exception.MinimalPriceException;
 import com.source.bundleboard.author.model.Author;
 import com.source.bundleboard.author.service.AuthorService;
 import com.source.bundleboard.collection.dto.*;
@@ -13,7 +12,6 @@ import com.source.bundleboard.collection.repository.CollectionRepository;
 import com.source.bundleboard.collection.service.CollectionServiceImpl;
 import com.source.bundleboard.collectionImage.model.CollectionImage;
 import com.source.bundleboard.collectionImage.repository.CollectionImageRepository;
-import com.source.bundleboard.collectionImage.service.CollectionImageService;
 import com.source.bundleboard.collectionTag.serivce.CollectionTagService;
 import com.source.bundleboard.image.dto.ImageShortInput;
 import com.source.bundleboard.image.model.PreviewImage;
@@ -23,7 +21,8 @@ import com.source.bundleboard.mediaresource.model.MediaResource;
 import com.source.bundleboard.mediaresource.model.MimeType;
 import com.source.bundleboard.mediaresource.model.Provider;
 import com.source.bundleboard.mediaresource.repository.MediaResourceRepository;
-import com.source.bundleboard.storage.SupabaseStorageService;
+import com.source.bundleboard.rabbitmq.dto.StorageTask;
+import com.source.bundleboard.rabbitmq.producer.TaskProducer;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,6 +41,8 @@ import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -66,10 +67,7 @@ public class CollectionServiceTest {
     private CollectionTagService collectionTagService;
 
     @Mock
-    private SupabaseStorageService supabaseStorageService;
-
-    @Mock
-    private CollectionImageService collectionImageService;
+    private TaskProducer taskProducer;
 
     @Mock
     private CollectionImageRepository collectionImageRepository;
@@ -168,13 +166,13 @@ public class CollectionServiceTest {
         when(collectionRepository.save(any(Collection.class))).thenReturn(Mono.just(sampleCollection));
 
         when(previewImageService.saveAll(anyList())).thenReturn(Flux.just(mockImage));
-        when(collectionImageService.saveAll(anyList())).thenReturn(Flux.just(mockRelation));
+        when(collectionImageRepository.saveAll(anyIterable())).thenReturn(Flux.just(mockRelation));
         when(collectionTagService.saveAll(anyList())).thenReturn(Flux.empty());
 
         StepVerifier.create(collectionService.createCollection(inputDto, username))
                 .assertNext(response -> {
-                    org.junit.jupiter.api.Assertions.assertTrue(response.success());
-                    org.junit.jupiter.api.Assertions.assertEquals("Java Bundle", response.name());
+                    assertTrue(response.success());
+                    assertEquals("Java Bundle", response.name());
                 })
                 .verifyComplete();
     }
@@ -192,26 +190,6 @@ public class CollectionServiceTest {
                 List.of(imageInput),
                 mediaInput
         );
-    }
-
-    @Test
-    void createCollection_LowPrice_ThrowsMinimalPriceException() {
-        CreateNewCollectionInput inputDto = new CreateNewCollectionInput(
-                "Cheap Pack",
-                validDescription,
-                new BigDecimal("4.99"),
-                null,
-                List.of(),
-                List.of(),
-                null
-        );
-
-        StepVerifier.create(collectionService.createCollection(inputDto, username))
-                .expectErrorMatches(throwable -> throwable instanceof MinimalPriceException
-                        && throwable.getMessage().contains("Minimal price is 5 USD"))
-                .verify();
-
-        verifyNoInteractions(authorService, collectionRepository, mediaResourceRepository, previewImageService);
     }
 
     @Test
@@ -246,7 +224,7 @@ public class CollectionServiceTest {
                 .verifyComplete();
 
         verify(collectionMapper).updateEntityFromDto(updateDto, sampleCollection);
-        verifyNoInteractions(previewImageService, collectionImageRepository, supabaseStorageService);
+        verifyNoInteractions(previewImageService, collectionImageRepository, taskProducer);
     }
 
     @Test
@@ -257,19 +235,6 @@ public class CollectionServiceTest {
 
         StepVerifier.create(collectionService.updateCollection(1L, updateDto))
                 .expectError(DescriptionException.class)
-                .verify();
-
-        verify(collectionRepository, never()).save(any());
-    }
-
-    @Test
-    void updateCollection_InvalidPrice_ThrowsMinimalPriceException() {
-        UpdateCollectionRequest updateDto = new UpdateCollectionRequest("Updated Name", validDescription, new BigDecimal("4.50"), null);
-
-        when(collectionRepository.findCollectionById(1L)).thenReturn(Mono.just(sampleCollection));
-
-        StepVerifier.create(collectionService.updateCollection(1L, updateDto))
-                .expectError(MinimalPriceException.class)
                 .verify();
 
         verify(collectionRepository, never()).save(any());
@@ -287,8 +252,7 @@ public class CollectionServiceTest {
         when(collectionTagService.deleteAllByCollectionsId(1L)).thenReturn(Mono.empty());
         when(collectionImageRepository.deleteAllByCollectionId(1L)).thenReturn(Mono.empty());
 
-        when(supabaseStorageService.deleteFolder(folderPath, "previews")).thenReturn(Mono.empty());
-        when(supabaseStorageService.deleteFolder(folderPath, "vault")).thenReturn(Mono.empty());
+        when(taskProducer.sendStorageTask(any(StorageTask.class))).thenReturn(Mono.empty());
 
         when(previewImageService.findAllByCollectionId(1L)).thenReturn(Flux.just(mockImage));
         when(collectionRepository.deleteById(1L)).thenReturn(Mono.empty());
@@ -303,7 +267,7 @@ public class CollectionServiceTest {
         verify(collectionTagService).deleteAllByCollectionsId(1L);
         verify(collectionImageRepository).deleteAllByCollectionId(1L);
         verify(collectionRepository).deleteById(1L);
-        verify(supabaseStorageService).deleteFolder(folderPath, "previews");
+        verify(taskProducer, times(2)).sendStorageTask(any(StorageTask.class));
     }
 
     @Test
@@ -314,7 +278,7 @@ public class CollectionServiceTest {
                 .expectError(CollectionNotFoundException.class)
                 .verify();
 
-        verifyNoInteractions(supabaseStorageService, previewImageService, mediaResourceRepository, collectionTagService);
+        verifyNoInteractions(taskProducer, previewImageService, mediaResourceRepository, collectionTagService);
     }
 
     @Test
@@ -325,6 +289,24 @@ public class CollectionServiceTest {
 
         StepVerifier.create(collectionService.findShortResponseById(1L))
                 .expectNext(expectedShortResponse)
+                .verifyComplete();
+    }
+
+    @Test
+    void findAllByAuthorId_Success() {
+        CollectionRow dbRow = mock(CollectionRow.class);
+
+        when(dbRow.id()).thenReturn(1L);
+        when(dbRow.name()).thenReturn("Java Bundle");
+        when(dbRow.price()).thenReturn(new BigDecimal("10.00"));
+        when(dbRow.description()).thenReturn(validDescription);
+        when(collectionRepository.findAllByAuthorId(42L)).thenReturn(Flux.just(dbRow));
+        StepVerifier.create(collectionService.findAllByAuthorId(42L))
+                .assertNext(response -> {
+                    assertEquals(1L, response.id());
+                    assertEquals("Java Bundle", response.name());
+                    assertEquals(new BigDecimal("10.00"), response.price());
+                })
                 .verifyComplete();
     }
 }

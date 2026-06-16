@@ -5,7 +5,6 @@ import com.source.bundleboard.mediaresource.service.MediaResourceService;
 import com.source.bundleboard.purchase.dto.DownloadVerificationResponse;
 import com.source.bundleboard.purchase.dto.PurchaseBaseResponse;
 import com.source.bundleboard.purchase.item.dto.PurchaseItemBaseResponse;
-import com.source.bundleboard.purchase.item.mapper.PurchaseItemMapper;
 import com.source.bundleboard.purchase.item.model.PurchaseItem;
 import com.source.bundleboard.purchase.item.service.PurchaseItemService;
 import com.source.bundleboard.purchase.mapper.PurchaseMapper;
@@ -146,6 +145,14 @@ public class PurchaseServiceImpl implements PurchaseService {
                         return Mono.error(new RuntimeException("Unauthorized: Invalid User Principal"));
                     }
                 });
+    }
+
+    @Override
+    public Mono<Long> countByCollectionIdAndStatus(Long collectionId, PurchaseStatus purchaseStatus) {
+        if (collectionId == null || purchaseStatus == null) {
+            return Mono.empty();
+        }
+        return purchaseRepository.countByCollectionIdAndStatus(collectionId, purchaseStatus);
     }
 
     private Mono<PurchaseBaseResponse> enrichPurchaseWithAsset(Purchase purchase) {
