@@ -21,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Answers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -32,6 +33,8 @@ import reactor.test.StepVerifier;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -50,7 +53,7 @@ public class PasswordServiceTest {
     @Mock
     private TaskProducer taskProducer;
 
-    @Mock
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     private MailProperties mailProperties;
 
     @Mock
@@ -72,7 +75,9 @@ public class PasswordServiceTest {
     private PasswordServiceImpl passwordService;
 
     private User mockUser;
-    @Mock private UserDetails mockUserDetails;
+
+    @Mock
+    private UserDetails mockUserDetails;
 
     @BeforeEach
     void setUp() {
@@ -84,8 +89,9 @@ public class PasswordServiceTest {
         lenient().when(mockUserDetails.getUsername()).thenReturn("user@example.com");
         lenient().when(passwordResetTokenProperties.getBlockDurationSeconds()).thenReturn(300);
         lenient().when(passwordResetTokenProperties.getMaxAttempts()).thenReturn(3);
-        lenient().when(mailProperties.getSubjects()).thenReturn(new MailProperties.Subjects());
-        lenient().when(mailProperties.getTemplates()).thenReturn(new MailProperties.Templates());
+        lenient().when(mailProperties.getSubjects().getResetPassword()).thenReturn("Reset Your Password");
+        lenient().when(mailProperties.getTemplates().getResetPassword()).thenReturn("reset-password-template");
+        lenient().when(mailProperties.getPaths().getResetPassword()).thenReturn("/reset-password");
     }
 
     @Nested
@@ -105,8 +111,8 @@ public class PasswordServiceTest {
 
             StepVerifier.create(result)
                     .assertNext(response -> {
-                        org.junit.jupiter.api.Assertions.assertTrue(response.success());
-                        org.junit.jupiter.api.Assertions.assertEquals("Code sent successfully", response.message());
+                        assertTrue(response.success());
+                        assertEquals("Code sent successfully", response.message());
                     })
                     .verifyComplete();
         }
@@ -143,9 +149,9 @@ public class PasswordServiceTest {
 
             StepVerifier.create(result)
                     .assertNext(response -> {
-                        org.junit.jupiter.api.Assertions.assertTrue(response.success());
-                        org.junit.jupiter.api.Assertions.assertEquals("Password changed successfully", response.message());
-                        org.junit.jupiter.api.Assertions.assertEquals("new_hashed_password", mockUser.getPasswordHash());
+                        assertTrue(response.success());
+                        assertEquals("Password changed successfully", response.message());
+                        assertEquals("new_hashed_password", mockUser.getPasswordHash());
                     })
                     .verifyComplete();
         }
@@ -183,7 +189,7 @@ public class PasswordServiceTest {
                     .expectError(InvalidTokenException.class)
                     .verify();
 
-            org.junit.jupiter.api.Assertions.assertEquals(1, expiredToken.getAttemptCount());
+            assertEquals(1, expiredToken.getAttemptCount());
         }
     }
 
@@ -206,10 +212,21 @@ public class PasswordServiceTest {
 
             StepVerifier.create(result)
                     .assertNext(response -> {
-                        org.junit.jupiter.api.Assertions.assertTrue(response.success());
-                        org.junit.jupiter.api.Assertions.assertEquals("raw_reset_token", response.token());
+                        assertTrue(response.success());
+                        assertEquals("raw_reset_token", response.token());
                     })
                     .verifyComplete();
+        }
+
+        @Test
+        void userNotFound_ThrowsInvalidTokenException() {
+            PasswordResetInput input = new PasswordResetInput("missing@example.com");
+
+            when(userService.getUserByEmail("missing@example.com")).thenReturn(Mono.empty());
+
+            StepVerifier.create(passwordService.requestPasswordReset(input))
+                    .expectError(InvalidTokenException.class)
+                    .verify();
         }
     }
 
@@ -233,9 +250,9 @@ public class PasswordServiceTest {
 
             StepVerifier.create(result)
                     .assertNext(response -> {
-                        org.junit.jupiter.api.Assertions.assertTrue(response.success());
-                        org.junit.jupiter.api.Assertions.assertEquals("Password reset successfully", response.message());
-                        org.junit.jupiter.api.Assertions.assertEquals("new_secure_hash", mockUser.getPasswordHash());
+                        assertTrue(response.success());
+                        assertEquals("Password reset successfully", response.message());
+                        assertEquals("new_secure_hash", mockUser.getPasswordHash());
                     })
                     .verifyComplete();
         }
@@ -253,6 +270,40 @@ public class PasswordServiceTest {
 
             StepVerifier.create(result)
                     .expectError(InvalidTokenException.class)
+                    .verify();
+        }
+
+        @Test
+        void tokenExpired_ThrowsInvalidTokenException() {
+            PasswordConfirmResetInput input = new PasswordConfirmResetInput("raw_token", "newSecPass", "newSecPass");
+            PasswordResetToken expiredToken = new PasswordResetToken();
+            expiredToken.setType(PasswordResetType.reset_password);
+            expiredToken.setExpiresAt(Instant.now().minus(1, ChronoUnit.HOURS));
+            expiredToken.setAttemptCount(0);
+
+            when(tokenService.sha256Hex("raw_token")).thenReturn("hashed_token");
+            when(passwordResetTokenRepository.findByCode("hashed_token")).thenReturn(Mono.just(expiredToken));
+            when(passwordResetTokenRepository.save(expiredToken)).thenReturn(Mono.just(expiredToken));
+
+            StepVerifier.create(passwordService.confirmPasswordReset(input))
+                    .expectError(InvalidTokenException.class)
+                    .verify();
+
+            assertEquals(1, expiredToken.getAttemptCount());
+        }
+
+        @Test
+        void tokenBlocked_ThrowsUserStatusException() {
+            PasswordConfirmResetInput input = new PasswordConfirmResetInput("raw_token", "newSecPass", "newSecPass");
+            PasswordResetToken blockedToken = new PasswordResetToken();
+            blockedToken.setType(PasswordResetType.reset_password);
+            blockedToken.setBlockedUntil(Instant.now().plus(1, ChronoUnit.HOURS));
+
+            when(tokenService.sha256Hex("raw_token")).thenReturn("hashed_token");
+            when(passwordResetTokenRepository.findByCode("hashed_token")).thenReturn(Mono.just(blockedToken));
+
+            StepVerifier.create(passwordService.confirmPasswordReset(input))
+                    .expectError(UserStatusException.class)
                     .verify();
         }
     }

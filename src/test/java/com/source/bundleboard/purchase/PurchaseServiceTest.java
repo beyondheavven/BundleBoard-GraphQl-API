@@ -1,23 +1,31 @@
 package com.source.bundleboard.purchase;
 
+import com.source.bundleboard.author.model.Author;
+import com.source.bundleboard.author.service.AuthorService;
 import com.source.bundleboard.collection.dto.CollectionShortResponse;
+import com.source.bundleboard.collection.model.Collection;
 import com.source.bundleboard.collection.service.CollectionService;
+import com.source.bundleboard.mediaresource.model.MediaResource;
+import com.source.bundleboard.mediaresource.service.MediaResourceService;
 import com.source.bundleboard.purchase.dto.PurchaseBaseResponse;
 import com.source.bundleboard.purchase.item.dto.PurchaseItemBaseResponse;
-import com.source.bundleboard.purchase.item.mapper.PurchaseItemMapper;
 import com.source.bundleboard.purchase.item.model.PurchaseItem;
-import com.source.bundleboard.purchase.item.repository.PurchaseItemRepository;
+import com.source.bundleboard.purchase.item.service.PurchaseItemService;
 import com.source.bundleboard.purchase.mapper.PurchaseMapper;
 import com.source.bundleboard.purchase.model.Purchase;
 import com.source.bundleboard.purchase.model.PurchaseStatus;
 import com.source.bundleboard.purchase.repository.PurchaseRepository;
 import com.source.bundleboard.purchase.service.PurchaseServiceImpl;
+import com.source.bundleboard.user.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -26,160 +34,253 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 
 @ExtendWith(MockitoExtension.class)
 public class PurchaseServiceTest {
 
-    @Mock
-    private CollectionService collectionService;
-
-    @Mock
-    private PurchaseMapper purchaseMapper;
-
-    @Mock
-    private PurchaseItemMapper purchaseItemMapper;
-
-    @Mock
-    private PurchaseRepository purchaseRepository;
-
-    @Mock
-    private PurchaseItemRepository purchaseItemRepository;
+    @Mock private CollectionService collectionService;
+    @Mock private PurchaseMapper purchaseMapper;
+    @Mock private PurchaseRepository purchaseRepository;
+    @Mock private PurchaseItemService purchaseItemService;
+    @Mock private MediaResourceService mediaResourceService;
+    @Mock private AuthorService authorService;
 
     @InjectMocks
     private PurchaseServiceImpl purchaseService;
 
-    private Purchase purchase1;
-    private Purchase purchase2;
-    private PurchaseItem item1;
-    private PurchaseItem item2;
-    private CollectionShortResponse mockAsset;
-    private PurchaseItemBaseResponse itemResponse1;
-    private PurchaseItemBaseResponse itemResponse2;
-    private PurchaseBaseResponse response1;
-    private PurchaseBaseResponse response2;
+    private Purchase samplePurchase;
+    private User sampleUser;
+    private final Long userId = 100L;
+    private final Long collectionId = 501L;
 
     @BeforeEach
     void setUp() {
-        Instant now = Instant.now();
+        samplePurchase = new Purchase();
+        samplePurchase.setId(1L);
+        samplePurchase.setUserId(userId);
+        samplePurchase.setAmount(new BigDecimal("99.99"));
+        samplePurchase.setCurrency("USD");
+        samplePurchase.setStatus(PurchaseStatus.succeeded);
+        samplePurchase.setCreatedAt(Instant.now());
 
-        purchase1 = new Purchase();
-        purchase1.setId(1L);
-        purchase1.setUserId(100L);
-        purchase1.setAmount(new BigDecimal("99.99"));
-        purchase1.setCurrency("USD");
-        purchase1.setStatus(PurchaseStatus.succeeded);
-        purchase1.setCreatedAt(now);
+        sampleUser = new User();
+        sampleUser.setId(userId);
+        sampleUser.setUsername("test_user");
+    }
 
-        purchase2 = new Purchase();
-        purchase2.setId(2L);
-        purchase2.setUserId(100L);
-        purchase2.setAmount(new BigDecimal("49.99"));
-        purchase2.setCurrency("USD");
-        purchase2.setStatus(PurchaseStatus.succeeded);
-        purchase2.setCreatedAt(now);
+    // --- BASIC CRUD & FINDERS ---
 
-        item1 = new PurchaseItem();
-        item1.setId(11L);
-        item1.setPurchaseId(1L);
-        item1.setCollectionId(501L);
-        item1.setSnapshotPrice(new BigDecimal("99.99"));
+    @Test
+    void findByStripeSessionId_Success() {
+        when(purchaseRepository.findByStripeSessionId("session_123")).thenReturn(Mono.just(samplePurchase));
 
-        item2 = new PurchaseItem();
-        item2.setId(12L);
-        item2.setPurchaseId(2L);
-        item2.setCollectionId(502L);
-        item2.setSnapshotPrice(new BigDecimal("49.99"));
+        StepVerifier.create(purchaseService.findByStripeSessionId("session_123"))
+                .expectNext(samplePurchase)
+                .verifyComplete();
+    }
 
-        mockAsset = new CollectionShortResponse(501L, "Test Collection", null);
+    @Test
+    void findByStripePaymentIntentId_Success() {
+        when(purchaseRepository.findByStripePaymentIntentId("pi_123")).thenReturn(Mono.just(samplePurchase));
 
-        itemResponse1 = new PurchaseItemBaseResponse(11L,  new BigDecimal("99.99"), 501L, mockAsset);
-        itemResponse2 = new PurchaseItemBaseResponse(12L, new BigDecimal("49.99"),501L, mockAsset);
+        StepVerifier.create(purchaseService.findByStripePaymentIntentId("pi_123"))
+                .expectNext(samplePurchase)
+                .verifyComplete();
+    }
 
-        response1 = new PurchaseBaseResponse(
-                1L,
+    @Test
+    void save_Success() {
+        when(purchaseRepository.save(samplePurchase)).thenReturn(Mono.just(samplePurchase));
+
+        StepVerifier.create(purchaseService.save(samplePurchase))
+                .expectNext(samplePurchase)
+                .verifyComplete();
+    }
+
+    @Test
+    void countByCollectionIdAndStatus_Success() {
+        when(purchaseRepository.countByCollectionIdAndStatus(collectionId, PurchaseStatus.succeeded))
+                .thenReturn(Mono.just(5L));
+
+        StepVerifier.create(purchaseService.countByCollectionIdAndStatus(collectionId, PurchaseStatus.succeeded))
+                .expectNext(5L)
+                .verifyComplete();
+    }
+
+    @Test
+    void findAllLightweightByUserId_Success() {
+        when(purchaseRepository.findAllByUserId(userId)).thenReturn(Flux.just(samplePurchase));
+
+        StepVerifier.create(purchaseService.findAllLightweightByUserId(userId))
+                .assertNext(list -> {
+                    assertEquals(1, list.size());
+                    assertEquals(samplePurchase.getId(), list.get(0).id());
+                    assertNull(list.get(0).items());
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    void findAllByUserId_Success_EnrichesWithAssets() {
+        PurchaseItemBaseResponse itemResponse = new PurchaseItemBaseResponse(
+                11L,
                 new BigDecimal("99.99"),
-                "USD",
-                PurchaseStatus.succeeded,
-                now,
-                List.of(itemResponse1)
+                collectionId,
+                null
         );
 
-        response2 = new PurchaseBaseResponse(
-                2L,
-                new BigDecimal("49.99"),
-                "USD",
-                PurchaseStatus.succeeded,
-                now,
-                List.of(itemResponse2)
+        CollectionShortResponse mockAsset = new CollectionShortResponse(collectionId, "Test Collection", null);
+        PurchaseBaseResponse mockResponse = new PurchaseBaseResponse(
+                1L, new BigDecimal("99.99"), "USD", PurchaseStatus.succeeded, Instant.now(), List.of()
         );
+
+        when(purchaseRepository.findAllByUserId(userId)).thenReturn(Flux.just(samplePurchase));
+        when(purchaseItemService.findAllByPurchaseId(1L)).thenReturn(Flux.just(itemResponse));
+        when(collectionService.findShortResponseById(collectionId)).thenReturn(Mono.just(mockAsset));
+        when(purchaseMapper.toBaseResponse(eq(samplePurchase), anyList())).thenReturn(mockResponse);
+
+        StepVerifier.create(purchaseService.findAllByUserId(userId))
+                .assertNext(list -> {
+                    assertEquals(1, list.size());
+                    assertEquals(mockResponse, list.get(0));
+                })
+                .verifyComplete();
+    }
+
+    // --- PURCHASE CREATION LOGIC ---
+
+    @Test
+    void createPurchaseWithItems_Success() {
+        PurchaseItem item = new PurchaseItem();
+        item.setCollectionId(collectionId);
+
+        when(purchaseRepository.save(samplePurchase)).thenReturn(Mono.just(samplePurchase));
+        when(purchaseItemService.saveAll(anyList())).thenReturn(Flux.just(item));
+
+        StepVerifier.create(purchaseService.createPurchaseWithItems(samplePurchase, List.of(item)))
+                .expectNext(samplePurchase)
+                .verifyComplete();
+
+        assertEquals(1L, item.getPurchaseId());
+        verify(purchaseItemService).saveAll(anyList());
     }
 
     @Test
-    void findAllByUserId_Success_ReturnsEnrichedList() {
-        Long userId = 100L;
+    void createFreePurchase_Success() {
+        Author currentAuthor = new Author();
+        currentAuthor.setId(42L);
 
-        when(purchaseRepository.findAllByUserId(userId))
-                .thenReturn(Flux.just(purchase1, purchase2));
+        Collection collection = new Collection();
+        collection.setId(collectionId);
+        collection.setAuthorId(99L);
 
-        when(purchaseItemRepository.findAllByPurchaseId(1L)).thenReturn(Flux.just(item1));
-        when(purchaseItemRepository.findAllByPurchaseId(2L)).thenReturn(Flux.just(item2));
-        when(collectionService.findShortResponseById(501L)).thenReturn(Mono.just(mockAsset));
-        when(collectionService.findShortResponseById(502L)).thenReturn(Mono.just(mockAsset));
+        when(authorService.findByUserId(userId)).thenReturn(Mono.just(currentAuthor));
+        when(collectionService.findById(collectionId)).thenReturn(Mono.just(collection));
+        when(purchaseRepository.save(any(Purchase.class))).thenReturn(Mono.just(samplePurchase));
+        when(purchaseItemService.saveAll(anyList())).thenReturn(Flux.empty());
+        when(authorService.incrementSalesAndRating(99L)).thenReturn(Mono.empty());
 
-        when(purchaseItemMapper.toItemResponse(eq(item1), any(CollectionShortResponse.class))).thenReturn(itemResponse1);
-        when(purchaseItemMapper.toItemResponse(eq(item2), any(CollectionShortResponse.class))).thenReturn(itemResponse2);
-        when(purchaseMapper.toBaseResponse(eq(purchase1), eq(List.of(itemResponse1)))).thenReturn(response1);
-        when(purchaseMapper.toBaseResponse(eq(purchase2), eq(List.of(itemResponse2)))).thenReturn(response2);
-
-        Mono<List<PurchaseBaseResponse>> result = purchaseService.findAllByUserId(userId);
-
-        StepVerifier.create(result)
-                .assertNext(list -> {
-                    assertNotNull(list);
-                    assertEquals(2, list.size());
-
-                    PurchaseBaseResponse first = list.get(0);
-                    assertEquals(1L, first.id());
-                    assertEquals("USD", first.currency());
-                    assertEquals(PurchaseStatus.succeeded, first.status());
-                    assertFalse(first.items().isEmpty());
-                    assertEquals(mockAsset, first.items().get(0).asset());
-
-                    assertEquals(response2, list.get(1));
-                })
+        StepVerifier.create(purchaseService.createFreePurchase(userId, List.of(collectionId)))
+                .expectNext(samplePurchase)
                 .verifyComplete();
 
-        verify(purchaseRepository, times(1)).findAllByUserId(userId);
-        verify(purchaseRepository, times(1)).findAllByUserId(1L);
-        verify(purchaseRepository, times(1)).findAllByUserId(2L);
-        verify(collectionService, times(1)).findShortResponseById(501L);
-        verify(collectionService, times(1)).findShortResponseById(502L);
-        verify(purchaseItemMapper, times(2)).toItemResponse(any(), any());
-        verify(purchaseMapper, times(2)).toBaseResponse(any(), anyList());
+        verify(authorService).incrementSalesAndRating(99L);
+        verify(purchaseRepository).save(argThat(purchase -> purchase.getAmount().equals(BigDecimal.ZERO)));
     }
 
     @Test
-    void findAllByUserId_NoPurchases_ReturnsEmptyList() {
-        Long userId = 100L;
+    void createFreePurchase_SelfPurchase_ThrowsException() {
+        Author currentAuthor = new Author();
+        currentAuthor.setId(42L);
 
-        when(purchaseRepository.findAllByUserId(userId)).thenReturn(Flux.empty());
+        Collection collection = new Collection();
+        collection.setId(collectionId);
+        collection.setAuthorId(42L);
 
-        Mono<List<PurchaseBaseResponse>> result = purchaseService.findAllByUserId(userId);
+        when(authorService.findByUserId(userId)).thenReturn(Mono.just(currentAuthor));
+        when(collectionService.findById(collectionId)).thenReturn(Mono.just(collection));
 
-        StepVerifier.create(result)
-                .assertNext(list -> {
-                    assertNotNull(list);
-                    assertTrue(list.isEmpty());
+        StepVerifier.create(purchaseService.createFreePurchase(userId, List.of(collectionId)))
+                .expectErrorMatches(throwable -> throwable instanceof IllegalStateException &&
+                        throwable.getMessage().equals("Authors cannot purchase their own collections"))
+                .verify();
+
+        verifyNoInteractions(purchaseRepository, purchaseItemService);
+    }
+
+    // --- DOWNLOAD VERIFICATION ---
+
+    @Test
+    void verifyPurchaseForDownload_Success_ReturnsLink() {
+        Authentication auth = new UsernamePasswordAuthenticationToken(sampleUser, null, List.of());
+
+        Collection collection = new Collection();
+        collection.setId(collectionId);
+        collection.setMediaResourceId(10L);
+
+        MediaResource media = new MediaResource();
+        media.setFilePath("s3://bucket/file.zip");
+
+        when(purchaseRepository.findByUserIdAndCollectionId(userId, collectionId)).thenReturn(Mono.just(samplePurchase));
+        when(collectionService.findById(collectionId)).thenReturn(Mono.just(collection));
+        when(mediaResourceService.findById(10L)).thenReturn(Mono.just(media));
+
+        StepVerifier.create(purchaseService.verifyPurchaseForDownload(collectionId)
+                        .contextWrite(ReactiveSecurityContextHolder.withAuthentication(auth)))
+                .assertNext(response -> {
+                    assertEquals(PurchaseStatus.succeeded, response.status());
+                    assertEquals("s3://bucket/file.zip", response.assetPath());
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    void verifyPurchaseForDownload_Success_ReturnsExternalLink() {
+        Authentication auth = new UsernamePasswordAuthenticationToken(sampleUser, null, List.of());
+
+        Collection collection = new Collection();
+        collection.setId(collectionId);
+        collection.setMediaResourceId(null);
+        collection.setExternalLink("https://external.link/download");
+
+        when(purchaseRepository.findByUserIdAndCollectionId(userId, collectionId)).thenReturn(Mono.just(samplePurchase));
+        when(collectionService.findById(collectionId)).thenReturn(Mono.just(collection));
+
+        StepVerifier.create(purchaseService.verifyPurchaseForDownload(collectionId)
+                        .contextWrite(ReactiveSecurityContextHolder.withAuthentication(auth)))
+                .assertNext(response -> {
+                    assertEquals(PurchaseStatus.succeeded, response.status());
+                    assertEquals("https://external.link/download", response.assetPath());
                 })
                 .verifyComplete();
 
-        verify(purchaseRepository, times(1)).findAllByUserId(userId);
-        verifyNoInteractions(purchaseItemRepository);
-        verifyNoInteractions(collectionService);
-        verifyNoInteractions(purchaseMapper);
+        verifyNoInteractions(mediaResourceService);
+    }
+
+    @Test
+    void verifyPurchaseForDownload_NotSucceeded_ReturnsStatusOnly() {
+        Authentication auth = new UsernamePasswordAuthenticationToken(sampleUser, null, List.of());
+        samplePurchase.setStatus(PurchaseStatus.pending);
+
+        when(purchaseRepository.findByUserIdAndCollectionId(userId, collectionId)).thenReturn(Mono.just(samplePurchase));
+
+        StepVerifier.create(purchaseService.verifyPurchaseForDownload(collectionId)
+                        .contextWrite(ReactiveSecurityContextHolder.withAuthentication(auth)))
+                .assertNext(response -> {
+                    assertEquals(PurchaseStatus.pending, response.status());
+                    assertNull(response.assetPath());
+                })
+                .verifyComplete();
+
+        verifyNoInteractions(collectionService, mediaResourceService);
     }
 }

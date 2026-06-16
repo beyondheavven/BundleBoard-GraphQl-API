@@ -11,7 +11,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import reactor.core.publisher.Mono;
@@ -20,8 +19,9 @@ import reactor.test.StepVerifier;
 import java.time.Instant;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
@@ -99,7 +99,9 @@ public class CollectionLikeServiceTest {
 
     @Test
     void isLikedByCurrentUser_Authenticated_ReturnsTrue() {
-        Authentication auth = new UsernamePasswordAuthenticationToken(username, null);
+        Authentication auth = mock(Authentication.class);
+        when(auth.isAuthenticated()).thenReturn(true);
+        when(auth.getName()).thenReturn(username);
 
         when(authorService.findByUsername(username)).thenReturn(Mono.just(testAuthor));
         when(collectionLikeRepository.existsByCollectionIdAndAuthorId(collectionId, 42L)).thenReturn(Mono.just(true));
