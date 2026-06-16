@@ -13,6 +13,7 @@ type AuthorResponse{
     bio: String
     rating: Float
     totalSales: Int
+    downloadCount: Int
     socialLinks: [SocialLink!]!
     username: String!
     email: String!
