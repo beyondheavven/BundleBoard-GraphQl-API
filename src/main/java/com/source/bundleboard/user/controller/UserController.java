@@ -5,6 +5,7 @@ import com.source.bundleboard.author.service.AuthorService;
 import com.source.bundleboard.collection.dto.AuthoredCollectionResponse;
 import com.source.bundleboard.collection.service.CollectionService;
 import com.source.bundleboard.purchase.dto.PurchaseBaseResponse;
+import com.source.bundleboard.purchase.model.PurchaseStatus;
 import com.source.bundleboard.purchase.service.PurchaseService;
 import com.source.bundleboard.user.dto.*;
 import com.source.bundleboard.user.model.UserRole;
@@ -34,6 +35,8 @@ public class UserController {
     private final AuthorService authorService;
 
     private final CollectionService collectionService;
+
+
 
     @QueryMapping
     @PreAuthorize("hasAnyRole('CLIENT','AUTHOR','ADMIN')")
@@ -117,6 +120,12 @@ public class UserController {
                 .flatMapMany(author -> collectionService.findAllByAuthorId(author.getId()))
                 .collectList()
                 .defaultIfEmpty(Collections.emptyList());
+    }
+
+    @SchemaMapping(typeName = "AuthoredCollectionResponse", field = "downloadCount")
+    public Mono<Long> getDownloadCount(AuthoredCollectionResponse collection) {
+        return purchaseService.countByCollectionIdAndStatus(collection.id(), PurchaseStatus.succeeded)
+                .defaultIfEmpty(0L);
     }
 
 
