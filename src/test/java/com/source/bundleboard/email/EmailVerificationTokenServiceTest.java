@@ -3,6 +3,7 @@ package com.source.bundleboard.email;
 import com.source.bundleboard.api.exception.InvalidEmailVerificationTokenException;
 import com.source.bundleboard.api.exception.UserNotFoundException;
 import com.source.bundleboard.api.exception.UserStatusException;
+import com.source.bundleboard.email.mail.propeties.MailProperties;
 import com.source.bundleboard.email.model.EmailTokenStatus;
 import com.source.bundleboard.email.model.EmailTokenType;
 import com.source.bundleboard.email.model.EmailVerificationToken;
@@ -18,6 +19,7 @@ import com.source.bundleboard.utils.AppLinkBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Answers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -27,8 +29,17 @@ import reactor.test.StepVerifier;
 
 import java.time.Instant;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 
 @ExtendWith(MockitoExtension.class)
 public class EmailVerificationTokenServiceTest {
@@ -48,6 +59,9 @@ public class EmailVerificationTokenServiceTest {
     @Mock
     private AppLinkBuilder appLinkBuilder;
 
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+    private MailProperties mailProperties;
+
     @InjectMocks
     @Spy
     private EmailVerificationTokenServiceImpl emailTokenService;
@@ -66,6 +80,10 @@ public class EmailVerificationTokenServiceTest {
         lenient().when(emailVerificationProperties.getMaxAttempts()).thenReturn(3);
         lenient().when(emailVerificationProperties.getBlockDurationSeconds()).thenReturn(600);
 
+        lenient().when(mailProperties.getPaths().getVerificationEmail()).thenReturn("/verify-email");
+        lenient().when(mailProperties.getSubjects().getVerificationEmail()).thenReturn("Please verify your email");
+        lenient().when(mailProperties.getTemplates().getVerificationEmail()).thenReturn("verification-template");
+
         sampleToken = new EmailVerificationToken();
         sampleToken.setId(1L);
         sampleToken.setUserId(42L);
@@ -82,7 +100,6 @@ public class EmailVerificationTokenServiceTest {
         sampleUser.setEmail("john@example.com");
         sampleUser.setStatus(UserStatus.inactive);
     }
-
 
     @Test
     void verifyEmail_Success_VerifyEmailType() {
@@ -180,7 +197,6 @@ public class EmailVerificationTokenServiceTest {
         assertNotNull(sampleToken.getBlockedUntil());
     }
 
-
     @Test
     void sendChangeEmailToken_Success() {
         doReturn(rawToken).when(emailTokenService).generateRawToken();
@@ -208,7 +224,6 @@ public class EmailVerificationTokenServiceTest {
 
         when(userService.getUserByEmail("john@example.com")).thenReturn(Mono.just(sampleUser));
         when(emailVerificationTokenRepository.save(any(EmailVerificationToken.class))).thenReturn(Mono.just(sampleToken));
-
         when(appLinkBuilder.buildLink(anyString(), anyString())).thenReturn("http://link");
         when(taskProducer.sendEmailTask(any(EmailTask.class))).thenReturn(Mono.empty());
 
@@ -226,6 +241,7 @@ public class EmailVerificationTokenServiceTest {
         StepVerifier.create(emailTokenService.resendVerificationEmail("missing@example.com"))
                 .expectError(UserNotFoundException.class)
                 .verify();
+
         verifyNoInteractions(taskProducer, emailVerificationTokenRepository);
     }
 }
