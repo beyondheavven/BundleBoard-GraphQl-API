@@ -37,6 +37,7 @@ type CollectionResponse {
     name: String!
     description: String!
     price: Float!
+    externalLink: String!
     author: AuthorShortResponse!
     galleryImages: [ImageShortResponse!]!
     likesCount: Int!
@@ -49,6 +50,7 @@ type GetCollectionByIdResponse {
     description: String!
     price: Float!
     videoTutorialUrl: String
+    externalLink: String
     author: AuthorResponse!
     galleryImages: [ImageShortResponse!]!
     mediaResource: GetMediaResourceByIdResponse!
@@ -95,6 +97,7 @@ input CreateNewCollectionInput {
     description: String!
     price: Float!
     videoTutorialUrl: String
+    externalLink: String!
     tagIds: [ID!]!
     galleryImages: [ImageShortInput!]!
     mediaResource: MediaResourceInput!
@@ -105,4 +108,5 @@ input UpdateCollectionRequest {
     description: String
     price: Float
     galleryImages: [ImageShortInput!]!
+    externalLink: String
 }
