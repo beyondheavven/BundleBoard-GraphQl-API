@@ -1,5 +1,6 @@
 package com.source.bundleboard.purchase.service;
 
+import com.source.bundleboard.author.model.Author;
 import com.source.bundleboard.author.service.AuthorService;
 import com.source.bundleboard.collection.service.CollectionService;
 import com.source.bundleboard.mediaresource.service.MediaResourceService;
@@ -94,42 +95,52 @@ public class PurchaseServiceImpl implements PurchaseService {
     @Override
     @Transactional
     public Mono<Purchase> createFreePurchase(Long userId, List<Long> collectionIds) {
-        Purchase purchase = new Purchase();
-        purchase.setUserId(userId);
-        purchase.setStripeSessionId("FREE_" + UUID.randomUUID());
-        purchase.setStripePaymentIntentId("FREE_" + UUID.randomUUID());
-        purchase.setAmount(BigDecimal.ZERO);
-        purchase.setCurrency("USD");
-        purchase.setStatus(PurchaseStatus.succeeded);
-        purchase.setCreatedAt(Instant.now());
-        purchase.setUpdatedAt(Instant.now());
+        return authorService.findByUserId(userId)
+                .map(Author::getId)
+                .defaultIfEmpty(-1L)
+                .flatMap(currentUserAuthorId -> {
+                    Purchase purchase = new Purchase();
+                    purchase.setUserId(userId);
+                    purchase.setStripeSessionId("FREE_" + UUID.randomUUID());
+                    purchase.setStripePaymentIntentId("FREE_" + UUID.randomUUID());
+                    purchase.setAmount(BigDecimal.ZERO);
+                    purchase.setCurrency("USD");
+                    purchase.setStatus(PurchaseStatus.succeeded);
+                    purchase.setCreatedAt(Instant.now());
+                    purchase.setUpdatedAt(Instant.now());
 
-        return Flux.fromIterable(collectionIds)
-                .flatMap(collectionId -> collectionService.findById(collectionId)
-                        .map(collection -> {
-                            PurchaseItem item = new PurchaseItem();
-                            item.setCollectionId(collectionId);
-                            item.setSnapshotPrice(BigDecimal.ZERO);
-                            return Tuples.of(item, collection.getAuthorId());
-                        })
-                )
-                .collectList()
-                .flatMap(tuples -> {
-                    List<PurchaseItem> items = tuples.stream()
-                            .map(Tuple2::getT1)
-                            .toList();
+                    return Flux.fromIterable(collectionIds)
+                            .flatMap(collectionId -> collectionService.findById(collectionId)
+                                    .flatMap(collection -> {
+                                        if (collection.getAuthorId().equals(currentUserAuthorId)) {
+                                            return Mono.error(new IllegalStateException("Authors cannot purchase their own collections"));
+                                        }
 
-                    List<Long> authorIds = tuples.stream()
-                            .map(Tuple2::getT2)
-                            .toList();
+                                        PurchaseItem item = new PurchaseItem();
+                                        item.setCollectionId(collectionId);
+                                        item.setSnapshotPrice(BigDecimal.ZERO);
 
-                    return createPurchaseWithItems(purchase, items)
-                            .flatMap(savedPurchase -> {
-                                List<Mono<Void>> authorUpdated = authorIds.stream()
-                                        .map(authorService::incrementSalesAndRating)
+                                        return Mono.just(Tuples.of(item, collection.getAuthorId()));
+                                    })
+                            )
+                            .collectList()
+                            .flatMap(tuples -> {
+                                List<PurchaseItem> items = tuples.stream()
+                                        .map(Tuple2::getT1)
                                         .toList();
 
-                                return Mono.when(authorUpdated).thenReturn(savedPurchase);
+                                List<Long> authorIds = tuples.stream()
+                                        .map(Tuple2::getT2)
+                                        .toList();
+
+                                return createPurchaseWithItems(purchase, items)
+                                        .flatMap(savedPurchase -> {
+                                            List<Mono<Void>> authorUpdated = authorIds.stream()
+                                                    .map(authorService::incrementSalesAndRating)
+                                                    .toList();
+
+                                            return Mono.when(authorUpdated).thenReturn(savedPurchase);
+                                        });
                             });
                 });
     }
