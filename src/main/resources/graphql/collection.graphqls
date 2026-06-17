@@ -15,7 +15,7 @@ extend type Mutation {
 }
 
 type CollectionByTagResponse {
-    collections: [CollectionResponse!]!
+    collections: [CollectionResponse!]
     totalPages: Int!
     totalElements: Int!
 }
@@ -28,7 +28,7 @@ type Collection {
     author: Author!
     tags: [Tag!]!
     videoTutorialUrl: String!
-    galleryImages: [ImageShortResponse!]!
+    galleryImages: [ImageShortResponse!]
     mediaResource: MediaResource!
 }
 
@@ -39,7 +39,7 @@ type CollectionResponse {
     price: Float!
     externalLink: String!
     author: AuthorShortResponse!
-    galleryImages: [ImageShortResponse!]!
+    galleryImages: [ImageShortResponse!]
     likesCount: Int!
     isLiked: Boolean!
 }
@@ -52,7 +52,7 @@ type GetCollectionByIdResponse {
     videoTutorialUrl: String
     externalLink: String
     author: AuthorResponse!
-    galleryImages: [ImageShortResponse!]!
+    galleryImages: [ImageShortResponse!]
     mediaResource: GetMediaResourceByIdResponse!
     likesCount: Int!
     isLiked: Boolean!
@@ -61,7 +61,7 @@ type GetCollectionByIdResponse {
 type CollectionShortResponse{
     id: ID!
     name: String!
-    galleryImages: [ImageShortResponse!]!
+    galleryImages: [ImageShortResponse!]
 }
 
 type AuthoredCollectionResponse {
@@ -69,9 +69,9 @@ type AuthoredCollectionResponse {
     name: String!
     price: Float!
     description: String!
-    galleryImages: [ImageShortResponse!]!
+    galleryImages: [ImageShortResponse!]
     likesCount: Int!
-    isLiked: Boolean!
+    isLiked: Boolean
     downloadCount: Int
 }
 
