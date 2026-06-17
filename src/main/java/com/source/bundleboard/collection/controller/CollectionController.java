@@ -163,11 +163,17 @@ public class CollectionController {
 
     @SchemaMapping(typeName = "GetCollectionByIdResponse", field = "mediaResource")
     public Mono<GetMediaResourceByIdResponse> getMediaResourceDetails(GetCollectionByIdResponse collection){
+        if (collection.mediaResourceId() == null) {
+            return Mono.empty();
+        }
         return mediaResourceService.findGetMediaResourceById(collection.mediaResourceId());
     }
 
     @SchemaMapping(typeName = "Collection", field = "mediaResource")
     public Mono<GetMediaResourceByIdResponse> getMediaResource(Collection collection) {
+        if (collection.getMediaResourceId() == null) {
+            return Mono.empty();
+        }
         return mediaResourceService.findGetMediaResourceById(collection.getMediaResourceId());
     }
 }

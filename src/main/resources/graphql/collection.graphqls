@@ -53,7 +53,7 @@ type GetCollectionByIdResponse {
     externalLink: String
     author: AuthorResponse!
     galleryImages: [ImageShortResponse!]
-    mediaResource: GetMediaResourceByIdResponse!
+    mediaResource: GetMediaResourceByIdResponse
     likesCount: Int!
     isLiked: Boolean!
 }
