@@ -97,16 +97,16 @@ input CreateNewCollectionInput {
     description: String!
     price: Float!
     videoTutorialUrl: String
-    externalLink: String!
+    externalLink: String
     tagIds: [ID!]!
-    galleryImages: [ImageShortInput!]!
-    mediaResource: MediaResourceInput!
+    galleryImages: [ImageShortInput!]
+    mediaResource: MediaResourceInput
 }
 
 input UpdateCollectionRequest {
     name: String
     description: String
     price: Float
-    galleryImages: [ImageShortInput!]!
+    galleryImages: [ImageShortInput!]
     externalLink: String
 }
