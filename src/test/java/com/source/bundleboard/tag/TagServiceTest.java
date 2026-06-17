@@ -146,4 +146,27 @@ public class TagServiceTest {
 
         verifyNoInteractions(tagRepository);
     }
+
+    // --- findAllTagsByCollectionId TESTS ---
+
+    @Test
+    void findAllTagsByCollectionId_Success() {
+        Long collectionId = 200L;
+        when(tagRepository.findAllByCollectionId(collectionId)).thenReturn(Flux.just(sampleTag1, sampleTag2));
+
+        StepVerifier.create(tagService.findAllTagsByCollectionId(collectionId))
+                .expectNext(sampleTag1)
+                .expectNext(sampleTag2)
+                .verifyComplete();
+
+        verify(tagRepository).findAllByCollectionId(collectionId);
+    }
+
+    @Test
+    void findAllTagsByCollectionId_NullId_ReturnsEmptyFlux() {
+        StepVerifier.create(tagService.findAllTagsByCollectionId(null))
+                .verifyComplete();
+
+        verifyNoInteractions(tagRepository);
+    }
 }
