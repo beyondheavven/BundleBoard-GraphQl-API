@@ -18,4 +18,6 @@ public interface TagService {
     Flux<Tag> findAllById(List<Long> ids);
 
     Flux<Tag> findTagsByCollectionId(Long collectionId);
+
+    Flux<Tag> findAllTagsByCollectionId(Long id);
 }

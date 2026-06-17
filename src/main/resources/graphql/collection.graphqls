@@ -73,6 +73,7 @@ type AuthoredCollectionResponse {
     likesCount: Int!
     isLiked: Boolean
     downloadCount: Int
+    tags: [Tag!]
 }
 
 type CreateCollectionResponse {
