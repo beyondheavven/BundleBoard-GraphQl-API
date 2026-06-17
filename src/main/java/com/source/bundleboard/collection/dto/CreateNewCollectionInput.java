@@ -28,20 +28,16 @@ public record CreateNewCollectionInput(
         @Digits(integer = 6, fraction = 2, message = "invalid price format")
         BigDecimal price,
 
-        @Pattern(regexp = "^(https?://.*)?$", message = "invalid video tutorial format")
         String videoTutorialUrl,
 
-        @Pattern(regexp = "^(https?://.*)?$", message = "invalid external link format")
         String externalLink,
 
         @NotEmpty(message = "at least one tag required")
         List<Long> tagIds,
 
-        @NotEmpty(message = "at least one image required")
         @Valid
         List<ImageShortInput> galleryImages,
 
-        @NotNull(message = "metadata is required")
         MediaResourceInput mediaResource
 ) {
 }
