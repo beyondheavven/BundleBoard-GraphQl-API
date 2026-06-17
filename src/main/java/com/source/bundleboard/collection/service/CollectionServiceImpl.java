@@ -61,6 +61,9 @@ public class CollectionServiceImpl implements CollectionService {
 
     @Override
     public Mono<GetCollectionByIdResponse> getCollectionById(Long id) {
+        if (id == null) {
+            return Mono.empty();
+        }
         return collectionRepository.findCollectionById(id)
                 .map(collectionMapper::toGetDto)
                 .switchIfEmpty(Mono.error(new CollectionNotFoundException()));
