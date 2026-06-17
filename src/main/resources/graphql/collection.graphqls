@@ -37,7 +37,7 @@ type CollectionResponse {
     name: String!
     description: String!
     price: Float!
-    externalLink: String!
+    externalLink: String
     author: AuthorShortResponse!
     galleryImages: [ImageShortResponse!]
     likesCount: Int!
