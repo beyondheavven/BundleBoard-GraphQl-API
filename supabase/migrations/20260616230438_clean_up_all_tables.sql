@@ -18,5 +18,4 @@ TRUNCATE TABLE
     users
     RESTART IDENTITY CASCADE;
 
--- Включаем обратно
 SET session_replication_role = 'origin';
