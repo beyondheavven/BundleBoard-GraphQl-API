@@ -26,18 +26,6 @@ spring:
       printer:
         enabled: true
 
-  mail:
-    host: ${MAIL_HOST:localhost}
-    port: ${MAIL_PORT:25}
-    username: ${MAIL_USERNAME:bundleboard@localhost}
-    password: ${MAIL_PASSWORD:bundleboard}
-    properties:
-      mail:
-        smtp:
-          auth: ${MAIL_SMTP_AUTH:false}
-          starttls:
-            enable: ${MAIL_SMTP_STARTTLS_ENABLE:false}
-
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
@@ -74,8 +62,10 @@ app:
     secret: ${JWT_SECRET:very-long-secret-key-that-is-at-least-512-bits-long-for-security-purposes}
 
   mail:
-    from: ${spring.mail.username:noreply@bundleboard.com}
+    api-key: ${MAIL_API_KEY:test_key}
+    from: ${MAIL_FROM:noreply@bundleboard.com}
     from-name: "BundleBoard"
+
     templates:
       verification-email: mail/verify-email
       reset-password: mail/reset-password
@@ -93,7 +83,7 @@ app:
 
   email-verification:
     ttl-ms: ${EMAIL_VERIFICATION_TTL_MS:3600000}
-    verify-email-url: ${VERIFY_EMAIL_URL:http://localhost:8080/verify}
+    verify-email-url: ${VERIFY_EMAIL_URL:https://bundle-board.com}
     hash-algorithm: ${EMAIL_HASH_ALGORITHM:SHA-256}
     hex-format: ${EMAIL_HEX_FORMAT:true}
     hash-length: ${EMAIL_HASH_LENGTH:64}
