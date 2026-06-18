@@ -52,4 +52,12 @@ public class TagServiceImpl implements TagService {
         }
         return tagRepository.findByCollectionId(collectionId);
     }
+
+    @Override
+    public Flux<Tag> findAllTagsByCollectionId(Long collectionId) {
+        if (collectionId == null) {
+            return Flux.empty();
+        }
+        return tagRepository.findAllByCollectionId(collectionId);
+    }
 }
