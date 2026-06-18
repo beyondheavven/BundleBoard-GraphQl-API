@@ -63,7 +63,7 @@ app:
 
   mail:
     api-key: ${MAIL_API_KEY:test_key}
-    from: ${MAIL_FROM:noreply@bundleboard.com}
+    from: ${MAIL_FROM:bundleboard.app@gmail.com}
     from-name: "BundleBoard"
 
     templates:
