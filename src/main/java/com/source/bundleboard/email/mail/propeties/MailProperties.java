@@ -12,6 +12,8 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "app.mail")
 public class MailProperties {
 
+    private String apiKey;
+
     private String from;
 
     private String fromName;
