@@ -16,4 +16,7 @@ public interface TagRepository extends R2dbcRepository<Tag, Long> {
             "INNER JOIN collection_tags ct ON t.id = ct.tags_id " +
             "WHERE ct.collections_id = :collectionId")
     Flux<Tag> findByCollectionId(Long collectionId);
+
+    @Query("SELECT t.* FROM tags t JOIN collection_tags ct ON t.id = ct.tags_id WHERE ct.collections_id = :collectionId")
+    Flux<Tag> findAllByCollectionId(Long collectionId);
 }

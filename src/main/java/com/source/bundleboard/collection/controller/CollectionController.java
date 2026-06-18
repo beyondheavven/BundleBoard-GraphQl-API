@@ -12,6 +12,8 @@ import com.source.bundleboard.mediaresource.dto.GetMediaResourceByIdResponse;
 import com.source.bundleboard.mediaresource.service.MediaResourceService;
 import com.source.bundleboard.purchase.model.PurchaseStatus;
 import com.source.bundleboard.purchase.service.PurchaseService;
+import com.source.bundleboard.tag.model.Tag;
+import com.source.bundleboard.tag.service.TagService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.graphql.data.method.annotation.Argument;
@@ -39,6 +41,8 @@ public class CollectionController {
     private final MediaResourceService mediaResourceService;
 
     private final PurchaseService purchaseService;
+
+    private final TagService tagService;
 
     @PreAuthorize("permitAll()")
     @QueryMapping
@@ -175,5 +179,10 @@ public class CollectionController {
             return Mono.empty();
         }
         return mediaResourceService.findGetMediaResourceById(collection.getMediaResourceId());
+    }
+
+    @SchemaMapping(typeName = "AuthoredCollectionResponse", field = "tags")
+    public Flux<Tag> getTagsForAuthoredCollection(AuthoredCollectionResponse collection) {
+        return tagService.findAllTagsByCollectionId(collection.id());
     }
 }
