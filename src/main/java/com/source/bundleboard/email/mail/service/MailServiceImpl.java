@@ -7,14 +7,19 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -23,13 +28,11 @@ import java.util.Map;
 @Slf4j
 public class MailServiceImpl implements MailService {
 
-    private final JavaMailSender mailSender;
-
     private final SpringTemplateEngine templateEngine;
 
     private final MailProperties mailProperties;
 
-    private final static String UTF_8 = "UTF-8";
+    private final RestTemplate restTemplate = new RestTemplate();
 
     private final EmailVerificationProperties emailVerificationProperties;
 
@@ -40,18 +43,21 @@ public class MailServiceImpl implements MailService {
 
             String html = templateEngine.process(template, context);
 
-            MimeMessage mimeMessage = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, UTF_8);
+            HttpHeaders httpHeaders = new HttpHeaders();
+            httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+            httpHeaders.set("Authorization", "Bearer " + mailProperties.getApiKey());
+            String fromSender = String.format("%s <%s>", mailProperties.getFromName(), mailProperties.getFrom());
+            Map<String, Object> body = new HashMap<>();
+            body.put("from", fromSender);
+            body.put("to", List.of(toEmail));
+            body.put("subject", subject);
+            body.put("html", html);
 
-            helper.setFrom(mailProperties.getFrom(), mailProperties.getFromName());
-            helper.setTo(toEmail);
-            helper.setSubject(subject);
-            helper.setText(html, true);
-
-            mailSender.send(mimeMessage);
-            log.info("Email successfully sent via RabbitMQ to {}", toEmail);
-        } catch (MessagingException | UnsupportedEncodingException e) {
-            log.error("Failed to send email to {}", toEmail, e);
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, httpHeaders);
+            restTemplate.postForEntity("https://api.resend.com/emails", request, String.class);
+            log.info("Email successfully sent via Resend API (triggered by RabbitMQ) to {}", toEmail);
+        } catch (Exception e) {
+            log.error("Failed to send email via Resend API to {}", toEmail, e);
             throw new BadTemplateEmailException(e.getMessage());
         }
     }
