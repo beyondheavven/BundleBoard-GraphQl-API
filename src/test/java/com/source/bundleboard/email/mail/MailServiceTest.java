@@ -4,15 +4,16 @@ import com.source.bundleboard.api.exception.BadTemplateEmailException;
 import com.source.bundleboard.email.mail.propeties.MailProperties;
 import com.source.bundleboard.email.mail.service.MailServiceImpl;
 import com.source.bundleboard.email.properties.EmailVerificationProperties;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
@@ -24,14 +25,10 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.ArgumentMatchers.anyString;
 
 @ExtendWith(MockitoExtension.class)
 public class MailServiceTest {
-
-    @Mock
-    private JavaMailSender mailSender;
 
     @Mock
     private SpringTemplateEngine templateEngine;
@@ -40,19 +37,19 @@ public class MailServiceTest {
     private MailProperties mailProperties;
 
     @Mock
+    private RestTemplate restTemplate;
+
+    @Mock
     private EmailVerificationProperties emailVerificationProperties;
 
     @InjectMocks
     private MailServiceImpl mailService;
 
-    @Mock
-    private MimeMessage mimeMessage;
-
     @BeforeEach
     void setUp() {
-        lenient().when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
         lenient().when(mailProperties.getFrom()).thenReturn("noreply@bundleboard.com");
         lenient().when(mailProperties.getFromName()).thenReturn("BundleBoard");
+        lenient().when(mailProperties.getApiKey()).thenReturn("test_api_key");
     }
 
     @Test
@@ -65,18 +62,22 @@ public class MailServiceTest {
         when(templateEngine.process(eq(template), any(Context.class)))
                 .thenReturn("<html>Content</html>");
 
+        when(restTemplate.postForEntity(eq("https://api.resend.com/emails"), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(ResponseEntity.ok("success"));
+
         assertDoesNotThrow(() -> mailService.sendTemplateEmailSync(toEmail, subject, template, model));
-        verify(mailSender).send(mimeMessage);
+
         verify(templateEngine).process(eq(template), any(Context.class));
+        verify(restTemplate).postForEntity(eq("https://api.resend.com/emails"), any(HttpEntity.class), eq(String.class));
     }
 
     @Test
-    void sendTemplateEmailSync_ThrowsBadTemplateEmailException_WhenMessagingExceptionOccurs() {
+    void sendTemplateEmailSync_ThrowsBadTemplateEmailException_WhenNetworkExceptionOccurs() {
         when(templateEngine.process(anyString(), any(Context.class))).thenReturn("content");
 
-        doAnswer(invocation -> {
-            throw new MessagingException("SMTP Connection failed");
-        }).when(mailSender).send(any(MimeMessage.class));
+        when(restTemplate.postForEntity(eq("https://api.resend.com/emails"), any(HttpEntity.class), eq(String.class)))
+                .thenThrow(new RestClientException("Connection refused"));
+
         assertThrows(BadTemplateEmailException.class, () ->
                 mailService.sendTemplateEmailSync("user@test.com", "Sub", "tpl", Map.of())
         );
