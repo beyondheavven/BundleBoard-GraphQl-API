@@ -43,15 +43,13 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.mock;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyIterable;
-import static org.mockito.ArgumentMatchers.anyList;
 
 @ExtendWith(MockitoExtension.class)
 public class CollectionServiceTest {
@@ -381,6 +379,193 @@ public class CollectionServiceTest {
                     assertEquals("Java Bundle", response.name());
                     assertEquals(new BigDecimal("10.00"), response.price());
                 })
+                .verifyComplete();
+    }
+
+    @Test
+    void getLikedCollections_Success() {
+        // Mock Security Context (Spring Security Reactive)
+        org.springframework.security.core.Authentication auth = mock(org.springframework.security.core.Authentication.class);
+        when(auth.getName()).thenReturn("testuser");
+        org.springframework.security.core.context.SecurityContext ctx = mock(org.springframework.security.core.context.SecurityContext.class);
+        when(ctx.getAuthentication()).thenReturn(auth);
+
+        CollectionResponse responseDto = new CollectionResponse(1L, "Bundle", "Desc", BigDecimal.ZERO, null, 42L, null, 0L, false);
+
+        when(authorService.findByUsername("testuser")).thenReturn(Mono.just(sampleAuthor));
+        when(collectionRepository.findLikedCollectionsByAuthorId(42L)).thenReturn(Flux.just(sampleCollection));
+        when(collectionMapper.toDto(sampleCollection)).thenReturn(responseDto);
+
+        StepVerifier.create(collectionService.getLikedCollections()
+                        .contextWrite(org.springframework.security.core.context.ReactiveSecurityContextHolder.withSecurityContext(Mono.just(ctx))))
+                .expectNext(responseDto)
+                .verifyComplete();
+    }
+
+    @Test
+    void findLikedCollectionsByAuthorId_Success() {
+        CollectionResponse responseDto = new CollectionResponse(1L, "Bundle", "Desc", BigDecimal.ZERO, null, 42L, null, 0L, false);
+        when(collectionRepository.findLikedCollectionsByAuthorId(42L)).thenReturn(Flux.just(sampleCollection));
+        when(collectionMapper.toDto(sampleCollection)).thenReturn(responseDto);
+
+        StepVerifier.create(collectionService.findLikedCollectionsByAuthorId(42L))
+                .expectNext(responseDto)
+                .verifyComplete();
+    }
+
+    @Test
+    void findShortById_Success() {
+        when(collectionRepository.findById(1L)).thenReturn(Mono.just(sampleCollection));
+
+        StepVerifier.create(collectionService.findShortById(1L))
+                .assertNext(res -> {
+                    assertEquals(1L, res.id());
+                    assertEquals("Java Bundle", res.name());
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    void searchByName_Success() {
+        when(collectionRepository.findByNameContainingIgnoreCase(eq("Java"), any(Pageable.class)))
+                .thenReturn(Flux.just(sampleCollection));
+
+        StepVerifier.create(collectionService.searchByName("Java", 0, 10))
+                .assertNext(res -> {
+                    assertEquals(1L, res.id());
+                    assertEquals("Java Bundle", res.name());
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    void getTopLikedCollections_Success() {
+        CollectionResponse responseDto = new CollectionResponse(1L, "Bundle", "Desc", BigDecimal.ZERO, null, 42L, null, 0L, false);
+        when(collectionRepository.findTopLikedCollections(5)).thenReturn(Flux.just(sampleCollection));
+        when(collectionMapper.toDto(sampleCollection)).thenReturn(responseDto);
+
+        StepVerifier.create(collectionService.getTopLikedCollections(5))
+                .expectNext(responseDto)
+                .verifyComplete();
+    }
+
+    @Test
+    void getCollectionCommentResponseById_Success() {
+        when(collectionRepository.findById(1L)).thenReturn(Mono.just(sampleCollection));
+
+        StepVerifier.create(collectionService.getCollectionCommentResponseById(1L))
+                .assertNext(res -> {
+                    assertEquals(1L, res.id());
+                    assertEquals("Java Bundle", res.name());
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    void getCollectionCommentResponseById_NullId_ThrowsException() {
+        StepVerifier.create(collectionService.getCollectionCommentResponseById(null))
+                .expectError(CollectionNotFoundException.class)
+                .verify();
+    }
+
+    @Test
+    void getLatestCollections_Success() {
+        CollectionResponse responseDto = new CollectionResponse(1L, "Bundle", "Desc", BigDecimal.ZERO, null, 42L, null, 0L, false);
+        when(collectionRepository.findAllBy(any(Pageable.class))).thenReturn(Flux.just(sampleCollection));
+        when(collectionMapper.toDto(sampleCollection)).thenReturn(responseDto);
+
+        StepVerifier.create(collectionService.getLatestCollections(10))
+                .expectNext(responseDto)
+                .verifyComplete();
+    }
+
+    @Test
+    void getSortedCollections_WithFilters_Success() {
+        CollectionResponse responseDto = new CollectionResponse(1L, "Bundle", "Desc", BigDecimal.ZERO, null, 42L, null, 0L, false);
+
+        // Тестируем ветку SIZE_ASC с фильтром по MimeType
+        when(collectionRepository.findFilteredByMimeTypesSortedBySizeAsc(anyList(), eq(10), eq(0)))
+                .thenReturn(Flux.just(sampleCollection));
+        when(collectionMapper.toDto(sampleCollection)).thenReturn(responseDto);
+
+        StepVerifier.create(collectionService.getSortedCollections(0, 10, "SIZE_ASC", List.of("ZIP", "WEBP")))
+                .expectNext(responseDto)
+                .verifyComplete();
+    }
+
+    @Test
+    void getSortedCollections_WithoutFilters_Success() {
+        CollectionResponse responseDto = new CollectionResponse(1L, "Bundle", "Desc", BigDecimal.ZERO, null, 42L, null, 0L, false);
+
+        // Тестируем ветку ALPHABETICAL без фильтров (mimeTypeStrings is null/empty)
+        when(collectionRepository.findAllSortedByAlphabetical(10, 0))
+                .thenReturn(Flux.just(sampleCollection));
+        when(collectionMapper.toDto(sampleCollection)).thenReturn(responseDto);
+
+        StepVerifier.create(collectionService.getSortedCollections(0, 10, "ALPHABETICAL", null))
+                .expectNext(responseDto)
+                .verifyComplete();
+    }
+
+    @Test
+    void getSortedCollections_DefaultSort_Success() {
+        CollectionResponse responseDto = new CollectionResponse(1L, "Bundle", "Desc", BigDecimal.ZERO, null, 42L, null, 0L, false);
+
+        // Тестируем ветку default (когда sortBy неизвестен)
+        when(collectionRepository.findAllSortedByLatest(10, 0))
+                .thenReturn(Flux.just(sampleCollection));
+        when(collectionMapper.toDto(sampleCollection)).thenReturn(responseDto);
+
+        StepVerifier.create(collectionService.getSortedCollections(0, 10, "UNKNOWN_SORT", List.of()))
+                .expectNext(responseDto)
+                .verifyComplete();
+    }
+
+    @Test
+    void getCollectionByTagName_Success() {
+        CollectionFilterInput input = new CollectionFilterInput("UI", 0, 10);
+        CollectionResponse responseDto = new CollectionResponse(1L, "Bundle", "Desc", BigDecimal.ZERO, null, 42L, null, 0L, false);
+
+        when(collectionRepository.findCollectionsByTagNamePaged("UI", 10, 0))
+                .thenReturn(Flux.just(sampleCollection));
+        when(collectionMapper.toDto(sampleCollection)).thenReturn(responseDto);
+        when(collectionRepository.countCollectionsByTagName("UI")).thenReturn(Mono.just(1L));
+
+        StepVerifier.create(collectionService.getCollectionByTagName(input))
+                .assertNext(res -> {
+                    assertEquals(1, res.totalPages());
+                    assertEquals(1L, res.totalElements());
+                    assertEquals(1, res.collections().size());
+                    assertEquals(1L, res.collections().get(0).id());
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    void findAllByIds_Success() {
+        when(collectionRepository.findAllById(List.of(1L, 2L)))
+                .thenReturn(Flux.just(sampleCollection));
+
+        StepVerifier.create(collectionService.findAllByIds(List.of(1L, 2L)))
+                .expectNext(sampleCollection)
+                .verifyComplete();
+    }
+
+    @Test
+    void findAllByIds_NullOrEmptyList_ReturnsEmpty() {
+        StepVerifier.create(collectionService.findAllByIds(null))
+                .verifyComplete();
+
+        StepVerifier.create(collectionService.findAllByIds(List.of()))
+                .verifyComplete();
+    }
+
+    @Test
+    void findById_Success() {
+        when(collectionRepository.findById(1L)).thenReturn(Mono.just(sampleCollection));
+
+        StepVerifier.create(collectionService.findById(1L))
+                .expectNext(sampleCollection)
                 .verifyComplete();
     }
 }
