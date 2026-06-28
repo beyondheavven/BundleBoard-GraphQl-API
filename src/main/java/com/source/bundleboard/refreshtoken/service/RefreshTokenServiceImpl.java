@@ -5,7 +5,10 @@ import com.source.bundleboard.refreshtoken.model.RefreshToken;
 import com.source.bundleboard.refreshtoken.repository.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
+
+import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
@@ -24,5 +27,11 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     public Mono<RefreshToken> save(RefreshToken refreshToken) {
         return refreshTokenRepository.save(refreshToken)
                 .onErrorResume(e -> Mono.error(new RefreshTokenNotFoundException()));
+    }
+
+    @Override
+    @Transactional
+    public Mono<Void> deleteAllExpired() {
+        return refreshTokenRepository.deleteExpiredTokens(Instant.now()).then();
     }
 }

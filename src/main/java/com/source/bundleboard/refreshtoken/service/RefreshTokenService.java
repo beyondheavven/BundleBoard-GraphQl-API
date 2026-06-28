@@ -8,4 +8,6 @@ public interface RefreshTokenService {
     Mono<Void> deleteByUserId(Long id);
 
     Mono<RefreshToken> save(RefreshToken refreshToken);
+
+    Mono<Void> deleteAllExpired();
 }
