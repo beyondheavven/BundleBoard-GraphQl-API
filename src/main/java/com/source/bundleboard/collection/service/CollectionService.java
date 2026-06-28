@@ -38,7 +38,6 @@ public interface CollectionService {
 
     Mono<CollectionShortResponse> findShortById(Long id);
 
-
     Flux<CollectionResponse> searchByName(String query, int page, int size);
 
     Flux<CollectionResponse> getTopLikedCollections(int limit);
@@ -48,4 +47,6 @@ public interface CollectionService {
     Flux<CollectionResponse> getLatestCollections(Integer limit);
 
     Flux<CollectionResponse> getSortedCollections(int page, int size, String sortBy, List<String> mimeTypes);
+
+    Flux<CollectionResponse> getRandomCollections(int limit);
 }

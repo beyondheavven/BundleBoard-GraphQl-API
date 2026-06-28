@@ -355,6 +355,12 @@ public class CollectionServiceImpl implements CollectionService {
         return collectionsFlux.map(collectionMapper::toDto);
     }
 
+    @Override
+    public Flux<CollectionResponse> getRandomCollections(int limit) {
+        int safeLimit = Math.max(1, Math.min(limit, 50));
+        return collectionRepository.findRandom(safeLimit).map(collectionMapper::toDto);
+    }
+
 
     @Transactional
     @Override
