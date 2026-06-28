@@ -154,5 +154,8 @@ public interface CollectionRepository extends R2dbcRepository<Collection, Long> 
     """)
     Flux<Collection> findFilteredByMimeTypesSortedByAuthorSales(List<MimeType> mimeTypes, int size, int offset);
 
+    @Query("SELECT * FROM collections ORDER BY random() LIMIT :limit")
+    Flux<Collection> findRandom (int limit);
+
 
 }

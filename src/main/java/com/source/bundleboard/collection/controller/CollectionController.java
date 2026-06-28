@@ -110,6 +110,12 @@ public class CollectionController {
 
     @PreAuthorize("permitAll()")
     @QueryMapping
+    public Flux<CollectionResponse> getRandomCollections(@Argument int limit){
+        return collectionService.getRandomCollections(limit);
+    }
+
+    @PreAuthorize("permitAll()")
+    @QueryMapping
     public Flux<CollectionResponse> searchCollections(@Argument String query,
                                                       @Argument int size,
                                                       @Argument int page){
