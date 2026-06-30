@@ -62,6 +62,7 @@ services:
       - LOG_LEVEL_R2DBC=${LOG_LEVEL_R2DBC}
       - LOG_LEVEL_POSTGRES=${LOG_LEVEL_POSTGRES}
       - GRAPHIQL_ENABLED=${GRAPHIQL_ENABLED}
+      - FRONTEND_URS=${FRONTEND_URL}
     ports:
       - "8080:8080"
     networks:

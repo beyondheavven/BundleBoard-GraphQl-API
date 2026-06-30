@@ -18,6 +18,7 @@ import com.stripe.model.StripeObject;
 import com.stripe.model.checkout.Session;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
@@ -43,6 +44,9 @@ public class WebhookServiceImpl implements WebhookService {
     private final TaskProducer taskProducer;
 
     private final MailProperties mailProperties;
+
+    @Value("${app.frontend-url:http://localhost:3000}")
+    private String frontendUrl;
 
     @Override
     @Transactional
@@ -129,7 +133,8 @@ public class WebhookServiceImpl implements WebhookService {
                                             Map.of(
                                                     "username", user.getUsername(),
                                                     "amount", savedPurchase.getAmount(),
-                                                    "currency", savedPurchase.getCurrency()
+                                                    "currency", savedPurchase.getCurrency(),
+                                                    "vaultUrl", frontendUrl + "/stash"
                                             )
 
                                     );
