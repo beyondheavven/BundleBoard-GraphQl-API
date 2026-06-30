@@ -226,18 +226,14 @@ public class AuthServiceImpl implements AuthService {
                             passwordEncoder.encode(input.password()),
                             "",
                             Set.of(UserRole.client),
-                            UserStatus.inactive,
+                            UserStatus.active,
                             null,
                             Instant.now(),
                             true
                     );
                     return userService.save(user);
                 })
-                .flatMap(savedUser ->
-                        emailVerificationTokenService.resendVerificationEmail(savedUser.getEmail())
-                                .doOnSuccess(v -> log.info("🟢 Verification email sent to: {}", savedUser.getEmail()))
-                                .then(generateAuthResponse(savedUser, true))
-                )
+                .flatMap(savedUser -> generateAuthResponse(savedUser, true))
                 .doOnSuccess(response -> log.info("🟢 Social registration successful for: {}", input.email()))
                 .doOnError(e -> log.error("🔴 Error during social registration for [{}]: {}", input.email(), e.getMessage()));
     }
