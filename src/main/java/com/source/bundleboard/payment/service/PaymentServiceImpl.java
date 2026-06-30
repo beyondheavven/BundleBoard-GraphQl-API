@@ -36,6 +36,21 @@ public class PaymentServiceImpl implements PaymentService {
                         return Mono.error(new IllegalArgumentException("No collections found"));
                     }
 
+                    boolean containsOwnCollections = collections.stream()
+                            .anyMatch(collection -> collection.getAuthorId().equals(input.userId()));
+
+                    if (containsOwnCollections) {
+                        return Mono.error(new IllegalArgumentException("Cannot purchase own collections"));
+                    }
+
+                    boolean hasInvalidCommercialPrice = collections.stream()
+                            .anyMatch(collection -> collection.getPrice().compareTo(BigDecimal.ZERO) > 0
+                            && collection.getPrice().compareTo(BigDecimal.valueOf(5.00)) < 0);
+
+                    if (hasInvalidCommercialPrice) {
+                        return Mono.error(new IllegalArgumentException("Cannot purchase collections with commercial price less than $5.00"));
+                    }
+
                     long totalAmountInCents = calculateTotalAmountInCents(collections);
 
                     if (totalAmountInCents == 0) {
@@ -83,21 +98,27 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     private List<SessionCreateParams.LineItem> buildLineItems(List<Collection> collections, String currency) {
-        return collections.stream().map(collection -> {
-            long amountInCents = collection.getPrice().multiply(BigDecimal.valueOf(100)).longValue();
+        return collections.stream()
+                .filter(collection -> collection.getPrice().compareTo(BigDecimal.ZERO) > 0)
+                .map(collection -> {
+                    long amountInCents = collection.getPrice().movePointRight(2).longValue();
+                    String truncatedDescription = collection.getDescription();
+                    if (truncatedDescription != null && truncatedDescription.length() > 450) {
+                        truncatedDescription = truncatedDescription.substring(0, 447) + "...";
+                    }
 
-            return SessionCreateParams.LineItem.builder()
-                    .setQuantity(1L)
-                    .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
-                            .setCurrency(currency.toLowerCase())
-                            .setUnitAmount(amountInCents)
-                            .setProductData(SessionCreateParams.LineItem.PriceData.ProductData.builder()
-                                    .setName(collection.getName())
-                                    .setDescription(collection.getDescription())
+                    return SessionCreateParams.LineItem.builder()
+                            .setQuantity(1L)
+                            .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
+                                    .setCurrency(currency.toLowerCase())
+                                    .setUnitAmount(amountInCents)
+                                    .setProductData(SessionCreateParams.LineItem.PriceData.ProductData.builder()
+                                            .setName(collection.getName())
+                                            .setDescription(truncatedDescription)
+                                            .build())
                                     .build())
-                            .build())
-                    .build();
-        }).toList();
+                            .build();
+                }).toList();
     }
 
     public Session createStripeSession(SessionCreateParams params) throws StripeException {
