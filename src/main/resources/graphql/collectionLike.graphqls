@@ -1,5 +1,5 @@
 extend type Query {
-    getLikedCollections: [CollectionResponse!]!
+    getLikedCollections: [CollectionResponse!]
 }
 
 extend type Mutation {
