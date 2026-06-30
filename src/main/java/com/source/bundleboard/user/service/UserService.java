@@ -4,6 +4,7 @@ package com.source.bundleboard.user.service;
 import com.source.bundleboard.user.dto.*;
 import com.source.bundleboard.user.model.User;
 import com.stripe.net.HttpHeaders;
+import jakarta.validation.constraints.NotBlank;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -38,4 +39,6 @@ public interface UserService {
     Mono<UpdateAvatarResponse> updateUserAvatar(UpdateAvatarRequest input);
 
     Mono<UserCommentResponse> getUserCommentResponseById(Long userId);
+
+    Mono<User> findByIdentifier(String identifier);
 }
