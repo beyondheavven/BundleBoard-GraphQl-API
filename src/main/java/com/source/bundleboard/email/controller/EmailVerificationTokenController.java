@@ -3,6 +3,7 @@ package com.source.bundleboard.email.controller;
 import com.source.bundleboard.email.dto.EmailResponse;
 import com.source.bundleboard.email.service.EmailVerificationTokenService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -11,6 +12,7 @@ import reactor.core.publisher.Mono;
 
 import java.security.Principal;
 
+@Slf4j
 @Controller
 @RequiredArgsConstructor
 public class EmailVerificationTokenController {
@@ -20,6 +22,7 @@ public class EmailVerificationTokenController {
     @MutationMapping
     @PreAuthorize("permitAll()")
     public Mono<EmailResponse> verifyEmail(@Argument String token) {
+        log.info("🎯 [TEST] Попытка верификации токена: {}", token);
         return tokenService.verifyEmail(token);
     }
 
