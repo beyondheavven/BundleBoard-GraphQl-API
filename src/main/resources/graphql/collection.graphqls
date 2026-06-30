@@ -2,10 +2,10 @@ extend type Query {
     getAllCollections(page: Int!, size: Int!): [CollectionResponse]!
     getCollectionById(id: ID!): GetCollectionByIdResponse!
     getCollectionsByTag(input: CollectionFilterInput!): CollectionByTagResponse!
-    getTopLikedCollections(limit: Int!): [CollectionResponse!]!
-    searchCollections(query: String!, page: Int!, size: Int!): [CollectionResponse!]!
+    getTopLikedCollections(limit: Int!): [CollectionResponse!]
+    searchCollections(query: String!, page: Int!, size: Int!): [CollectionResponse!]
     getLatestCollections(limit: Int!): [CollectionResponse!]
-    getSortedCollections(page: Int!, size: Int!, sortBy: String!, mimeTypes: [String!]): [CollectionResponse!]!
+    getSortedCollections(page: Int!, size: Int!, sortBy: String!, mimeTypes: [String!]): [CollectionResponse!]
     getRandomCollections(limit: Int!): [CollectionResponse!]
 }
 
