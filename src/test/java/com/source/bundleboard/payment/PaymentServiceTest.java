@@ -44,6 +44,7 @@ public class PaymentServiceTest {
 
     private PaymentRequest paymentRequest;
     private final Long userId = 42L;
+    private final Long foreignAuthorId = 999L;
 
     @BeforeEach
     void setUp() {
@@ -63,10 +64,45 @@ public class PaymentServiceTest {
     }
 
     @Test
+    void createCheckoutSession_ContainsOwnCollections_ThrowsException() {
+        Collection ownCollection = new Collection();
+        ownCollection.setId(1L);
+        ownCollection.setPrice(new BigDecimal("10.00"));
+        ownCollection.setAuthorId(userId); // Setting authorId equal to purchaser's userId
+
+        when(collectionService.findAllByIds(paymentRequest.collectionIds())).thenReturn(Flux.just(ownCollection));
+
+        StepVerifier.create(paymentService.createCheckoutSession(paymentRequest))
+                .expectErrorMatches(throwable -> throwable instanceof IllegalArgumentException &&
+                        throwable.getMessage().equals("Cannot purchase own collections"))
+                .verify();
+
+        verifyNoInteractions(purchaseService, stripeProperties);
+    }
+
+    @Test
+    void createCheckoutSession_CommercialPriceLessThanFiveDollars_ThrowsException() {
+        Collection cheapCollection = new Collection();
+        cheapCollection.setId(1L);
+        cheapCollection.setPrice(new BigDecimal("3.50")); // Price is between $0.00 and $5.00
+        cheapCollection.setAuthorId(foreignAuthorId);
+
+        when(collectionService.findAllByIds(paymentRequest.collectionIds())).thenReturn(Flux.just(cheapCollection));
+
+        StepVerifier.create(paymentService.createCheckoutSession(paymentRequest))
+                .expectErrorMatches(throwable -> throwable instanceof IllegalArgumentException &&
+                        throwable.getMessage().equals("Cannot purchase collections with commercial price less than $5.00"))
+                .verify();
+
+        verifyNoInteractions(purchaseService, stripeProperties);
+    }
+
+    @Test
     void createCheckoutSession_TotalAmountZero_CreatesFreePurchase() {
         Collection freeCollection = new Collection();
         freeCollection.setId(1L);
         freeCollection.setPrice(BigDecimal.ZERO);
+        freeCollection.setAuthorId(foreignAuthorId); // Safe from own collection validation
 
         when(collectionService.findAllByIds(paymentRequest.collectionIds())).thenReturn(Flux.just(freeCollection));
         when(purchaseService.createFreePurchase(eq(userId), eq(paymentRequest.collectionIds())))
@@ -87,7 +123,8 @@ public class PaymentServiceTest {
         paidCollection.setId(1L);
         paidCollection.setName("Premium UI Kit");
         paidCollection.setDescription("Awesome description");
-        paidCollection.setPrice(new BigDecimal("15.00"));
+        paidCollection.setPrice(new BigDecimal("15.00")); // Price passes the >= $5.00 rule
+        paidCollection.setAuthorId(foreignAuthorId); // Safe from own collection validation
 
         when(collectionService.findAllByIds(paymentRequest.collectionIds())).thenReturn(Flux.just(paidCollection));
         when(stripeProperties.getPaymentSuccessUrl()).thenReturn("https://bundleboard.com/success");
@@ -100,6 +137,7 @@ public class PaymentServiceTest {
         StepVerifier.create(paymentService.createCheckoutSession(paymentRequest))
                 .expectNext("https://checkout.stripe.com/pay/cs_test_123")
                 .verifyComplete();
+
         verify(paymentService, times(1)).createStripeSession(any(SessionCreateParams.class));
         verifyNoInteractions(purchaseService);
     }
