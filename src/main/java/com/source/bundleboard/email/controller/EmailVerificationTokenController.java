@@ -24,7 +24,7 @@ public class EmailVerificationTokenController {
     }
 
     @MutationMapping
-    @PreAuthorize("permitAll()")
+    @PreAuthorize("isAuthenticated()")
     public Mono<EmailResponse> requestEmailChange(@Argument String newEmail, Principal principal) {
         return tokenService.sendChangeEmailToken(newEmail, principal.getName());
     }
