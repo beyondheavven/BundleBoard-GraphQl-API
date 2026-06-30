@@ -22,9 +22,9 @@ spring:
       enabled: ${GRAPHIQL_ENABLED:true}
     schema:
       inspection:
-        enabled: true
+        enabled: false
       printer:
-        enabled: true
+        enabled: false
 
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
