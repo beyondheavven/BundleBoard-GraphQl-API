@@ -1,7 +1,7 @@
 extend type Query {
     getUserById(id: ID!): User
     getAllUsers: [UserResponseDto!]!
-    me: UserResponseDto!
+    me: UserResponseDto
     getUserProfile: UserProfileResponse!
 }
 
