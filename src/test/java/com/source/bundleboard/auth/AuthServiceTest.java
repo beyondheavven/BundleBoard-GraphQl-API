@@ -71,8 +71,9 @@ public class AuthServiceTest {
     // --- AUTHENTICATE TESTS ---
 
     @Test
-    void authenticate_Success() {
-        when(userService.findByUsername("testuser")).thenReturn(Mono.just(testUser));
+    void authenticate_Success_WithUsername() {
+        // Изменено на findByIdentifier
+        when(userService.findByIdentifier("testuser")).thenReturn(Mono.just(testUser));
         when(passwordEncoder.matches("rawPass", "encodedPass")).thenReturn(true);
         when(userService.save(any(User.class))).thenReturn(Mono.just(testUser));
 
@@ -81,14 +82,33 @@ public class AuthServiceTest {
         when(jwtProperties.getRefreshTokenExpirationMs()).thenReturn(86400000L);
         when(refreshTokenRepository.save(any(RefreshToken.class))).thenReturn(Mono.just(mockRefreshToken));
 
+        // Конструктор AuthRequest теперь принимает универсальный идентифактор
         StepVerifier.create(authService.authenticate(new AuthRequest("testuser", "rawPass")))
                 .expectNextMatches(res -> res.accessToken().equals("access") && res.refreshToken().equals("new-refresh"))
                 .verifyComplete();
     }
 
     @Test
+    void authenticate_Success_WithEmail() {
+        // Добавлен тест для верификации входа по Email
+        when(userService.findByIdentifier("test@test.com")).thenReturn(Mono.just(testUser));
+        when(passwordEncoder.matches("rawPass", "encodedPass")).thenReturn(true);
+        when(userService.save(any(User.class))).thenReturn(Mono.just(testUser));
+
+        when(jwtService.generateAccessToken(any(), any(), any())).thenReturn("access");
+        when(jwtService.generateRefreshToken(any(), any())).thenReturn("new-refresh");
+        when(jwtProperties.getRefreshTokenExpirationMs()).thenReturn(86400000L);
+        when(refreshTokenRepository.save(any(RefreshToken.class))).thenReturn(Mono.just(mockRefreshToken));
+
+        StepVerifier.create(authService.authenticate(new AuthRequest("test@test.com", "rawPass")))
+                .expectNextMatches(res -> res.accessToken().equals("access") && res.refreshToken().equals("new-refresh"))
+                .verifyComplete();
+    }
+
+    @Test
     void authenticate_UserNotFound() {
-        when(userService.findByUsername("unknown")).thenReturn(Mono.empty());
+        // Изменено на findByIdentifier
+        when(userService.findByIdentifier("unknown")).thenReturn(Mono.empty());
 
         StepVerifier.create(authService.authenticate(new AuthRequest("unknown", "pass")))
                 .expectError(UserNotFoundException.class)
@@ -97,7 +117,8 @@ public class AuthServiceTest {
 
     @Test
     void authenticate_IncorrectPassword() {
-        when(userService.findByUsername("testuser")).thenReturn(Mono.just(testUser));
+        // Изменено на findByIdentifier
+        when(userService.findByIdentifier("testuser")).thenReturn(Mono.just(testUser));
         when(passwordEncoder.matches("wrong", "encodedPass")).thenReturn(false);
 
         StepVerifier.create(authService.authenticate(new AuthRequest("testuser", "wrong")))
@@ -110,7 +131,8 @@ public class AuthServiceTest {
         User bannedUser = new User(1L, "testuser", "test@test.com", "encodedPass",
                 "", Set.of(UserRole.client), UserStatus.banned, null, null, true);
 
-        when(userService.findByUsername("testuser")).thenReturn(Mono.just(bannedUser));
+        // Изменено на findByIdentifier
+        when(userService.findByIdentifier("testuser")).thenReturn(Mono.just(bannedUser));
         when(passwordEncoder.matches("rawPass", "encodedPass")).thenReturn(true);
 
         StepVerifier.create(authService.authenticate(new AuthRequest("testuser", "rawPass")))
@@ -159,7 +181,7 @@ public class AuthServiceTest {
         when(jwtService.isRefreshToken(oldToken)).thenReturn(Mono.just(true));
         when(refreshTokenRepository.existsByTokenAndExpirationTimeAfter(anyString(), any())).thenReturn(Mono.just(true));
         when(jwtService.validateToken(oldToken)).thenReturn(Mono.just(mockClaims));
-        when(mockClaims.get("userId", Number.class)).thenReturn(1L);
+        withMockUserId(mockClaims, 1L);
         when(userService.getUserById(1L)).thenReturn(Mono.just(testUser));
         when(refreshTokenRepository.deleteByToken(oldToken)).thenReturn(Mono.empty());
 
@@ -181,7 +203,7 @@ public class AuthServiceTest {
         when(jwtService.isRefreshToken(oldToken)).thenReturn(Mono.just(true));
         when(refreshTokenRepository.existsByTokenAndExpirationTimeAfter(anyString(), any())).thenReturn(Mono.just(true));
         when(jwtService.validateToken(oldToken)).thenReturn(Mono.just(mockClaims));
-        when(mockClaims.get("userId", Number.class)).thenReturn(null);
+        withMockUserId(mockClaims, null);
         when(mockClaims.getSubject()).thenReturn("testuser");
         when(userService.getUserByUsername("testuser")).thenReturn(Mono.just(testUser));
         when(refreshTokenRepository.deleteByToken(oldToken)).thenReturn(Mono.empty());
@@ -251,8 +273,8 @@ public class AuthServiceTest {
     void socialRegister_Success() {
         SocialRegisterRequest req = new SocialRegisterRequest("socialUser", "social@test.com", "pass", UserRole.client);
 
-        when(userService.getUserByEmail("social@test.com")).thenReturn(Mono.error(new UserNotFoundException())); // Email does not exist
-        when(userService.existsByUsername("socialUser")).thenReturn(Mono.just(false)); // Username is unique
+        when(userService.getUserByEmail("social@test.com")).thenReturn(Mono.error(new UserNotFoundException()));
+        when(userService.existsByUsername("socialUser")).thenReturn(Mono.just(false));
         when(passwordEncoder.encode("pass")).thenReturn("encoded");
         when(userService.save(any(User.class))).thenReturn(Mono.just(testUser));
         when(emailVerificationTokenService.resendVerificationEmail(anyString())).thenReturn(Mono.empty());
@@ -276,5 +298,9 @@ public class AuthServiceTest {
         StepVerifier.create(authService.socialRegister(req))
                 .expectError(UserAlreadyExistsException.class)
                 .verify();
+    }
+
+    private void withMockUserId(Claims mockClaims, Long userId) {
+        when(mockClaims.get("userId", Number.class)).thenReturn(userId);
     }
 }

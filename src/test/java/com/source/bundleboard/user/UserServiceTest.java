@@ -256,7 +256,6 @@ class UserServiceTest {
         void updateUserRole_AuthorRole_Success() {
             UpdateUserRoleInput input = new UpdateUserRoleInput("test@example.com", "author");
 
-            // Пользователь без роли author
             User userWithoutAuthor = new User();
             userWithoutAuthor.setId(1L);
             userWithoutAuthor.setUsername("testuser");
@@ -269,14 +268,11 @@ class UserServiceTest {
             when(userRepository.findByEmail("test@example.com")).thenReturn(Mono.just(userWithoutAuthor));
             when(userRepository.save(any(User.class))).thenReturn(Mono.just(userWithoutAuthor));
 
-            // Мокаем инициализацию профиля клиента (так как роль client уже есть)
             when(clientService.createClientByUserId(1L)).thenReturn(Mono.empty());
 
-            // Мокаем инициализацию профиля автора
             when(authorRepository.findByUserId(1L)).thenReturn(Mono.empty());
             when(authorRepository.save(any(Author.class))).thenReturn(Mono.just(new Author()));
 
-            // Мокаем токены
             when(jwtService.generateAccessToken(eq(1L), eq("testuser"), any())).thenReturn("new-access");
             when(jwtService.generateRefreshToken(1L, "testuser")).thenReturn("new-refresh");
             when(jwtProperties.getRefreshTokenExpirationMs()).thenReturn(3600000L);
@@ -318,6 +314,24 @@ class UserServiceTest {
     }
 
     // --- SIMPLE GETTERS & SAVERS ---
+
+    @Test
+    void findByIdentifier_Success_WithUsername() {
+        when(userRepository.findByUsernameOrEmail("testuser", "testuser")).thenReturn(Mono.just(sampleUser));
+
+        StepVerifier.create(userService.findByIdentifier("testuser"))
+                .expectNext(sampleUser)
+                .verifyComplete();
+    }
+
+    @Test
+    void findByIdentifier_Success_WithEmail() {
+        when(userRepository.findByUsernameOrEmail("test@example.com", "test@example.com")).thenReturn(Mono.just(sampleUser));
+
+        StepVerifier.create(userService.findByIdentifier("test@example.com"))
+                .expectNext(sampleUser)
+                .verifyComplete();
+    }
 
     @Test
     void getUserById_Success() {
