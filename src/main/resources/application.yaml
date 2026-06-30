@@ -85,7 +85,7 @@ app:
 
   email-verification:
     ttl-ms: ${EMAIL_VERIFICATION_TTL_MS:3600000}
-    verify-email-url: ${VERIFY_EMAIL_URL:https://bundle-board.com}
+    verify-email-url: ${VERIFY_EMAIL_URL:https://www.bundle-board.com}
     hash-algorithm: ${EMAIL_HASH_ALGORITHM:SHA-256}
     hex-format: ${EMAIL_HEX_FORMAT:true}
     hash-length: ${EMAIL_HASH_LENGTH:64}
