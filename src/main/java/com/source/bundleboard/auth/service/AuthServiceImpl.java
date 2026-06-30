@@ -107,8 +107,9 @@ public class AuthServiceImpl implements AuthService {
                                 .doOnSuccess(v -> log.info("🟢 Verification email sent to: {}", savedUser.getEmail()))
                                 .then(generateAuthResponse(savedUser, false))
                 )
+                .doOnError(e -> log.error("🔴 Error during registration for user [{}]: {}", request.username(), e.getMessage()))
                 .doOnSuccess(response -> log.info("🟢 User registered successfully: {}", request.username()))
-                .doOnError(e -> log.error("🔴 Error during registration for user [{}]: {}", request.username(), e.getMessage()));
+                .onErrorResume(e -> Mono.just(new AuthResponse(null, null, null, e.getMessage(), false)));
     }
 
     @Override
