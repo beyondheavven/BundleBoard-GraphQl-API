@@ -22,7 +22,6 @@ public class EmailVerificationTokenController {
     @MutationMapping
     @PreAuthorize("permitAll()")
     public Mono<EmailResponse> verifyEmail(@Argument String token) {
-        log.info("🎯 [TEST] Попытка верификации токена: {}", token);
         return tokenService.verifyEmail(token);
     }
 
