@@ -39,7 +39,7 @@ public class UserController {
 
 
     @QueryMapping
-    @PreAuthorize("hasAnyRole('CLIENT','AUTHOR','ADMIN')")
+    @PreAuthorize("permitAll()")
     public Mono<UserResponseDto> me(){
         return userService.findMe();
     }
