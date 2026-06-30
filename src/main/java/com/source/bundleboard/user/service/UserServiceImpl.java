@@ -108,8 +108,9 @@ public class UserServiceImpl implements UserService {
                 .map(SecurityContext::getAuthentication)
                 .filter(Authentication::isAuthenticated)
                 .flatMap(authentication -> userRepository.findByUsername(authentication.getName()))
-                .switchIfEmpty(Mono.error(new UserNotFoundException()))
-                .map(userMapper::toDto);
+                .map(userMapper::toDto)
+                .switchIfEmpty(Mono.empty());
+
     }
 
     @Override
