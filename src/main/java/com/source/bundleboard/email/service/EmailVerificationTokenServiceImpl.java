@@ -50,106 +50,32 @@ public class EmailVerificationTokenServiceImpl implements EmailVerificationToken
 
     private final SecureRandom random = new SecureRandom();
 
-
     @Override
     @Transactional
     public Mono<EmailResponse> verifyEmail(String tokenValue) {
-        // 1. Логируем входящий токен
-        log.info("🔍 [DEBUG] Step 1: Received raw token from frontend. Length: {}",
-                tokenValue != null ? tokenValue.length() : "NULL");
-
-        if (tokenValue == null || tokenValue.trim().isEmpty()) {
-            log.error("❌ [DEBUG] Verification aborted: incoming token value is empty.");
-            return Mono.error(new InvalidEmailVerificationTokenException());
-        }
-
         String hashedToken = sha256Hex(tokenValue);
-        log.info("🔍 [DEBUG] Step 2: Hashed incoming token to SHA-256: {}", hashedToken);
-
         return emailVerificationTokenRepository.findByToken(hashedToken)
-                // Логируем, если токен вообще был найден в БД
-                .doOnNext(token -> log.info("🟢 [DEBUG] Step 3: Token found in Database. ID: {}, UserID: {}, Status: {}, ExpiresAt: {}",
-                        token.getId(), token.getUserId(), token.getEmailTokenStatus(), token.getExpiresAt()))
                 .flatMap(token -> {
-                    // Проверка блокировки попыток
                     if (token.getBlockedUntil() != null && token.getBlockedUntil().isAfter(Instant.now())) {
-                        log.warn("⛔ [DEBUG] Verification blocked: Token is currently rate-limited until {}", token.getBlockedUntil());
                         return Mono.error(new UserStatusException());
                     }
 
-                    // Проверка валидности
                     boolean isValid = token.getEmailTokenStatus() == EmailTokenStatus.pending &&
                             token.getExpiresAt().isAfter(Instant.now());
 
                     if (!isValid) {
-                        log.warn("🟡 [DEBUG] Token is invalid (Either not pending or expired). Handling failed attempt...");
                         return handleFailedAttempt(token);
                     }
 
-                    log.info("🔍 [DEBUG] Step 4: Token is valid. Requesting User profile from UserService for ID: {}", token.getUserId());
-
-                    // ТУТ НАЧИНАЕТСЯ ЗОНА РИСКА SPRING SECURITY
                     return userService.getUserById(token.getUserId())
-                            .doOnSubscribe(sub -> log.info("🔍 [DEBUG] Subscribed to userService.getUserById()"))
-                            .doOnNext(user -> log.info("🟢 [DEBUG] Step 5: User profile retrieved successfully. Current Status: {}", user.getStatus()))
-                            .doOnError(e -> log.error("🔴 [DEBUG] CRITICAL: userService.getUserById() failed! Error type: {}, Message: {}",
-                                    e.getClass().getName(), e.getMessage()))
-
-                            // Переходим к обновлению пользователя
+                            .flatMap(user -> processUserUpdate(user, token))
                             .flatMap(user -> {
-                                log.info("🔍 [DEBUG] Step 6: Triggering processUserUpdate (modifying status to ACTIVE)...");
-                                return processUserUpdate(user, token);
-                            })
-                            .doOnSubscribe(sub -> log.info("🔍 [DEBUG] Subscribed to processUserUpdate()"))
-                            .doOnNext(updatedUser -> log.info("🟢 [DEBUG] Step 7: User status updated and saved. New Status: {}", updatedUser.getStatus()))
-                            .doOnError(e -> log.error("🔴 [DEBUG] CRITICAL: processUserUpdate() database write failed! Error type: {}, Message: {}",
-                                    e.getClass().getName(), e.getMessage()))
-
-                            // Переходим к обновлению статуса самого токена
-                            .flatMap(user -> {
-                                log.info("🔍 [DEBUG] Step 8: Changing token status to VERIFIED...");
                                 token.setEmailTokenStatus(EmailTokenStatus.verified);
                                 return emailVerificationTokenRepository.save(token);
                             })
-                            .doOnNext(savedToken -> log.info("🟢 [DEBUG] Step 9: Token marked as verified in DB."))
                             .thenReturn(new EmailResponse(true, "Email verified successfully", null));
-                })
-                // Если репозиторий вернул пустой Mono (хэш не найден в таблице)
-                .switchIfEmpty(Mono.defer(() -> {
-                    log.error("❌ [DEBUG] Step 3/FAIL: No record matching hashed token {} found in the database.", hashedToken);
-                    return Mono.error(new InvalidEmailVerificationTokenException());
-                }))
-                // Перехватываем абсолютно любую ошибку во всем реактивном стриме
-                .doOnError(globalError -> log.error("🚨 [DEBUG] GLOBAL STREAM ERROR inside verifyEmail: {} - {}",
-                        globalError.getClass().getName(), globalError.getMessage()));
+                }).switchIfEmpty(Mono.error(new InvalidEmailVerificationTokenException()));
     }
-
-//    @Override
-//    @Transactional
-//    public Mono<EmailResponse> verifyEmail(String tokenValue) {
-//        String hashedToken = sha256Hex(tokenValue);
-//        return emailVerificationTokenRepository.findByToken(hashedToken)
-//                .flatMap(token -> {
-//                    if (token.getBlockedUntil() != null && token.getBlockedUntil().isAfter(Instant.now())) {
-//                        return Mono.error(new UserStatusException());
-//                    }
-//
-//                    boolean isValid = token.getEmailTokenStatus() == EmailTokenStatus.pending &&
-//                            token.getExpiresAt().isAfter(Instant.now());
-//
-//                    if (!isValid) {
-//                        return handleFailedAttempt(token);
-//                    }
-//
-//                    return userService.getUserById(token.getUserId())
-//                            .flatMap(user -> processUserUpdate(user, token))
-//                            .flatMap(user -> {
-//                                token.setEmailTokenStatus(EmailTokenStatus.verified);
-//                                return emailVerificationTokenRepository.save(token);
-//                            })
-//                            .thenReturn(new EmailResponse(true, "Email verified successfully", null));
-//                }).switchIfEmpty(Mono.error(new InvalidEmailVerificationTokenException()));
-//    }
 
     @Override
     @Transactional
