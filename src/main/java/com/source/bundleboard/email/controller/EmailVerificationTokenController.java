@@ -5,6 +5,7 @@ import com.source.bundleboard.email.service.EmailVerificationTokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import reactor.core.publisher.Mono;
 
@@ -17,16 +18,19 @@ public class EmailVerificationTokenController {
     private final EmailVerificationTokenService tokenService;
 
     @MutationMapping
+    @PreAuthorize("permitAll()")
     public Mono<EmailResponse> verifyEmail(@Argument String token) {
         return tokenService.verifyEmail(token);
     }
 
     @MutationMapping
+    @PreAuthorize("permitAll()")
     public Mono<EmailResponse> requestEmailChange(@Argument String newEmail, Principal principal) {
         return tokenService.sendChangeEmailToken(newEmail, principal.getName());
     }
 
     @MutationMapping
+    @PreAuthorize("permitAll()")
     public Mono<EmailResponse> resendVerificationEmail(@Argument String email){
         return tokenService.resendVerificationEmail(email);
     }
