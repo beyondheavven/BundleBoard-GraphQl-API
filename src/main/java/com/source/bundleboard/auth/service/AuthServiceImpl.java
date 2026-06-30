@@ -47,21 +47,21 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public Mono<AuthResponse> authenticate(AuthRequest request) {
-        log.info("🟢 Attempting to authenticate user: {}", request.username());
-        return userService.findByUsername(request.username())
+        log.info("🟢 Attempting to authenticate user by identifier: {}", request.identifier());
+        return userService.findByIdentifier(request.identifier())
                 .switchIfEmpty(Mono.defer(() -> {
-                    log.warn("🟡 Authentication failed: User not found [{}]", request.username());
+                    log.warn("Authentication failed: User not found [{}]", request.identifier());
                     return Mono.error(new UserNotFoundException());
                 }))
                 .flatMap(user -> {
 
                     if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-                        log.warn("🟡 Authentication failed: Incorrect password for user [{}]", request.username());
+                        log.warn("Authentication failed: Incorrect password for user [{}]", request.identifier());
                         return Mono.error(new IncorrectPasswordException("Incorrect password."));
                     }
 
                     if (user.getStatus() == UserStatus.banned || user.getStatus() == UserStatus.inactive) {
-                        log.warn("🟡 Authentication failed: Status is {} for user [{}]", user.getStatus(), request.username());
+                        log.warn("Authentication failed: Status is {} for user [{}]", user.getStatus(), request.identifier());
                         return Mono.error(new UserStatusException());
                     }
 
@@ -74,8 +74,8 @@ public class AuthServiceImpl implements AuthService {
                     return userService.save(updatedUser)
                             .flatMap(savedUser -> generateAuthResponse(savedUser, !savedUser.isSetupCompleted()));
                 })
-                .doOnSuccess(response -> log.info("🟢 User authenticated successfully: {}", request.username()))
-                .doOnError(e -> log.error("🔴 Error during authentication for user [{}]: {}", request.username(), e.getMessage()));
+                .doOnSuccess(response -> log.info("🟢 User authenticated successfully: {}", request.identifier()))
+                .doOnError(e -> log.error("🔴 Error during authentication for user [{}]: {}", request.identifier(), e.getMessage()));
     }
 
     @Override

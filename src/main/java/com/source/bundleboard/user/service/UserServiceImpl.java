@@ -295,5 +295,13 @@ public class UserServiceImpl implements UserService {
                 ));
     }
 
+    @Override
+    public Mono<User> findByIdentifier(String identifier) {
+        if (identifier == null) {
+            return Mono.error(new UserNotFoundException());
+        }
+        return userRepository.findByUsernameOrEmail(identifier, identifier);
+    }
+
 
 }
