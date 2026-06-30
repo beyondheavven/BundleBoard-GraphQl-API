@@ -146,13 +146,18 @@ public class WebhookServiceImpl implements WebhookService {
 
     private Mono<Void> handlePaymentFailed(PaymentIntent intent) {
         String errorMsg = intent.getLastPaymentError() != null ? intent.getLastPaymentError().getMessage() : "Unknown or Canceled";
-
         log.warn("🟡 Payment failed or canceled. Intent: {}. Reason: {}", intent.getId(), errorMsg);
+
         return purchaseService.findByStripePaymentIntentId(intent.getId())
                 .flatMap(purchase -> {
                     purchase.setStatus(PurchaseStatus.failed);
+                    purchase.setUpdatedAt(Instant.now());
                     return purchaseService.save(purchase);
                 })
+                .switchIfEmpty(Mono.defer(() -> {
+                    log.info("Purchase not found for Intent: {}", intent.getId());
+                    return Mono.empty();
+                }))
                 .doOnSuccess(p -> log.info("🟡 Purchase status updated to FAILED for Intent: {}", intent.getId()))
                 .then();
     }
