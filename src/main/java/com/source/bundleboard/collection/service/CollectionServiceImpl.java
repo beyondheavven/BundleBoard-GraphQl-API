@@ -245,6 +245,7 @@ public class CollectionServiceImpl implements CollectionService {
                 .map(ctx -> ctx.getAuthentication().getName())
                 .flatMapMany(username ->
                         authorService.findByUsername(username)
+                                .switchIfEmpty(Mono.error(new AuthorNotFoundException()))
                                 .flatMapMany(author -> this.findLikedCollectionsByAuthorId(author.getId()))
                 );
     }
@@ -252,6 +253,7 @@ public class CollectionServiceImpl implements CollectionService {
     @Override
     public Flux<CollectionResponse> findLikedCollectionsByAuthorId(Long authorId) {
         return collectionRepository.findLikedCollectionsByAuthorId(authorId)
+                .switchIfEmpty(Mono.empty())
                 .map(collectionMapper::toDto);
     }
 
