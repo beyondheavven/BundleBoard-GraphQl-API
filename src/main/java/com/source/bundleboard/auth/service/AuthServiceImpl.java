@@ -83,39 +83,32 @@ public class AuthServiceImpl implements AuthService {
     public Mono<AuthResponse> register(RegisterRequest request) {
         log.info("🟢 Attempting to register new user: {}", request.username());
         return userService.existsByUsername(request.username())
-                .flatMap(usernameExists -> {
-                    if (usernameExists){
+                .flatMap(exists -> {
+                    if (exists){
                         log.warn("🟡 Registration failed: Username already exists [{}]", request.username());
                         return Mono.error(new UserAlreadyExistsException());
                     }
-                    return userService.getUserByEmail(request.email())
-                            .flatMap(existingUser -> {
-                                log.warn("🟡 Registration failed: Email already exists [{}]", request.email());
-                                return Mono.<User>error(new UserAlreadyExistsException());
-                            })
-                            .switchIfEmpty(Mono.defer(() -> {
-                                User user = new User(
-                                        null,
-                                        request.username(),
-                                        request.email(),
-                                        passwordEncoder.encode(request.password()),
-                                        "",
-                                        Set.of(UserRole.client),
-                                        UserStatus.inactive,
-                                        null,
-                                        Instant.now(),
-                                        true
-                                );
-                                return userService.save(user);
-                            }));
+                    User user = new User(
+                            null,
+                            request.username(),
+                            request.email(),
+                            passwordEncoder.encode(request.password()),
+                            "",
+                            Set.of(UserRole.client),
+                            UserStatus.inactive,
+                            null,
+                            Instant.now(),
+                            true
+                    );
+                    return userService.save(user);
                 })
                 .flatMap(savedUser ->
                         emailVerificationTokenService.resendVerificationEmail(savedUser.getEmail())
                                 .doOnSuccess(v -> log.info("🟢 Verification email sent to: {}", savedUser.getEmail()))
                                 .then(generateAuthResponse(savedUser, false))
                 )
-                .doOnSuccess(response -> log.info("🟢 User registered successfully: {}", request.username()))
                 .doOnError(e -> log.error("🔴 Error during registration for user [{}]: {}", request.username(), e.getMessage()))
+                .doOnSuccess(response -> log.info("🟢 User registered successfully: {}", request.username()))
                 .onErrorResume(e -> Mono.just(new AuthResponse(null, null, null, e.getMessage(), false)));
     }
 
