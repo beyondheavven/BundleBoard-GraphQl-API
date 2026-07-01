@@ -89,7 +89,7 @@ public class CollectionController {
         return collectionService.getTopLikedCollections(actualLimit);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'CLIENT', 'AUTHOR')")
+    @PreAuthorize("isAuthenticated()")
     @QueryMapping
     public Flux<CollectionResponse> getLikedCollections() {
         return collectionService.getLikedCollections();
