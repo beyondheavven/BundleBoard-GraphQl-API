@@ -53,7 +53,7 @@ public class CollectionLikeServiceImpl implements CollectionLikeService {
                 .flatMap(context -> Mono.justOrEmpty(context.getAuthentication()))
                 .filter(Authentication::isAuthenticated)
                 .map(Authentication::getName)
-                .flatMap(userService::getUserByUsername)
+                .flatMap(userService::findByUsername)
                 .flatMap(user -> collectionLikeRepository.existsByCollectionIdAndUserId(collectionId, user.getId()))
                 .defaultIfEmpty(false);
     }
