@@ -7,7 +7,7 @@ extend type Mutation {
 type EmailResponse {
     success: Boolean!
     message: String!
-    attemptsLeft: Int!
+    attemptsLeft: Int
 }
 
 
