@@ -30,12 +30,14 @@ import reactor.test.StepVerifier;
 import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.ArgumentMatchers.any;
@@ -165,7 +167,7 @@ public class EmailVerificationTokenServiceTest {
     }
 
     @Test
-    void verifyEmail_TokenExpired_IncrementsAttemptsAndThrowsInvalidTokenException() {
+    void verifyEmail_TokenExpired_IncrementsAttemptsAndReturnsFalse() {
         doReturn(hashedToken).when(emailTokenService).sha256Hex(rawToken);
         sampleToken.setExpiresAt(Instant.now().minusSeconds(10));
 
@@ -173,8 +175,12 @@ public class EmailVerificationTokenServiceTest {
         when(emailVerificationTokenRepository.save(any(EmailVerificationToken.class))).thenReturn(Mono.just(sampleToken));
 
         StepVerifier.create(emailTokenService.verifyEmail(rawToken))
-                .expectError(InvalidEmailVerificationTokenException.class)
-                .verify();
+                .assertNext(response -> {
+                    assertFalse(response.success());
+                    assertEquals("Failed to verify email", response.message());
+                    assertEquals(2, response.attemptsLeft());
+                })
+                .verifyComplete();
 
         assertEquals(1, sampleToken.getAttemptCount());
         assertNull(sampleToken.getBlockedUntil());
@@ -190,8 +196,11 @@ public class EmailVerificationTokenServiceTest {
         when(emailVerificationTokenRepository.save(any(EmailVerificationToken.class))).thenReturn(Mono.just(sampleToken));
 
         StepVerifier.create(emailTokenService.verifyEmail(rawToken))
-                .expectError(InvalidEmailVerificationTokenException.class)
-                .verify();
+                .assertNext(response -> {
+                    assertFalse(response.success());
+                    assertEquals(0, response.attemptsLeft());
+                })
+                .verifyComplete();
 
         assertEquals(3, sampleToken.getAttemptCount());
         assertNotNull(sampleToken.getBlockedUntil());
@@ -202,7 +211,8 @@ public class EmailVerificationTokenServiceTest {
         doReturn(rawToken).when(emailTokenService).generateRawToken();
         doReturn(hashedToken).when(emailTokenService).sha256Hex(rawToken);
 
-        when(userService.getUserByUsername("john_doe")).thenReturn(Mono.just(sampleUser));
+        when(userService.existsByEmail("new@example.com")).thenReturn(Mono.just(false));
+        when(userService.findByUsername("john_doe")).thenReturn(Mono.just(sampleUser));
         when(emailVerificationTokenRepository.save(any(EmailVerificationToken.class))).thenReturn(Mono.just(sampleToken));
         when(appLinkBuilder.buildLink(anyString(), anyString())).thenReturn("http://link");
         when(taskProducer.sendEmailTask(any(EmailTask.class))).thenReturn(Mono.empty());
@@ -215,6 +225,34 @@ public class EmailVerificationTokenServiceTest {
                 .verifyComplete();
 
         verify(taskProducer).sendEmailTask(any(EmailTask.class));
+    }
+
+    @Test
+    void sendChangeEmailToken_EmailAlreadyTaken_ReturnsFalse() {
+        when(userService.existsByEmail("taken@example.com")).thenReturn(Mono.just(true));
+
+        StepVerifier.create(emailTokenService.sendChangeEmailToken("taken@example.com", "john_doe"))
+                .assertNext(response -> {
+                    assertFalse(response.success());
+                    assertEquals("Email is already taken", response.message());
+                    assertEquals(0, response.attemptsLeft());
+                })
+                .verifyComplete();
+
+        verifyNoMoreInteractions(userService);
+        verifyNoInteractions(emailVerificationTokenRepository, taskProducer);
+    }
+
+    @Test
+    void sendChangeEmailToken_SameEmail_ThrowsIllegalArgumentException() {
+        when(userService.existsByEmail("john@example.com")).thenReturn(Mono.just(false));
+        when(userService.findByUsername("john_doe")).thenReturn(Mono.just(sampleUser));
+
+        StepVerifier.create(emailTokenService.sendChangeEmailToken("john@example.com", "john_doe"))
+                .expectError(IllegalArgumentException.class)
+                .verify();
+
+        verifyNoInteractions(emailVerificationTokenRepository, taskProducer);
     }
 
     @Test
