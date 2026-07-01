@@ -25,13 +25,16 @@ public class CollectionLikeServiceImpl implements CollectionLikeService {
     @Transactional
     public Mono<Boolean> toggleFavorite(Long collectionId, String username) {
         return userService.findByUsername(username)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("User not found")))
                 .flatMap(user ->
                         collectionLikeRepository.findByCollectionIdAndUserId(collectionId, user.getId())
                                 .flatMap(existingLike ->
-                                        collectionLikeRepository.delete(existingLike).thenReturn(false)
+                                        collectionLikeRepository.delete(existingLike)
+                                                .then(Mono.just(false))
                                 )
                                 .switchIfEmpty(Mono.defer(() ->
-                                        collectionLikeRepository.save(new CollectionLike(null, collectionId, user.getId(), Instant.now())).thenReturn(true)
+                                        collectionLikeRepository.save(new CollectionLike(null, collectionId, user.getId(), Instant.now()))
+                                                .thenReturn(true)
                                 ))
                 );
     }
