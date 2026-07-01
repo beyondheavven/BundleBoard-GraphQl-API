@@ -85,27 +85,16 @@ public class CollectionServiceImpl implements CollectionService {
     @Override
     public Mono<CreateCollectionResponse> createCollection(CreateNewCollectionInput input, String username) {
         return Mono.defer(() -> {
-            // Логируем факт вызова метода и входящие параметры
-            log.info("[CREATE COLLECTION] Start processing. User: '{}', Price: {}, ExternalLink: '{}', HasMediaResource: {}",
-                    username, input.price(), input.externalLink(), (input.mediaResource() != null));
-
             if (input.mediaResource() == null && (input.externalLink() == null || input.externalLink().isBlank())) {
-                log.warn("[CREATE COLLECTION] Validation failed: Neither media resource nor external link was provided.");
                 return Mono.error(new DescriptionException("You must provide either a project file or an external link"));
             }
 
             return authorService.findByUsername(username)
-                    .switchIfEmpty(Mono.defer(() -> {
-                        log.error("[CREATE COLLECTION] Author not found for username: {}", username);
-                        return Mono.error(new AuthorNotFoundException());
-                    }))
-                    .doOnNext(author -> log.info("[CREATE COLLECTION] Author found: {} (ID: {})", author.getUserId(), author.getId()))
+                    .switchIfEmpty(Mono.error(new AuthorNotFoundException()))
                     .flatMap(author -> {
 
-                        // Шаг 1: Обработка архива (если он есть)
                         Mono<Long> processMediaMono = Mono.justOrEmpty(input.mediaResource())
                                 .flatMap(mrInput -> {
-                                    log.info("[CREATE COLLECTION] Media resource present. Saving file: '{}'", mrInput.fileName());
                                     MediaResource mediaResource = new MediaResource();
                                     mediaResource.setFileName(mrInput.fileName());
                                     mediaResource.setFilePath(mrInput.filePath());
@@ -114,28 +103,16 @@ public class CollectionServiceImpl implements CollectionService {
                                     mediaResource.setFileSize(mrInput.fileSize());
                                     mediaResource.setFileType(MediaFileType.archive);
 
-                                    return mediaResourceRepository.save(mediaResource)
-                                            .map(MediaResource::getId)
-                                            .doOnNext(id -> log.info("[CREATE COLLECTION] Media resource saved successfully. ID: {}", id))
-                                            .doOnError(err -> log.error("[CREATE COLLECTION] Failed to save MediaResource", err));
+                                    return mediaResourceRepository.save(mediaResource).map(MediaResource::getId);
                                 });
 
                         return processMediaMono.map(Optional::of).defaultIfEmpty(Optional.empty())
                                 .flatMap(optMediaId -> {
-                                    log.info("[CREATE COLLECTION] Mapping Collection entity. MediaResource ID present: {}", optMediaId.isPresent());
 
                                     Collection collection = getCollection(input, author);
                                     optMediaId.ifPresent(collection::setMediaResourceId);
-
-                                    log.info("[CREATE COLLECTION] Attempting to SAVE main collection to DB. Name: '{}', Price: {}, MediaResourceId: {}, ExternalLink: '{}'",
-                                            collection.getName(), collection.getPrice(), collection.getMediaResourceId(), collection.getExternalLink());
-
-                                    // Шаг 2: Сохранение самой коллекции
                                     return collectionRepository.save(collection)
-                                            .doOnNext(saved -> log.info("[CREATE COLLECTION] Main collection saved successfully! Generated ID: {}", saved.getId()))
-                                            .doOnError(err -> log.error("[CREATE COLLECTION] CRITICAL ERROR during collectionRepository.save()", err))
                                             .flatMap(savedCollection -> {
-
                                                 List<PreviewImage> newImages = input.galleryImages().stream()
                                                         .map(imgDto -> {
                                                             PreviewImage img = new PreviewImage();
@@ -149,15 +126,9 @@ public class CollectionServiceImpl implements CollectionService {
                                                         })
                                                         .toList();
 
-                                                log.info("[CREATE COLLECTION] Saving {} gallery preview images...", newImages.size());
-
-                                                // Шаг 3: Сохранение картинок галереи
                                                 return previewImageService.saveAll(newImages).collectList()
-                                                        .doOnNext(savedImgs -> log.info("[CREATE COLLECTION] Saved {} preview images to DB", savedImgs.size()))
-                                                        .doOnError(err -> log.error("[CREATE COLLECTION] Failed to save preview images", err))
                                                         .flatMap(savedImages -> {
                                                             if (savedImages.isEmpty()) {
-                                                                log.warn("[CREATE COLLECTION] Validation failed: Gallery is empty after save attempt");
                                                                 return Mono.error(new DescriptionException("Gallery must contain at least one image"));
                                                             }
 
@@ -165,14 +136,8 @@ public class CollectionServiceImpl implements CollectionService {
                                                                     .map(img -> new CollectionImage(null, savedCollection.getId(), img.getId()))
                                                                     .toList();
 
-                                                            log.info("[CREATE COLLECTION] Creating {} image-to-collection bindings...", imageRelations.size());
-
-                                                            // Шаг 4: Связывание картинок с коллекцией
                                                             return collectionImageRepository.saveAll(imageRelations).collectList()
-                                                                    .doOnNext(savedRels -> log.info("[CREATE COLLECTION] Image bindings saved. Count: {}", savedRels.size()))
-                                                                    .doOnError(err -> log.error("[CREATE COLLECTION] Failed to save collection-image relations", err))
                                                                     .flatMap(savedImageRels -> {
-
                                                                         List<CollectionTag> tagRelations = input.tagIds().stream()
                                                                                 .map(tagId -> {
                                                                                     CollectionTag relation = new CollectionTag();
@@ -182,12 +147,7 @@ public class CollectionServiceImpl implements CollectionService {
                                                                                 })
                                                                                 .toList();
 
-                                                                        log.info("[CREATE COLLECTION] Creating {} tag-to-collection bindings...", tagRelations.size());
-
-                                                                        // Шаг 5: Сохранение тегов
                                                                         return collectionTagService.saveAll(tagRelations).collectList()
-                                                                                .doOnNext(savedTags -> log.info("[CREATE COLLECTION] Tag bindings saved. Count: {}", savedTags.size()))
-                                                                                .doOnError(err -> log.error("[CREATE COLLECTION] Failed to save collection-tag relations", err))
                                                                                 .thenReturn(new CreateCollectionResponse(
                                                                                         savedCollection.getId(),
                                                                                         savedCollection.getName(),
@@ -198,8 +158,7 @@ public class CollectionServiceImpl implements CollectionService {
                                             });
                                 });
                     });
-        })
-                .doOnError(err -> log.error("[CREATE COLLECTION] GLOBAL FLOW EXCEPTION CAUGHT! Error type: {}, Message:{}", String.valueOf(err)));
+        });
     }
 
     private static Collection getCollection(CreateNewCollectionInput input, Author author) {
