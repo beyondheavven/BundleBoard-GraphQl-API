@@ -147,15 +147,12 @@ public class CollectionServiceImpl implements CollectionService {
                                                                                 })
                                                                                 .toList();
 
-                                                                        return collectionRepository.save(savedCollection)
-                                                                                .flatMap(updatedCollection ->
-                                                                                        collectionTagService.saveAll(tagRelations).collectList()
-                                                                                                .thenReturn(new CreateCollectionResponse(
-                                                                                                        savedCollection.getId(),
-                                                                                                        savedCollection.getName(),
-                                                                                                        true
-                                                                                                ))
-                                                                                );
+                                                                        return collectionTagService.saveAll(tagRelations).collectList()
+                                                                                .thenReturn(new CreateCollectionResponse(
+                                                                                        savedCollection.getId(),
+                                                                                        savedCollection.getName(),
+                                                                                        true
+                                                                                ));
                                                                     });
                                                         });
                                             });
