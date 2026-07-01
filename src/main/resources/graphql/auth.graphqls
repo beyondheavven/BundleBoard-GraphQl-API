@@ -38,9 +38,9 @@ input SocialLoginRequest {
 }
 
 type AuthResponse {
-    accessToken: String!
-    refreshToken: String!
-    user: UserDto!
+    accessToken: String
+    refreshToken: String
+    user: UserDto
     error: String
     isNew: Boolean
 }
