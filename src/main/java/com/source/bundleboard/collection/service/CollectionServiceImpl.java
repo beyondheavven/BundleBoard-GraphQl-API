@@ -99,7 +99,7 @@ public class CollectionServiceImpl implements CollectionService {
                         log.error("[CREATE COLLECTION] Author not found for username: {}", username);
                         return Mono.error(new AuthorNotFoundException());
                     }))
-                    .doOnNext(author -> log.info("[CREATE COLLECTION] Author found: {} (ID: {})", author.getUsername(), author.getId()))
+                    .doOnNext(author -> log.info("[CREATE COLLECTION] Author found: {} (ID: {})", author.getUserId(), author.getId()))
                     .flatMap(author -> {
 
                         // Шаг 1: Обработка архива (если он есть)
