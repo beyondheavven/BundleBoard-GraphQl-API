@@ -207,6 +207,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Mono<User> findByUsername(String username) {
+        if (username == null) {
+            return Mono.error(new UserNotFoundException());
+        }
+
         return userRepository.findByUsername(username).switchIfEmpty(Mono.error(new UserNotFoundException()));
     }
 
@@ -302,6 +306,14 @@ public class UserServiceImpl implements UserService {
             return Mono.error(new UserNotFoundException());
         }
         return userRepository.findByUsernameOrEmail(identifier, identifier);
+    }
+
+    @Override
+    public Mono<Boolean> existsByEmail(String email) {
+        if (email == null) {
+            return Mono.error(new UserNotFoundException());
+        }
+        return userRepository.existsByEmail(email);
     }
 
 
