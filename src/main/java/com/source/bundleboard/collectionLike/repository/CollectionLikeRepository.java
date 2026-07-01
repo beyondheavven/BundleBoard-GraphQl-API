@@ -9,9 +9,9 @@ import reactor.core.publisher.Mono;
 @Repository
 public interface CollectionLikeRepository extends R2dbcRepository<CollectionLike, Long> {
 
-    Mono<CollectionLike> findByCollectionIdAndAuthorId(Long collectionId, Long authorId);
-
     Mono<Integer> countByCollectionId(Long collectionId);
 
-    Mono<Boolean> existsByCollectionIdAndAuthorId(Long collectionId, Long authorId);
+    Mono<CollectionLike> findByCollectionIdAndUserId(Long collectionId, Long id);
+
+    Mono<Boolean> existsByCollectionIdAndUserId(Long collectionId, Long id);
 }

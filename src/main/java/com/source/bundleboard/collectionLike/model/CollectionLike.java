@@ -23,8 +23,8 @@ public class CollectionLike {
     @Column("collection_id")
     private Long collectionId;
 
-    @Column("author_id")
-    private Long authorId;
+    @Column("user_id")
+    private Long userId;
 
     @Column("created_at")
     private Instant createdAt;

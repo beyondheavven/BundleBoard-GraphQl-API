@@ -23,6 +23,8 @@ import com.source.bundleboard.mediaresource.model.Provider;
 import com.source.bundleboard.mediaresource.repository.MediaResourceRepository;
 import com.source.bundleboard.rabbitmq.dto.StorageTask;
 import com.source.bundleboard.rabbitmq.producer.TaskProducer;
+import com.source.bundleboard.user.model.User;
+import com.source.bundleboard.user.service.UserService;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,6 +63,9 @@ public class CollectionServiceTest {
     private AuthorService authorService;
 
     @Mock
+    private UserService userService;
+
+    @Mock
     private CollectionMapper collectionMapper;
 
     @Mock
@@ -84,6 +89,7 @@ public class CollectionServiceTest {
     private Collection sampleCollection;
     private GetCollectionByIdResponse sampleGetDto;
     private Author sampleAuthor;
+    private User sampleUser;
     private String username = "test_author";
     private String validDescription = "A".repeat(150);
 
@@ -91,6 +97,9 @@ public class CollectionServiceTest {
     void setUp() {
         sampleAuthor = new Author();
         sampleAuthor.setId(42L);
+
+        sampleUser = new User();
+        sampleUser.setId(42L);
 
         sampleCollection = new Collection();
         sampleCollection.setId(1L);
@@ -101,7 +110,6 @@ public class CollectionServiceTest {
         sampleCollection.setAuthorId(42L);
         sampleCollection.setExternalLink(null);
 
-        // 💡 ИСПРАВЛЕНО: Добавлен null для externalLink (6-й аргумент)
         sampleGetDto = new GetCollectionByIdResponse(
                 1L,
                 "Java Bundle",
@@ -384,7 +392,6 @@ public class CollectionServiceTest {
 
     @Test
     void getLikedCollections_Success() {
-        // Mock Security Context (Spring Security Reactive)
         org.springframework.security.core.Authentication auth = mock(org.springframework.security.core.Authentication.class);
         when(auth.getName()).thenReturn("testuser");
         org.springframework.security.core.context.SecurityContext ctx = mock(org.springframework.security.core.context.SecurityContext.class);
@@ -392,8 +399,8 @@ public class CollectionServiceTest {
 
         CollectionResponse responseDto = new CollectionResponse(1L, "Bundle", "Desc", BigDecimal.ZERO, null, 42L, null, 0L, false);
 
-        when(authorService.findByUsername("testuser")).thenReturn(Mono.just(sampleAuthor));
-        when(collectionRepository.findLikedCollectionsByAuthorId(42L)).thenReturn(Flux.just(sampleCollection));
+        when(userService.findByUsername("testuser")).thenReturn(Mono.just(sampleUser));
+        when(collectionRepository.findLikedCollectionsByUserId(42L)).thenReturn(Flux.just(sampleCollection));
         when(collectionMapper.toDto(sampleCollection)).thenReturn(responseDto);
 
         StepVerifier.create(collectionService.getLikedCollections()
@@ -403,12 +410,12 @@ public class CollectionServiceTest {
     }
 
     @Test
-    void findLikedCollectionsByAuthorId_Success() {
+    void findLikedCollectionsByUserId_Success() {
         CollectionResponse responseDto = new CollectionResponse(1L, "Bundle", "Desc", BigDecimal.ZERO, null, 42L, null, 0L, false);
-        when(collectionRepository.findLikedCollectionsByAuthorId(42L)).thenReturn(Flux.just(sampleCollection));
+        when(collectionRepository.findLikedCollectionsByUserId(42L)).thenReturn(Flux.just(sampleCollection));
         when(collectionMapper.toDto(sampleCollection)).thenReturn(responseDto);
 
-        StepVerifier.create(collectionService.findLikedCollectionsByAuthorId(42L))
+        StepVerifier.create(collectionService.findLikedCollectionsByUserId(42L))
                 .expectNext(responseDto)
                 .verifyComplete();
     }
@@ -483,7 +490,6 @@ public class CollectionServiceTest {
     void getSortedCollections_WithFilters_Success() {
         CollectionResponse responseDto = new CollectionResponse(1L, "Bundle", "Desc", BigDecimal.ZERO, null, 42L, null, 0L, false);
 
-        // Тестируем ветку SIZE_ASC с фильтром по MimeType
         when(collectionRepository.findFilteredByMimeTypesSortedBySizeAsc(anyList(), eq(10), eq(0)))
                 .thenReturn(Flux.just(sampleCollection));
         when(collectionMapper.toDto(sampleCollection)).thenReturn(responseDto);
@@ -497,7 +503,6 @@ public class CollectionServiceTest {
     void getSortedCollections_WithoutFilters_Success() {
         CollectionResponse responseDto = new CollectionResponse(1L, "Bundle", "Desc", BigDecimal.ZERO, null, 42L, null, 0L, false);
 
-        // Тестируем ветку ALPHABETICAL без фильтров (mimeTypeStrings is null/empty)
         when(collectionRepository.findAllSortedByAlphabetical(10, 0))
                 .thenReturn(Flux.just(sampleCollection));
         when(collectionMapper.toDto(sampleCollection)).thenReturn(responseDto);
@@ -511,7 +516,6 @@ public class CollectionServiceTest {
     void getSortedCollections_DefaultSort_Success() {
         CollectionResponse responseDto = new CollectionResponse(1L, "Bundle", "Desc", BigDecimal.ZERO, null, 42L, null, 0L, false);
 
-        // Тестируем ветку default (когда sortBy неизвестен)
         when(collectionRepository.findAllSortedByLatest(10, 0))
                 .thenReturn(Flux.just(sampleCollection));
         when(collectionMapper.toDto(sampleCollection)).thenReturn(responseDto);

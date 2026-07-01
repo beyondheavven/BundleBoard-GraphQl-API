@@ -3,6 +3,7 @@ package com.source.bundleboard.collectionLike.service;
 import com.source.bundleboard.author.service.AuthorService;
 import com.source.bundleboard.collectionLike.model.CollectionLike;
 import com.source.bundleboard.collectionLike.repository.CollectionLikeRepository;
+import com.source.bundleboard.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -18,19 +19,19 @@ public class CollectionLikeServiceImpl implements CollectionLikeService {
 
     private final CollectionLikeRepository collectionLikeRepository;
 
-    private final AuthorService authorService;
+    private final UserService userService;
 
 
     @Transactional
     public Mono<Boolean> toggleFavorite(Long collectionId, String username) {
-        return authorService.findByUsername(username)
-                .flatMap(author ->
-                        collectionLikeRepository.findByCollectionIdAndAuthorId(collectionId, author.getId())
+        return userService.findByUsername(username)
+                .flatMap(user ->
+                        collectionLikeRepository.findByCollectionIdAndUserId(collectionId, user.getId())
                                 .flatMap(existingLike ->
                                         collectionLikeRepository.delete(existingLike).thenReturn(false)
                                 )
                                 .switchIfEmpty(Mono.defer(() ->
-                                        collectionLikeRepository.save(new CollectionLike(null, collectionId, author.getId(), Instant.now())).thenReturn(true)
+                                        collectionLikeRepository.save(new CollectionLike(null, collectionId, user.getId(), Instant.now())).thenReturn(true)
                                 ))
                 );
     }
@@ -49,8 +50,8 @@ public class CollectionLikeServiceImpl implements CollectionLikeService {
                 .flatMap(context -> Mono.justOrEmpty(context.getAuthentication()))
                 .filter(Authentication::isAuthenticated)
                 .map(Authentication::getName)
-                .flatMap(authorService::findByUsername)
-                .flatMap(author -> collectionLikeRepository.existsByCollectionIdAndAuthorId(collectionId, author.getId()))
+                .flatMap(userService::getUserByUsername)
+                .flatMap(user -> collectionLikeRepository.existsByCollectionIdAndUserId(collectionId, user.getId()))
                 .defaultIfEmpty(false);
     }
 }
