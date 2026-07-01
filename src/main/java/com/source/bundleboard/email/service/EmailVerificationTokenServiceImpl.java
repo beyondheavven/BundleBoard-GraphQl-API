@@ -80,12 +80,22 @@ public class EmailVerificationTokenServiceImpl implements EmailVerificationToken
     @Override
     @Transactional
     public Mono<EmailResponse> sendChangeEmailToken(String newEmail, String username) {
-        return userService.getUserByUsername(username)
-                .flatMap(user -> {
-                    TokenEntity tokenEntity = createTokenEntity(user.getId(), EmailTokenType.change_email);
-                    tokenEntity.token().setNewEmail(newEmail);
+        return userService.existsByEmail(newEmail)
+                .flatMap(emailExists -> {
+                    if (emailExists) {
+                        return Mono.just(new EmailResponse(false, "Email is already taken", 0));
+                    }
 
-                    return getMono(newEmail, tokenEntity);
+                    return userService.findByUsername(username)
+                            .flatMap(user -> {
+                                if (newEmail.equalsIgnoreCase(user.getEmail())) {
+                                    return Mono.error(new IllegalArgumentException("New email cannot be the same as the current one"));
+                                }
+                                TokenEntity tokenEntity = createTokenEntity(user.getId(), EmailTokenType.change_email);
+                                tokenEntity.token().setNewEmail(newEmail);
+
+                                return getMono(newEmail, tokenEntity);
+                            });
                 });
     }
 
@@ -174,7 +184,7 @@ public class EmailVerificationTokenServiceImpl implements EmailVerificationToken
         }
 
         return emailVerificationTokenRepository.save(token)
-                .flatMap(savedToken -> Mono.error(new InvalidEmailVerificationTokenException()));
+                .thenReturn(new EmailResponse(false, "Failed to verify email", Math.max(0, left)));
     }
 
 }

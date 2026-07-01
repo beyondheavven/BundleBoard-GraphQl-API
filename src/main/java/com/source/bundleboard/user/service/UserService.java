@@ -41,4 +41,6 @@ public interface UserService {
     Mono<UserCommentResponse> getUserCommentResponseById(Long userId);
 
     Mono<User> findByIdentifier(String identifier);
+
+    Mono<Boolean> existsByEmail(String newEmail);
 }

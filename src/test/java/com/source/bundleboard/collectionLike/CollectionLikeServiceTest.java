@@ -49,7 +49,6 @@ public class CollectionLikeServiceTest {
         testLike = new CollectionLike(1L, collectionId, 42L, Instant.now());
     }
 
-    // --- toggleFavorite TESTS ---
 
     @Test
     void toggleFavorite_Like_Success() {
@@ -77,7 +76,6 @@ public class CollectionLikeServiceTest {
         verify(collectionLikeRepository).delete(any(CollectionLike.class));
     }
 
-    // --- countByCollectionId TESTS ---
 
     @Test
     void countByCollectionId_Success() {
@@ -95,7 +93,6 @@ public class CollectionLikeServiceTest {
         verifyNoInteractions(collectionLikeRepository);
     }
 
-    // --- isLikedByCurrentUser TESTS ---
 
     @Test
     void isLikedByCurrentUser_Authenticated_ReturnsTrue() {
@@ -103,7 +100,7 @@ public class CollectionLikeServiceTest {
         when(auth.isAuthenticated()).thenReturn(true);
         when(auth.getName()).thenReturn(username);
 
-        when(userService.getUserByUsername(username)).thenReturn(Mono.just(testUser));
+        when(userService.findByUsername(username)).thenReturn(Mono.just(testUser));
         when(collectionLikeRepository.existsByCollectionIdAndUserId(collectionId, 42L)).thenReturn(Mono.just(true));
 
         StepVerifier.create(collectionLikeService.isLikedByCurrentUser(collectionId)
