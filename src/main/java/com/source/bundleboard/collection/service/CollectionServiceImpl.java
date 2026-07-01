@@ -3,6 +3,7 @@ package com.source.bundleboard.collection.service;
 import com.source.bundleboard.api.exception.AuthorNotFoundException;
 import com.source.bundleboard.api.exception.CollectionNotFoundException;
 import com.source.bundleboard.api.exception.DescriptionException;
+import com.source.bundleboard.api.exception.UserNotFoundException;
 import com.source.bundleboard.author.model.Author;
 import com.source.bundleboard.author.service.AuthorService;
 import com.source.bundleboard.collection.dto.*;
@@ -22,6 +23,7 @@ import com.source.bundleboard.collectionTag.model.CollectionTag;
 import com.source.bundleboard.rabbitmq.dto.StorageOperationType;
 import com.source.bundleboard.rabbitmq.dto.StorageTask;
 import com.source.bundleboard.rabbitmq.producer.TaskProducer;
+import com.source.bundleboard.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -35,6 +37,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -58,6 +61,8 @@ public class CollectionServiceImpl implements CollectionService {
     private final TaskProducer taskProducer;
 
     private final CollectionImageRepository collectionImageRepository;
+
+    private final UserService userService;
 
     @Override
     public Mono<GetCollectionByIdResponse> getCollectionById(Long id) {
@@ -242,17 +247,17 @@ public class CollectionServiceImpl implements CollectionService {
     @Override
     public Flux<CollectionResponse> getLikedCollections() {
         return ReactiveSecurityContextHolder.getContext()
-                .map(ctx -> ctx.getAuthentication().getName())
+                .map(ctx -> Objects.requireNonNull(ctx.getAuthentication()).getName())
                 .flatMapMany(username ->
-                        authorService.findByUsername(username)
-                                .switchIfEmpty(Mono.error(new AuthorNotFoundException()))
-                                .flatMapMany(author -> this.findLikedCollectionsByAuthorId(author.getId()))
+                        userService.findByUsername(username)
+                                .switchIfEmpty(Mono.error(new UserNotFoundException()))
+                                .flatMapMany(user -> this.findLikedCollectionsByUserId(user.getId()))
                 );
     }
 
     @Override
-    public Flux<CollectionResponse> findLikedCollectionsByAuthorId(Long authorId) {
-        return collectionRepository.findLikedCollectionsByAuthorId(authorId)
+    public Flux<CollectionResponse> findLikedCollectionsByUserId(Long authorId) {
+        return collectionRepository.findLikedCollectionsByUserId(authorId)
                 .switchIfEmpty(Mono.empty())
                 .map(collectionMapper::toDto);
     }

@@ -49,7 +49,6 @@ public interface CollectionRepository extends R2dbcRepository<Collection, Long> 
     WHERE cl.author_id = :authorId
     ORDER BY cl.created_at DESC
     """)
-    Flux<Collection> findLikedCollectionsByAuthorId(Long authorId);
 
     Flux<Collection> findByNameContainingIgnoreCase(String name, Pageable pageable);
 
@@ -158,4 +157,11 @@ public interface CollectionRepository extends R2dbcRepository<Collection, Long> 
     Flux<Collection> findRandom (int limit);
 
 
+    @Query("""
+    SELECT c.* FROM collections c
+    INNER JOIN collection_likes cl ON c.id = cl.collection_id
+    WHERE cl.user_id = :userId
+    ORDER BY cl.created_at DESC
+    """)
+    Flux<Collection> findLikedCollectionsByUserId(Long authorId);
 }

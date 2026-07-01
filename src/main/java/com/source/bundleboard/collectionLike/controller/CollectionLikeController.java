@@ -20,7 +20,7 @@ public class CollectionLikeController {
     private final CollectionLikeService collectionLikeService;
 
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'AUTHOR', 'CLIENT')")
+    @PreAuthorize("isAuthenticated()")
     @MutationMapping
     public Mono<Boolean> toggleFavorite(@Argument Long collectionId) {
         return ReactiveSecurityContextHolder.getContext()
