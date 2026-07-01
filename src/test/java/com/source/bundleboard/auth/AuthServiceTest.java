@@ -167,8 +167,8 @@ public class AuthServiceTest {
         when(userService.existsByUsername("existinguser")).thenReturn(Mono.just(true));
 
         StepVerifier.create(authService.register(req))
-                .expectError(UserAlreadyExistsException.class)
-                .verify();
+                .expectNextMatches(res -> res.error() != null && res.error().contains("already exists"))
+                .verifyComplete();
     }
 
     // --- REFRESH TOKEN TESTS ---
@@ -277,7 +277,6 @@ public class AuthServiceTest {
         when(userService.existsByUsername("socialUser")).thenReturn(Mono.just(false));
         when(passwordEncoder.encode("pass")).thenReturn("encoded");
         when(userService.save(any(User.class))).thenReturn(Mono.just(testUser));
-        when(emailVerificationTokenService.resendVerificationEmail(anyString())).thenReturn(Mono.empty());
 
         when(jwtService.generateAccessToken(any(), any(), any())).thenReturn("access");
         when(jwtService.generateRefreshToken(any(), any())).thenReturn("new-refresh");

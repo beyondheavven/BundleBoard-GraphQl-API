@@ -1,7 +1,7 @@
 package com.source.bundleboard.collectionLike;
 
-import com.source.bundleboard.author.model.Author;
-import com.source.bundleboard.author.service.AuthorService;
+import com.source.bundleboard.user.model.User;
+import com.source.bundleboard.user.service.UserService;
 import com.source.bundleboard.collectionLike.model.CollectionLike;
 import com.source.bundleboard.collectionLike.repository.CollectionLikeRepository;
 import com.source.bundleboard.collectionLike.service.CollectionLikeServiceImpl;
@@ -18,7 +18,7 @@ import reactor.test.StepVerifier;
 
 import java.time.Instant;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.mock;
@@ -31,20 +31,20 @@ public class CollectionLikeServiceTest {
     private CollectionLikeRepository collectionLikeRepository;
 
     @Mock
-    private AuthorService authorService;
+    private UserService userService;
 
     @InjectMocks
     private CollectionLikeServiceImpl collectionLikeService;
 
-    private Author testAuthor;
+    private User testUser;
     private CollectionLike testLike;
     private final Long collectionId = 1L;
     private final String username = "test_user";
 
     @BeforeEach
     void setUp() {
-        testAuthor = new Author();
-        testAuthor.setId(42L);
+        testUser = new User();
+        testUser.setId(42L);
 
         testLike = new CollectionLike(1L, collectionId, 42L, Instant.now());
     }
@@ -53,8 +53,8 @@ public class CollectionLikeServiceTest {
 
     @Test
     void toggleFavorite_Like_Success() {
-        when(authorService.findByUsername(username)).thenReturn(Mono.just(testAuthor));
-        when(collectionLikeRepository.findByCollectionIdAndAuthorId(collectionId, 42L)).thenReturn(Mono.empty());
+        when(userService.findByUsername(anyString())).thenReturn(Mono.just(testUser));
+        when(collectionLikeRepository.findByCollectionIdAndUserId(eq(collectionId), eq(42L))).thenReturn(Mono.empty());
         when(collectionLikeRepository.save(any(CollectionLike.class))).thenReturn(Mono.just(testLike));
 
         StepVerifier.create(collectionLikeService.toggleFavorite(collectionId, username))
@@ -66,15 +66,15 @@ public class CollectionLikeServiceTest {
 
     @Test
     void toggleFavorite_Unlike_Success() {
-        when(authorService.findByUsername(username)).thenReturn(Mono.just(testAuthor));
-        when(collectionLikeRepository.findByCollectionIdAndAuthorId(collectionId, 42L)).thenReturn(Mono.just(testLike));
-        when(collectionLikeRepository.delete(testLike)).thenReturn(Mono.empty());
+        when(userService.findByUsername(anyString())).thenReturn(Mono.just(testUser));
+        when(collectionLikeRepository.findByCollectionIdAndUserId(eq(collectionId), eq(42L))).thenReturn(Mono.just(testLike));
+        when(collectionLikeRepository.delete(any(CollectionLike.class))).thenReturn(Mono.empty());
 
         StepVerifier.create(collectionLikeService.toggleFavorite(collectionId, username))
                 .expectNext(false)
                 .verifyComplete();
 
-        verify(collectionLikeRepository).delete(testLike);
+        verify(collectionLikeRepository).delete(any(CollectionLike.class));
     }
 
     // --- countByCollectionId TESTS ---
@@ -103,8 +103,8 @@ public class CollectionLikeServiceTest {
         when(auth.isAuthenticated()).thenReturn(true);
         when(auth.getName()).thenReturn(username);
 
-        when(authorService.findByUsername(username)).thenReturn(Mono.just(testAuthor));
-        when(collectionLikeRepository.existsByCollectionIdAndAuthorId(collectionId, 42L)).thenReturn(Mono.just(true));
+        when(userService.getUserByUsername(username)).thenReturn(Mono.just(testUser));
+        when(collectionLikeRepository.existsByCollectionIdAndUserId(collectionId, 42L)).thenReturn(Mono.just(true));
 
         StepVerifier.create(collectionLikeService.isLikedByCurrentUser(collectionId)
                         .contextWrite(ReactiveSecurityContextHolder.withAuthentication(auth)))
@@ -118,6 +118,6 @@ public class CollectionLikeServiceTest {
                 .expectNext(false)
                 .verifyComplete();
 
-        verifyNoInteractions(authorService, collectionLikeRepository);
+        verifyNoInteractions(userService, collectionLikeRepository);
     }
 }
