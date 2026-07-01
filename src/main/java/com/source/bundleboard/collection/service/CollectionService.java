@@ -34,7 +34,7 @@ public interface CollectionService {
 
     Flux<CollectionResponse> getLikedCollections();
 
-    Flux<CollectionResponse> findLikedCollectionsByAuthorId(Long authorId);
+    Flux<CollectionResponse> findLikedCollectionsByUserId(Long userId);
 
     Mono<CollectionShortResponse> findShortById(Long id);
 
