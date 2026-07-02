@@ -44,12 +44,11 @@ public interface CollectionRepository extends R2dbcRepository<Collection, Long> 
     Mono<Long> countCollectionsByTagName(String tagName);
 
     @Query("""
-    SELECT c.* FROM collections c
-    INNER JOIN collection_likes cl ON c.id = cl.collection_id
-    WHERE cl.author_id = :authorId
-    ORDER BY cl.created_at DESC
+        SELECT * FROM collections 
+        WHERE name ILIKE CONCAT('%', :name, '%') 
+        ORDER BY created_at DESC 
+        LIMIT :#{#pageable.pageSize} OFFSET :#{#pageable.offset}
     """)
-
     Flux<Collection> findByNameContainingIgnoreCase(String name, Pageable pageable);
 
     @Query("""

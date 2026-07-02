@@ -273,7 +273,7 @@ public class CollectionServiceImpl implements CollectionService {
     public Flux<CollectionResponse> searchByName(String query, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         return collectionRepository.findByNameContainingIgnoreCase(query, pageable)
-                .switchIfEmpty(Mono.empty())
+                .switchIfEmpty(Flux.empty())
                 .map(collectionMapper::toDto);
     }
 
