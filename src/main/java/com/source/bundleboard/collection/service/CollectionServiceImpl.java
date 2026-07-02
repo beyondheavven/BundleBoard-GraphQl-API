@@ -272,9 +272,27 @@ public class CollectionServiceImpl implements CollectionService {
     @Override
     public Flux<CollectionResponse> searchByName(String query, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
+        log.info(">>> Запуск поиска. Строка: '{}', page: {}, size: {}", query, page, size);
         return collectionRepository.findByNameContainingIgnoreCase(query, pageable)
-                .switchIfEmpty(Flux.empty())
-                .map(collectionMapper::toDto);
+                // 2. Логируем каждый элемент, который база отдала ДО маппинга
+                .doOnNext(entity -> log.info(">>> Найдено в БД: {}", entity))
+
+                // 3. Используем Flux.defer для логирования пустого результата
+                .switchIfEmpty(Flux.defer(() -> {
+                    log.info(">>> БД вернула пустоту для строки: '{}'", query);
+                    return Flux.empty();
+                }))
+
+                .map(collectionMapper::toDto)
+
+                // 4. Логируем то, что уже смаппилось и летит на фронтенд
+                .doOnNext(dto -> log.info(">>> Отдаем DTO: {}", dto))
+
+                // 5. Контрольная точка успешного завершения запроса
+                .doOnComplete(() -> log.info(">>> Поток поиска для '{}' успешно завершен", query))
+
+                // 6. Ловим возможные скрытые ошибки
+                .doOnError(error -> log.error(">>> Ошибка во время поиска: '{}'", query, error));
     }
 
     @Override
