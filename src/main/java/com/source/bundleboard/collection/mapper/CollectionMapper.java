@@ -2,7 +2,6 @@ package com.source.bundleboard.collection.mapper;
 
 import com.source.bundleboard.collection.dto.*;
 import com.source.bundleboard.collection.model.Collection;
-import com.source.bundleboard.image.dto.ImageShortResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
