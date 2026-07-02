@@ -6,6 +6,8 @@ import java.util.List;
 public record AuthorResponse(
         Long id,
 
+        Long userId,
+
         String bio,
 
         BigDecimal rating,

@@ -61,6 +61,7 @@ public class AuthorServiceImpl implements AuthorService {
                 .flatMap(author -> userService.getUserById(author.getUserId())
                         .map(user -> new AuthorResponse(
                                 author.getId(),
+                                author.getUserId(),
                                 author.getBio(),
                                 author.getRating(),
                                 author.getTotalSales(),
