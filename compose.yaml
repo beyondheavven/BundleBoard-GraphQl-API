@@ -3,9 +3,7 @@ services:
     container_name: bundleboard_api
     build: .
     environment:
-      - POSTGRES_URL=${POSTGRES_URL}
-      - POSTGRES_PORT=${POSTGRES_PORT}
-      - POSTGRES_DB=${POSTGRES_DB}
+      - SPRING_R2DBC_URL=r2dbc:postgresql://${POSTGRES_URL}:${POSTGRES_PORT}/${POSTGRES_DB}
       - POSTGRES_SCHEMA=public
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
