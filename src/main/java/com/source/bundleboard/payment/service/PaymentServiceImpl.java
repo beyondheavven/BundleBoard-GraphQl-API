@@ -1,5 +1,6 @@
 package com.source.bundleboard.payment.service;
 
+import com.source.bundleboard.author.service.AuthorService;
 import com.source.bundleboard.collection.model.Collection;
 import com.source.bundleboard.collection.service.CollectionService;
 import com.source.bundleboard.config.properties.StripeProperties;
@@ -11,6 +12,7 @@ import com.stripe.param.checkout.SessionCreateParams;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -29,6 +31,8 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final PurchaseService purchaseService;
 
+    private final AuthorService authorService;
+
     @Override
     public Mono<String> createCheckoutSession(PaymentRequest input) {
         log.info(">>> Request for checkout: userId={}, currency={}, collectionIds={}",
@@ -41,40 +45,36 @@ public class PaymentServiceImpl implements PaymentService {
                         return Mono.error(new IllegalArgumentException("No collections found"));
                     }
 
-                    try {
-                        boolean containsOwnCollections = collections.stream()
-                                .anyMatch(collection -> {
-                                    if (collection.getAuthorId() == null) {
-                                        return false;
-                                    }
-                                    return collection.getAuthorId().equals(input.userId());
-                                });
+                    boolean hasInvalidCommercialPrice = collections.stream()
+                            .anyMatch(collection -> collection.getPrice() != null
+                                    && collection.getPrice().compareTo(BigDecimal.ZERO) > 0
+                                    && collection.getPrice().compareTo(BigDecimal.valueOf(5.00)) < 0);
 
-                        if (containsOwnCollections) {
-                            return Mono.error(new IllegalArgumentException("Cannot purchase own collections"));
-                        }
-
-                        boolean hasInvalidCommercialPrice = collections.stream()
-                                .anyMatch(collection -> collection.getPrice() != null
-                                        && collection.getPrice().compareTo(BigDecimal.ZERO) > 0
-                                        && collection.getPrice().compareTo(BigDecimal.valueOf(5.00)) < 0);
-
-                        if (hasInvalidCommercialPrice) {
-                            return Mono.error(new IllegalArgumentException("Cannot purchase collections with commercial price less than $5.00"));
-                        }
-
-                        long totalAmountInCents = calculateTotalAmountInCents(collections);
-
-                        if (totalAmountInCents == 0) {
-                            return processFreePurchase(input.userId(), input.collectionIds());
-                        }
-
-                        return processStripePayment(collections, input);
-
-                    } catch (Exception e) {
-                        log.error("Unexpected error ", e);
-                        return Mono.error(e);
+                    if (hasInvalidCommercialPrice) {
+                        return Mono.error(new IllegalArgumentException("Cannot purchase collections with commercial price less than $5.00"));
                     }
+
+                    return Flux.fromIterable(collections)
+                            .flatMap(collection -> authorService.findUserByAuthorId(collection.getAuthorId())
+                                    .map(user -> user.getId() != null && user.getId().equals(input.userId()))
+                                    .onErrorResume(e -> {
+                                        log.error("Could not resolve author for collection {}: {}", collection.getId(), e.getMessage());
+                                        return Mono.just(false);
+                                    }))
+                            .any(isOwn -> isOwn)
+                            .flatMap(containsOwnCollections -> {
+                                if (containsOwnCollections) {
+                                    return Mono.error(new IllegalArgumentException("Cannot purchase own collections"));
+                                }
+
+                                long totalAmountInCents = calculateTotalAmountInCents(collections);
+
+                                if (totalAmountInCents == 0) {
+                                    return processFreePurchase(input.userId(), input.collectionIds());
+                                }
+
+                                return processStripePayment(collections, input);
+                            });
                 })
                 .doOnError(error -> log.error("<<< Error in createCheckoutSession: {}", error.getMessage(), error));
     }
