@@ -6,6 +6,7 @@ import com.source.bundleboard.author.mapper.AuthorMapper;
 import com.source.bundleboard.author.model.Author;
 import com.source.bundleboard.author.repository.AuthorRepository;
 import com.source.bundleboard.user.dto.UserProfileResponse;
+import com.source.bundleboard.user.model.User;
 import com.source.bundleboard.user.service.UserService;
 import io.r2dbc.postgresql.codec.Json;
 import lombok.RequiredArgsConstructor;
@@ -92,6 +93,16 @@ public class AuthorServiceImpl implements AuthorService {
     public Mono<Author> findByUserId(Long userId) {
         return authorRepository.findByUserId(userId)
                 .switchIfEmpty(Mono.error(new AuthorNotFoundException()));
+    }
+
+    @Override
+    public Mono<User> findUserByAuthorId(Long authorId) {
+        if (authorId == null) {
+            return Mono.empty();
+        }
+        return authorRepository.findById(authorId)
+                .switchIfEmpty(Mono.error(new AuthorNotFoundException()))
+                .flatMap(author -> userService.getUserById(author.getUserId()));
     }
 
     @Override
