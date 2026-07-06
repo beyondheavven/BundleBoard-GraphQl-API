@@ -1,5 +1,6 @@
 package com.source.bundleboard.payment;
 
+import com.source.bundleboard.author.service.AuthorService;
 import com.source.bundleboard.collection.model.Collection;
 import com.source.bundleboard.collection.service.CollectionService;
 import com.source.bundleboard.config.properties.StripeProperties;
@@ -7,6 +8,7 @@ import com.source.bundleboard.payment.dto.PaymentRequest;
 import com.source.bundleboard.payment.service.PaymentServiceImpl;
 import com.source.bundleboard.purchase.model.Purchase;
 import com.source.bundleboard.purchase.service.PurchaseService;
+import com.source.bundleboard.user.model.User;
 import com.stripe.model.checkout.Session;
 import com.stripe.param.checkout.SessionCreateParams;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,6 +40,9 @@ public class PaymentServiceTest {
     @Mock
     private PurchaseService purchaseService;
 
+    @Mock
+    private AuthorService authorService;
+
     @Spy
     @InjectMocks
     private PaymentServiceImpl paymentService;
@@ -60,7 +65,7 @@ public class PaymentServiceTest {
                         throwable.getMessage().equals("No collections found"))
                 .verify();
 
-        verifyNoInteractions(purchaseService, stripeProperties);
+        verifyNoInteractions(purchaseService, stripeProperties, authorService);
     }
 
     @Test
@@ -68,9 +73,13 @@ public class PaymentServiceTest {
         Collection ownCollection = new Collection();
         ownCollection.setId(1L);
         ownCollection.setPrice(new BigDecimal("10.00"));
-        ownCollection.setAuthorId(userId); // Setting authorId equal to purchaser's userId
+        ownCollection.setAuthorId(userId);
+
+        User mockUser = mock(User.class);
+        when(mockUser.getId()).thenReturn(userId);
 
         when(collectionService.findAllByIds(paymentRequest.collectionIds())).thenReturn(Flux.just(ownCollection));
+        when(authorService.findUserByAuthorId(userId)).thenReturn(Mono.just(mockUser));
 
         StepVerifier.create(paymentService.createCheckoutSession(paymentRequest))
                 .expectErrorMatches(throwable -> throwable instanceof IllegalArgumentException &&
@@ -84,7 +93,7 @@ public class PaymentServiceTest {
     void createCheckoutSession_CommercialPriceLessThanFiveDollars_ThrowsException() {
         Collection cheapCollection = new Collection();
         cheapCollection.setId(1L);
-        cheapCollection.setPrice(new BigDecimal("3.50")); // Price is between $0.00 and $5.00
+        cheapCollection.setPrice(new BigDecimal("3.50"));
         cheapCollection.setAuthorId(foreignAuthorId);
 
         when(collectionService.findAllByIds(paymentRequest.collectionIds())).thenReturn(Flux.just(cheapCollection));
@@ -94,7 +103,7 @@ public class PaymentServiceTest {
                         throwable.getMessage().equals("Cannot purchase collections with commercial price less than $5.00"))
                 .verify();
 
-        verifyNoInteractions(purchaseService, stripeProperties);
+        verifyNoInteractions(purchaseService, stripeProperties, authorService);
     }
 
     @Test
@@ -102,9 +111,14 @@ public class PaymentServiceTest {
         Collection freeCollection = new Collection();
         freeCollection.setId(1L);
         freeCollection.setPrice(BigDecimal.ZERO);
-        freeCollection.setAuthorId(foreignAuthorId); // Safe from own collection validation
+        freeCollection.setAuthorId(foreignAuthorId);
+
+        User foreignUser = mock(User.class);
+        when(foreignUser.getId()).thenReturn(foreignAuthorId);
 
         when(collectionService.findAllByIds(paymentRequest.collectionIds())).thenReturn(Flux.just(freeCollection));
+        when(authorService.findUserByAuthorId(foreignAuthorId)).thenReturn(Mono.just(foreignUser));
+
         when(purchaseService.createFreePurchase(eq(userId), eq(paymentRequest.collectionIds())))
                 .thenReturn(Mono.just(mock(Purchase.class)));
 
@@ -123,10 +137,15 @@ public class PaymentServiceTest {
         paidCollection.setId(1L);
         paidCollection.setName("Premium UI Kit");
         paidCollection.setDescription("Awesome description");
-        paidCollection.setPrice(new BigDecimal("15.00")); // Price passes the >= $5.00 rule
-        paidCollection.setAuthorId(foreignAuthorId); // Safe from own collection validation
+        paidCollection.setPrice(new BigDecimal("15.00"));
+        paidCollection.setAuthorId(foreignAuthorId);
+
+        User foreignUser = mock(User.class);
+        when(foreignUser.getId()).thenReturn(foreignAuthorId);
 
         when(collectionService.findAllByIds(paymentRequest.collectionIds())).thenReturn(Flux.just(paidCollection));
+        when(authorService.findUserByAuthorId(foreignAuthorId)).thenReturn(Mono.just(foreignUser));
+
         when(stripeProperties.getPaymentSuccessUrl()).thenReturn("https://bundleboard.com/success");
         when(stripeProperties.getPaymentCancelUrl()).thenReturn("https://bundleboard.com/cancel");
 

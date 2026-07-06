@@ -434,8 +434,21 @@ public class CollectionServiceTest {
 
     @Test
     void searchByName_Success() {
+        CollectionResponse responseDto = new CollectionResponse(
+                1L,
+                "Java Bundle",
+                "Desc",
+                BigDecimal.ZERO,
+                null,
+                42L,
+                null,
+                0L,
+                false
+        );
+
         when(collectionRepository.findByNameContainingIgnoreCase(eq("Java"), any(Pageable.class)))
                 .thenReturn(Flux.just(sampleCollection));
+        when(collectionMapper.toDto(sampleCollection)).thenReturn(responseDto);
 
         StepVerifier.create(collectionService.searchByName("Java", 0, 10))
                 .assertNext(res -> {

@@ -1,6 +1,5 @@
 package com.source.bundleboard.purchase;
 
-import com.source.bundleboard.author.model.Author;
 import com.source.bundleboard.author.service.AuthorService;
 import com.source.bundleboard.collection.dto.CollectionShortResponse;
 import com.source.bundleboard.collection.model.Collection;
@@ -77,7 +76,6 @@ public class PurchaseServiceTest {
         sampleUser.setUsername("test_user");
     }
 
-    // --- BASIC CRUD & FINDERS ---
 
     @Test
     void findByStripeSessionId_Success() {
@@ -156,7 +154,6 @@ public class PurchaseServiceTest {
                 .verifyComplete();
     }
 
-    // --- PURCHASE CREATION LOGIC ---
 
     @Test
     void createPurchaseWithItems_Success() {
@@ -176,14 +173,10 @@ public class PurchaseServiceTest {
 
     @Test
     void createFreePurchase_Success() {
-        Author currentAuthor = new Author();
-        currentAuthor.setId(42L);
-
         Collection collection = new Collection();
         collection.setId(collectionId);
         collection.setAuthorId(99L);
 
-        when(authorService.findByUserId(userId)).thenReturn(Mono.just(currentAuthor));
         when(collectionService.findById(collectionId)).thenReturn(Mono.just(collection));
         when(purchaseRepository.save(any(Purchase.class))).thenReturn(Mono.just(samplePurchase));
         when(purchaseItemService.saveAll(anyList())).thenReturn(Flux.empty());
@@ -197,27 +190,6 @@ public class PurchaseServiceTest {
         verify(purchaseRepository).save(argThat(purchase -> purchase.getAmount().equals(BigDecimal.ZERO)));
     }
 
-    @Test
-    void createFreePurchase_SelfPurchase_ThrowsException() {
-        Author currentAuthor = new Author();
-        currentAuthor.setId(42L);
-
-        Collection collection = new Collection();
-        collection.setId(collectionId);
-        collection.setAuthorId(42L);
-
-        when(authorService.findByUserId(userId)).thenReturn(Mono.just(currentAuthor));
-        when(collectionService.findById(collectionId)).thenReturn(Mono.just(collection));
-
-        StepVerifier.create(purchaseService.createFreePurchase(userId, List.of(collectionId)))
-                .expectErrorMatches(throwable -> throwable instanceof IllegalStateException &&
-                        throwable.getMessage().equals("Authors cannot purchase their own collections"))
-                .verify();
-
-        verifyNoInteractions(purchaseRepository, purchaseItemService);
-    }
-
-    // --- DOWNLOAD VERIFICATION ---
 
     @Test
     void verifyPurchaseForDownload_Success_ReturnsLink() {
