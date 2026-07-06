@@ -142,7 +142,13 @@ public class CollectionController {
 
     @SchemaMapping(typeName = "AuthorResponse", field = "downloadCount")
     public Mono<Long> getAuthorDownloadCount(AuthorResponse author) {
-        return purchaseService.countByCollectionIdAndStatus(author.id(), PurchaseStatus.succeeded)
+        return purchaseService.countByAuthorIdAndStatus(author.id(), PurchaseStatus.succeeded)
+                .defaultIfEmpty(0L);
+    }
+
+    @SchemaMapping(typeName = "AuthoredCollectionResponse", field = "downloadCount")
+    public Mono<Long> getCollectionDownloadCount(CollectionResponse collection) {
+        return purchaseService.countByCollectionIdAndStatus(collection.id(), PurchaseStatus.succeeded)
                 .defaultIfEmpty(0L);
     }
 
