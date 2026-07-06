@@ -122,13 +122,4 @@ public class UserController {
                 .defaultIfEmpty(Collections.emptyList());
     }
 
-    @SchemaMapping(typeName = "AuthoredCollectionResponse", field = "downloadCount")
-    public Mono<Long> getDownloadCount(AuthoredCollectionResponse collection) {
-        return purchaseService.countByCollectionIdAndStatus(collection.id(), PurchaseStatus.succeeded)
-                .defaultIfEmpty(0L);
-    }
-
-
-
-
 }
