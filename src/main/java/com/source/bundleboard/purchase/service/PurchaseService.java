@@ -29,4 +29,6 @@ public interface PurchaseService {
     Mono<DownloadVerificationResponse> verifyPurchaseForDownload(Long collectionId);
 
     Mono<Long> countByCollectionIdAndStatus(Long collectionId, PurchaseStatus purchaseStatus);
+
+    Mono<Long> countByAuthorIdAndStatus(Long authorId, PurchaseStatus purchaseStatus);
 }

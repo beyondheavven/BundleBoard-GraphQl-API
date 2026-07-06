@@ -28,4 +28,10 @@ public interface PurchaseRepository extends R2dbcRepository<Purchase, Long> {
             "JOIN purchase_items pi ON p.id = pi.purchase_id " +
             "WHERE pi.collection_id = :collectionId AND p.status = :purchaseStatus")
     Mono<Long> countByCollectionIdAndStatus(Long collectionId, PurchaseStatus purchaseStatus);
+
+    @Query("SELECT COUNT(p.id) FROM purchases p " +
+            "JOIN purchase_items pi ON p.id = pi.purchase_id " +
+            "JOIN collections c ON pi.collection_id = c.id " +
+            "WHERE c.author_id = :authorId AND p.status = :purchaseStatus")
+    Mono<Long> countByAuthorIdAndStatus(Long authorId, PurchaseStatus purchaseStatus);
 }

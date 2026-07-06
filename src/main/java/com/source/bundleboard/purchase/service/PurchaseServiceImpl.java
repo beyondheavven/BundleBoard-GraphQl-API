@@ -1,6 +1,5 @@
 package com.source.bundleboard.purchase.service;
 
-import com.source.bundleboard.author.model.Author;
 import com.source.bundleboard.author.service.AuthorService;
 import com.source.bundleboard.collection.service.CollectionService;
 import com.source.bundleboard.mediaresource.service.MediaResourceService;
@@ -175,6 +174,14 @@ public class PurchaseServiceImpl implements PurchaseService {
             return Mono.empty();
         }
         return purchaseRepository.countByCollectionIdAndStatus(collectionId, purchaseStatus);
+    }
+
+    @Override
+    public Mono<Long> countByAuthorIdAndStatus(Long authorId, PurchaseStatus purchaseStatus) {
+        if (authorId == null || purchaseStatus == null) {
+            return Mono.empty();
+        }
+        return purchaseRepository.countByAuthorIdAndStatus(authorId, purchaseStatus);
     }
 
     private Mono<PurchaseBaseResponse> enrichPurchaseWithAsset(Purchase purchase) {
