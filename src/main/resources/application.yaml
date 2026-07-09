@@ -37,12 +37,12 @@ spring:
 
 logging:
   level:
-    root: INFO
-    com.source.bundleboard: DEBUG
+    root: ${LOG_LEVEL_ROOT:INFO}
+    com.source.bundleboard: ${LOG_LEVEL_APP:INFO}
     org.springframework.security: ${LOG_LEVEL_SECURITY:INFO}
-    org.springframework.security.authorization: ${LOG_LEVEL_SECURITY:INFO}
+    org.springframework.security.authorization: ${LOG_LEVEL_SECURITY_AUTH:INFO}
     org.springframework.security.web.server: ${LOG_LEVEL_WEB_SECURITY:INFO}
-    org.springframework.graphql: ${LOG_LEVEL_GRAPHQL:DEBUG}
+    org.springframework.graphql: ${LOG_LEVEL_GRAPHQL:INFO}
     org.springframework.r2dbc: ${LOG_LEVEL_R2DBC:INFO}
     io.r2dbc.postgresql: ${LOG_LEVEL_POSTGRES:INFO}
 

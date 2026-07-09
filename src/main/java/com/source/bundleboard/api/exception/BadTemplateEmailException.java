@@ -5,3 +5,5 @@ public class BadTemplateEmailException extends RuntimeException {
         super(message);
     }
 }
+
+
