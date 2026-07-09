@@ -3,29 +3,12 @@ spring:
     active: dev
   application:
     name: bundleboard
-  r2dbc:
-    url: r2dbc:postgresql://${POSTGRES_URL:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:postgres}?options=-c%20search_path%3D${POSTGRES_SCHEMA:public}
-    username: ${POSTGRES_USER:bundleboard_user}
-    password: ${POSTGRES_PASSWORD:bundleboard_password}
-    pool:
-      enabled: true
-      initial-size: ${DB_POOL_SIZE:2}
-      max-size: ${DB_MAX_POOL_SIZE:10}
-
-  data:
-    redis:
-      repositories:
-        enabled: false
-
   graphql:
-    graphiql:
-      enabled: ${GRAPHIQL_ENABLED:true}
     schema:
       inspection:
         enabled: true
       printer:
         enabled: true
-
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
@@ -50,12 +33,10 @@ server:
   port: ${SERVER_PORT:8080}
 
 app:
-  frontend-url: ${FRONTEND_URL:http://localhost:3000}
   auth:
     social-password-secret: ${SOCIAL_AUTH_PASSWORD_SECRET:default-secret-change-me}
 
   cors:
-    allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000}
     allowed-methods: ${ALLOWED_METHODS:GET,POST,PUT,DELETE}
     allowed-headers: ${ALLOWED_HEADERS:*}
     allowed-credentials: ${ALLOWED_CREDENTIALS:true}
@@ -100,15 +81,6 @@ app:
   password-verification:
     max-attempts: ${MAX_ATTEMPTS:3}
     block-duration-seconds: ${BLOCK_DURATION_SECONDS:300}
-
-  s3:
-    endpoint: ${S3_ENDPOINT:https://lemevepzkbfxkunmrgor.storage.supabase.co/storage/v1/s3}
-    access-key: ${S3_ACCESS_KEY:5e36e380e1f774193a77ca1f750df8e4}
-    secret-key: ${S3_SECRET_KEY:6ed04948146fd121d932bc4e4331c708c5b896856498a5e78f6393c195c2b02c}
-    previews-bucket: ${S3_PREVIEWS_BUCKET:previews}
-    previews-public-url-prefix: ${S3_PREVIEWS_URL_PREFIX:https://lemevepzkbfxkunmrgor.supabase.co/storage/v1/object/public/previews/}
-    vault-bucket: ${S3_VAULT_BUCKET:vault}
-    region: ${S3_REGION:us-east-1}
 
 stripe:
   secret-key: ${STRIPE_SECRET_KEY}

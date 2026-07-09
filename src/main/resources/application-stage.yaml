@@ -1,0 +1,35 @@
+spring:
+  config:
+    activate:
+      on-profile: stage
+  r2dbc:
+    url: r2dbc:postgresql://${STAGE_POSTGRES_URL:localhost}:${STAGE_POSTGRES_PORT:5432}/${STAGE_POSTGRES_DB:postgres}?options=-c%20search_path%3D${STAGE_POSTGRES_SCHEMA:public}
+    username: ${STAGE_POSTGRES_USER:bundleboard_user}
+    password: ${STAGE_POSTGRES_PASSWORD:bundleboard_password}
+    pool:
+      enabled: true
+      initial-size: ${DB_POOL_SIZE:2}
+      max-size: ${DB_MAX_POOL_SIZE:10}
+
+    data:
+      redis:
+        repositories:
+          enabled: true
+
+app:
+  frontend-url: ${STAGE_FRONTEND_URL:https://www.bundle-board.com}
+
+  cors:
+    allowed-origins: ${STAGE_ALLOWED_ORIGINS:https://www.bundle-board.com}
+
+  email-verification:
+    verify-email-url: ${STAGE_VERIFY_EMAIL_URL:https://www.bundle-board.com}
+
+  s3:
+    endpoint: ${STAGE_S3_ENDPOINT}
+    access-key: ${STAGE_S3_ACCESS_KEY}
+    secret-key: ${STAGE_S3_SECRET_KEY}
+    previews-bucket: ${STAGE_S3_PREVIEWS_BUCKET:previews}
+    previews-public-url-prefix: ${STAGE_S3_PREVIEWS_URL_PREFIX}
+    vault-bucket: ${STAGE_S3_VAULT_BUCKET:vault}
+    region: ${STAGE_S3_REGION:us-east-1}

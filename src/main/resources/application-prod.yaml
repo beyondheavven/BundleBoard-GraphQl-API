@@ -1,0 +1,39 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+  r2dbc:
+    url: r2dbc:postgresql://${PROD_POSTGRES_URL:localhost}:${PROD_POSTGRES_PORT:5432}/${PROD_POSTGRES_DB:postgres}?options=-c%20search_path%3D${PROD_POSTGRES_SCHEMA:public}
+    username: ${PROD_POSTGRES_USER:bundleboard_user}
+    password: ${PROD_POSTGRES_PASSWORD:bundleboard_password}
+    pool:
+      enabled: true
+      initial-size: ${PROD_DB_POOL_SIZE:5}
+      max-size: ${PROD_DB_MAX_POOL_SIZE:20}
+
+    data:
+      redis:
+        repositories:
+          enabled: false
+
+    graphql:
+      graphiql:
+        enabled: false
+
+app:
+  frontend-url: ${PROD_FRONTEND_URL:https://www.bundle-board.com}
+
+  cors:
+    allowed-origins: ${PROD_ALLOWED_ORIGINS:https://www.bundle-board.com}
+
+  email-verification:
+    verify-email-url: ${PROD_VERIFY_EMAIL_URL:https://www.bundle-board.com}
+
+  s3:
+    endpoint: ${PROD_S3_ENDPOINT:https://lemevepzkbfxkunmrgor.storage.supabase.co/storage/v1/s3}
+    access-key: ${PROD_S3_ACCESS_KEY:5e36e380e1f774193a77ca1f750df8e4}
+    secret-key: ${PROD_S3_SECRET_KEY:6ed04948146fd121d932bc4e4331c708c5b896856498a5e78f6393c195c2b02c}
+    previews-bucket: ${PROD_S3_PREVIEWS_BUCKET:previews}
+    previews-public-url-prefix: ${PROD_S3_PREVIEWS_URL_PREFIX:https://lemevepzkbfxkunmrgor.supabase.co/storage/v1/object/public/previews/}
+    vault-bucket: ${PROD_S3_VAULT_BUCKET:vault}
+    region: ${PROD_S3_REGION:us-east-1}

@@ -3,6 +3,7 @@ services:
     container_name: bundleboard_api
     build: .
     environment:
+      - SPRING_PROFILES_ACTIVE=staging
       - SPRING_R2DBC_URL=r2dbc:postgresql://${POSTGRES_URL}:${POSTGRES_PORT}/${POSTGRES_DB}
       - POSTGRES_SCHEMA=public
       - POSTGRES_USER=${POSTGRES_USER}
@@ -30,7 +31,6 @@ services:
       - EMAIL_BYTE_LENGTH=${EMAIL_BYTE_LENGTH}
       - VERIFY_EMAIL_URL=${VERIFY_EMAIL_URL}
 
-      - SPRING_PROFILES_ACTIVE=dev
       - BLOCK_DURATION_SECONDS=${BLOCK_DURATION_SECONDS}
       - MAX_ATTEMPTS=${MAX_ATTEMPTS}
 
@@ -58,11 +58,22 @@ services:
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
 
+      - LOG_LEVEL_ROOT=${LOG_LEVEL_ROOT}
+      - LOG_LEVEL_APP=${LOG_LEVEL_APP}
       - LOG_LEVEL_SECURITY=${LOG_LEVEL_SECURITY}
+      - LOG_LEVEL_SECURITY_AUTH=${LOG_LEVEL_SECURITY_AUTH}
+      - LOG_LEVEL_WEB_SECURITY=${LOG_LEVEL_WEB_SECURITY}
+      - LOG_LEVEL_GRAPHQL=${LOG_LEVEL_GRAPHQL}
       - LOG_LEVEL_R2DBC=${LOG_LEVEL_R2DBC}
       - LOG_LEVEL_POSTGRES=${LOG_LEVEL_POSTGRES}
+
       - GRAPHIQL_ENABLED=${GRAPHIQL_ENABLED}
-      - FRONTEND_URS=${FRONTEND_URL}
+      - FRONTEND_URL=${FRONTEND_URL}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_started
     ports:
       - "8080:8080"
     networks:

@@ -1,4 +1,6 @@
 .env
+.env.stage
+.env.prod
 .gitattributes
 HELP.md
 target/
