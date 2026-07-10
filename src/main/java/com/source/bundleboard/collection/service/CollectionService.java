@@ -49,4 +49,6 @@ public interface CollectionService {
     Flux<CollectionResponse> getSortedCollections(int page, int size, String sortBy, List<String> mimeTypes);
 
     Flux<CollectionResponse> getRandomCollections(int limit);
+
+    Mono<GetCollectionBySlugResponse> getCollectionBySlug(String username, String slug);
 }

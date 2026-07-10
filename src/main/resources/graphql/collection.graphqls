@@ -2,6 +2,7 @@ extend type Query {
     getAllCollections(page: Int!, size: Int!): [CollectionResponse!]!
     getCollectionById(id: ID!): GetCollectionByIdResponse!
     getCollectionsByTag(input: CollectionFilterInput!): CollectionByTagResponse!
+    getCollectionBySlug(username: String!, slug: String!): GetCollectionBySlugResponse!
     getTopLikedCollections(limit: Int!): [CollectionResponse!]!
     searchCollections(query: String!, page: Int!, size: Int!): [CollectionResponse!]!
     getLatestCollections(limit: Int!): [CollectionResponse!]!
@@ -13,6 +14,21 @@ extend type Mutation {
     createCollection(input: CreateNewCollectionInput!): CreateCollectionResponse!
     updateCollection(id: ID!, input: UpdateCollectionRequest!): GetCollectionByIdResponse!
     deleteCollection(id: ID!, folderPath: String): Boolean!
+}
+
+type GetCollectionBySlugResponse {
+    id: ID!
+    name: String!
+    description: String!
+    price: Float!
+    videoTutorialUrl: String
+    externalLink: String
+    slug: String!
+    author: AuthorResponse!
+    galleryImages: [ImageShortResponse!]
+    mediaResource: GetMediaResourceByIdResponse
+    likesCount: Int!
+    isLiked: Boolean!
 }
 
 type CollectionByTagResponse {
@@ -39,11 +55,13 @@ type CollectionResponse {
     description: String!
     price: Float!
     externalLink: String
+    slug: String
     author: AuthorShortResponse!
     galleryImages: [ImageShortResponse!]
     likesCount: Int!
     isLiked: Boolean!
 }
+
 
 type GetCollectionByIdResponse {
     id: ID!

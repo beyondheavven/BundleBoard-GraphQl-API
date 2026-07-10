@@ -157,4 +157,12 @@ public interface CollectionRepository extends R2dbcRepository<Collection, Long> 
     ORDER BY cl.created_at DESC
     """)
     Flux<Collection> findLikedCollectionsByUserId(Long authorId);
+
+
+    @Query("""
+        SELECT c.* FROM collections c
+        INNER JOIN authors a ON c.authors_id = a.id
+        WHERE a.username = :username AND c.slug = :slug
+    """)
+    Mono<Collection> findBySlugAndAuthorUsername(String username, String slug);
 }
