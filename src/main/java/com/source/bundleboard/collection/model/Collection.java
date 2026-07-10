@@ -42,4 +42,7 @@ public class Collection {
     @Column("external_link")
     String externalLink;
 
+    @Column("slug")
+    String slug;
+
 }
