@@ -9,6 +9,7 @@ import org.springframework.graphql.execution.DataFetcherExceptionResolverAdapter
 import org.springframework.graphql.execution.ErrorType;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
@@ -26,13 +27,20 @@ public class GlobalExceptionResolver extends DataFetcherExceptionResolverAdapter
             log.error("Internal server error", ex);
         }
 
+        Map<String, Object> extensions = new HashMap<>(Map.of(
+                "code", errorCode.getCode(),
+                "status", errorCode.name()
+        ));
+
+        String details = exceptionMapper.getDetails(ex);
+        if (details != null && errorCode != ErrorCode.INTERNAL_SERVER_ERROR) {
+            extensions.put("detail", details);
+        }
+
         return GraphqlErrorBuilder.newError()
                 .message(errorCode.getMessage())
                 .errorType(mapToErrorType(errorCode))
-                .extensions(Map.of(
-                        "code", errorCode.getCode(),
-                        "status", errorCode.name()
-                ))
+                .extensions(extensions)
                 .build();
     }
 
@@ -40,8 +48,8 @@ public class GlobalExceptionResolver extends DataFetcherExceptionResolverAdapter
         return switch (code.getCode()) {
             case 404 -> ErrorType.NOT_FOUND;
             case 401 -> ErrorType.UNAUTHORIZED;
-            case 403 -> ErrorType.FORBIDDEN;
-            case 409 -> ErrorType.BAD_REQUEST;
+            case 402, 403 -> ErrorType.FORBIDDEN;
+            case 400, 409, 429 -> ErrorType.BAD_REQUEST;
             default -> ErrorType.INTERNAL_ERROR;
         };
     }

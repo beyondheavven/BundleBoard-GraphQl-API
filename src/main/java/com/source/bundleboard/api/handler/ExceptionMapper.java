@@ -1,10 +1,12 @@
 package com.source.bundleboard.api.handler;
 
 import com.source.bundleboard.api.exception.*;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.support.WebExchangeBindException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,17 +35,44 @@ public class ExceptionMapper {
 
     public ErrorCode getCode(Throwable ex) {
         if (ex instanceof DuplicateKeyException) {
-            String msg = ex.getMessage();
-            if (msg != null) {
-                if (msg.contains("users_username_key")) {
-                    return ErrorCode.USERNAME_ALREADY_EXISTS;
-                }
-                if (msg.contains("users_email_key")) {
-                    return ErrorCode.EMAIL_ALREADY_EXISTS;
-                }
-            }
-            return ErrorCode.USER_ALREADY_EXISTS;
+            return resolveDuplicateKey(ex);
         }
-        return MAPPER.getOrDefault(ex.getClass(), ErrorCode.INTERNAL_SERVER_ERROR);
+
+        if (ex instanceof ConstraintViolationException || ex instanceof WebExchangeBindException) {
+            return ErrorCode.VALIDATION_ERROR;
+        }
+
+        if (ex instanceof IllegalArgumentException) {
+            return ErrorCode.VALIDATION_ERROR;
+        }
+
+        Class<?> clazz = ex.getClass();
+        while (clazz != null) {
+            ErrorCode errorCode = MAPPER.get(clazz);
+            if (errorCode != null) {
+                return errorCode;
+            }
+            clazz = clazz.getSuperclass();
+        }
+        return ErrorCode.INTERNAL_SERVER_ERROR;
+    }
+
+    public String getDetails(Throwable ex) {
+        if (ex instanceof ApiException apiEx) {
+            return apiEx.getDetails();
+        }
+        if (ex instanceof IllegalArgumentException || ex instanceof ConstraintViolationException) {
+            return ex.getMessage();
+        }
+        return null;
+    }
+
+    private ErrorCode resolveDuplicateKey(Throwable ex) {
+        String msg = ex.getMessage();
+        if (msg != null) {
+            if (msg.contains("users_username_key")) return ErrorCode.USERNAME_ALREADY_EXISTS;
+            if (msg.contains("users_email_key")) return ErrorCode.EMAIL_ALREADY_EXISTS;
+        }
+        return ErrorCode.USER_ALREADY_EXISTS;
     }
 }

@@ -16,7 +16,7 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public Mono<Client> findByUserId(Long id) {
         return clientRepository.findByUserId(id)
-                .switchIfEmpty(Mono.error(() -> (new ClientNotFoundException(id))));
+                .switchIfEmpty(Mono.error(ClientNotFoundException::new));
     }
 
     @Override

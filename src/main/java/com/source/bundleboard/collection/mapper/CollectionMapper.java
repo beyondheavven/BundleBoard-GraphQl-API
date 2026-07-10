@@ -18,9 +18,13 @@ public interface CollectionMapper {
     @Mapping(target = "authorId", source = "authorId")
     GetCollectionByIdResponse toGetDto(Collection collection);
 
+    @Mapping(target = "authorId", source = "authorId")
+    GetCollectionBySlugResponse toSlugDto(Collection collection);
+
     @Mapping(target = "authorId", ignore = true)
     @Mapping(target = "mediaResourceId", ignore = true)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "videoTutorialUrl", ignore = true)
+    @Mapping(target = "slug", ignore = true)
     void updateEntityFromDto(UpdateCollectionRequest dto, @MappingTarget Collection entity);
 }

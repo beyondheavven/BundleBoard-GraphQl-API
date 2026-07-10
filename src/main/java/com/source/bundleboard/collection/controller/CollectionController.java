@@ -58,6 +58,12 @@ public class CollectionController {
 
     @PreAuthorize("permitAll()")
     @QueryMapping
+    public Mono<GetCollectionBySlugResponse> getCollectionBySlug(@Argument String username, @Argument String slug){
+        return collectionService.getCollectionBySlug(username, slug);
+    }
+
+    @PreAuthorize("permitAll()")
+    @QueryMapping
     public Mono<CollectionByTagResponse> getCollectionsByTag(@Argument @Valid CollectionFilterInput input){
         return collectionService.getCollectionByTagName(input);
     }
@@ -123,6 +129,24 @@ public class CollectionController {
             return Flux.empty();
         }
         return collectionService.searchByName(query, page, size);
+    }
+
+    @SchemaMapping(typeName = "GetCollectionBySlugResponse", field = "author")
+    public Mono<AuthorResponse> getAuthorForSlug(GetCollectionBySlugResponse collection) {
+        return authorService.findFullAuthorById(collection.authorId());
+    }
+
+    @SchemaMapping(typeName = "GetCollectionBySlugResponse", field = "galleryImages")
+    public Flux<ImageShortResponse> getGalleryImagesForSlug(GetCollectionBySlugResponse collection) {
+        return imageService.findAllShortResponsesByCollectionId(collection.id());
+    }
+
+    @SchemaMapping(typeName = "GetCollectionBySlugResponse", field = "mediaResource")
+    public Mono<GetMediaResourceByIdResponse> getMediaResourceForSlug(GetCollectionBySlugResponse collection) {
+        if (collection.mediaResourceId() == null) {
+            return Mono.empty();
+        }
+        return mediaResourceService.findGetMediaResourceById(collection.mediaResourceId());
     }
 
     @SchemaMapping(typeName = "CollectionResponse", field = "author")

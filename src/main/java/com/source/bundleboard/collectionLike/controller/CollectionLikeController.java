@@ -3,6 +3,7 @@ package com.source.bundleboard.collectionLike.controller;
 import com.source.bundleboard.collection.dto.AuthoredCollectionResponse;
 import com.source.bundleboard.collection.dto.CollectionResponse;
 import com.source.bundleboard.collection.dto.GetCollectionByIdResponse;
+import com.source.bundleboard.collection.dto.GetCollectionBySlugResponse;
 import com.source.bundleboard.collectionLike.service.CollectionLikeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.graphql.data.method.annotation.Argument;
@@ -26,6 +27,16 @@ public class CollectionLikeController {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> securityContext.getAuthentication().getName())
                 .flatMap(username -> collectionLikeService.toggleFavorite(collectionId, username));
+    }
+
+    @SchemaMapping(typeName = "GetCollectionBySlugResponse", field = "likesCount")
+    public Mono<Integer> getLikesCount(GetCollectionBySlugResponse collection) {
+        return collectionLikeService.countByCollectionId(collection.id());
+    }
+
+    @SchemaMapping(typeName = "GetCollectionBySlugResponse", field = "isLiked")
+    public Mono<Boolean> getIsLiked(GetCollectionBySlugResponse collection) {
+        return collectionLikeService.isLikedByCurrentUser(collection.id());
     }
 
     @SchemaMapping(typeName = "CollectionResponse", field = "likesCount")

@@ -356,6 +356,19 @@ public class CollectionServiceImpl implements CollectionService {
         return collectionRepository.findRandom(safeLimit).map(collectionMapper::toDto);
     }
 
+    @Override
+    public Mono<GetCollectionBySlugResponse> getCollectionBySlug(String username, String slug) {
+        if (username == null || username.isBlank() || slug == null || slug.isBlank()) {
+            return Mono.error(new CollectionNotFoundException());
+        }
+
+        return collectionRepository.findBySlugAndAuthorUsername(username, slug)
+                .map(collectionMapper::toSlugDto)
+                .switchIfEmpty(Mono.error(new CollectionNotFoundException(
+                        "No collection found for username '%s' and slug '%s'".formatted(username, slug)
+                )));
+    }
+
 
     @Transactional
     @Override
