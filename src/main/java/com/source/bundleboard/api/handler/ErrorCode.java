@@ -13,6 +13,7 @@ public enum ErrorCode {
     IMAGE_NOT_FOUND(404, "Image not found"),
     CLIENT_NOT_FOUND(404, "Client not found"),
 
+    VALIDATION_ERROR(400, "Invalid request"),
     UNAUTHORIZED(401, "Authentication failed"),
     FORBIDDEN(403, "Access denied"),
 

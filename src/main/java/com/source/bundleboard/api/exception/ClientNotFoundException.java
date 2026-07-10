@@ -1,8 +1,13 @@
 package com.source.bundleboard.api.exception;
 
-public class ClientNotFoundException extends RuntimeException{
+public class ClientNotFoundException extends ApiException{
 
-    public ClientNotFoundException(Long id){
-        super("Client with id " + id + " not found.");
+    public ClientNotFoundException(){
+        super("Client not found.");
     }
+
+    public ClientNotFoundException(String details){
+        super("Client not found.", details);
+    }
+
 }

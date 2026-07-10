@@ -364,7 +364,9 @@ public class CollectionServiceImpl implements CollectionService {
 
         return collectionRepository.findBySlugAndAuthorUsername(username, slug)
                 .map(collectionMapper::toSlugDto)
-                .switchIfEmpty(Mono.error(new CollectionNotFoundException()));
+                .switchIfEmpty(Mono.error(new CollectionNotFoundException(
+                        "No collection found for username '%s' and slug '%s'".formatted(username, slug)
+                )));
     }
 
 
