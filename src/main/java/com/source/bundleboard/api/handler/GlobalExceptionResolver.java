@@ -48,8 +48,8 @@ public class GlobalExceptionResolver extends DataFetcherExceptionResolverAdapter
         return switch (code.getCode()) {
             case 404 -> ErrorType.NOT_FOUND;
             case 401 -> ErrorType.UNAUTHORIZED;
-            case 403 -> ErrorType.FORBIDDEN;
-            case 400, 409 -> ErrorType.BAD_REQUEST;
+            case 402, 403 -> ErrorType.FORBIDDEN;
+            case 400, 409, 429 -> ErrorType.BAD_REQUEST;
             default -> ErrorType.INTERNAL_ERROR;
         };
     }
