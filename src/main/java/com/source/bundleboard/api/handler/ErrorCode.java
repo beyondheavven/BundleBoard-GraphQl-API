@@ -31,7 +31,7 @@ public enum ErrorCode {
     SLUG_ALREADY_EXISTS(409, "Slug already exists"),
     USER_ALREADY_EXISTS(409, "Conflict"),
     USERNAME_ALREADY_EXISTS(409, "This username is already occupied by another user"),
-    EMAIL_ALREADY_EXISTS(409, "This email route is already registered in the database"),
+    EMAIL_ALREADY_EXISTS(409, "This email is already registered in the database"),
 
     RATE_LIMIT_EXCEEDED(429, "Rate limit exceeded"),
 
