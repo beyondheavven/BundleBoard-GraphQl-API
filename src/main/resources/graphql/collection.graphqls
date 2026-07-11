@@ -104,6 +104,8 @@ type CreateCollectionResponse {
 type CollectionCommentResponse {
     id: ID!
     name: String!
+    slug: String
+    author: AuthorShortResponse!
 }
 
 input CollectionFilterInput {
