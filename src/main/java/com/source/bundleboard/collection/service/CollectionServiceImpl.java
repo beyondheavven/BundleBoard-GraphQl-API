@@ -422,7 +422,9 @@ public class CollectionServiceImpl implements CollectionService {
                         row.id(),
                         row.name(),
                         row.price(),
-                        row.description()
+                        row.description(),
+                        row.slug(),
+                        row.authorId()
                 ));
     }
 

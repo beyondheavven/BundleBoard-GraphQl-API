@@ -221,4 +221,9 @@ public class CollectionController {
     public Flux<Tag> getTagsForAuthoredCollection(AuthoredCollectionResponse collection) {
         return tagService.findAllTagsByCollectionId(collection.id());
     }
+
+    @SchemaMapping(typeName = "AuthoredCollectionResponse", field = "author")
+    public Mono<AuthorShortResponse> getAuthorForAuthoredCollection(AuthoredCollectionResponse collection) {
+        return authorService.findShortResponseById(collection.authorId());
+    }
 }
