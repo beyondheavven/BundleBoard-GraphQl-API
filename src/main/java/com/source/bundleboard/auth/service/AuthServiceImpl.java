@@ -1,10 +1,6 @@
 package com.source.bundleboard.auth.service;
 
-import com.source.bundleboard.api.exception.UserAlreadyExistsException;
-import com.source.bundleboard.api.exception.UserNotFoundException;
-import com.source.bundleboard.api.exception.IncorrectPasswordException;
-import com.source.bundleboard.api.exception.InvalidTokenException;
-import com.source.bundleboard.api.exception.UserStatusException;
+import com.source.bundleboard.api.exception.*;
 import com.source.bundleboard.auth.dto.*;
 import com.source.bundleboard.auth.jwt.JwtProperties;
 import com.source.bundleboard.auth.jwt.service.JwtService;
@@ -23,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
+import javax.naming.AuthenticationException;
 import java.time.Instant;
 import java.util.Set;
 
@@ -75,7 +72,7 @@ public class AuthServiceImpl implements AuthService {
                             .flatMap(savedUser -> generateAuthResponse(savedUser, !savedUser.isSetupCompleted()));
                 })
                 .doOnSuccess(response -> log.info("🟢 User authenticated successfully: {}", request.identifier()))
-                .doOnError(e -> log.error("🔴 Error during authentication for user [{}]: {}", request.identifier(), e.getMessage()));
+                .doOnError(e -> Mono.error(new AuthenticationException("Authentication failed: " + e.getMessage())));
     }
 
     @Override
@@ -107,7 +104,7 @@ public class AuthServiceImpl implements AuthService {
                                 .doOnSuccess(v -> log.info("🟢 Verification email sent to: {}", savedUser.getEmail()))
                                 .then(generateAuthResponse(savedUser, false))
                 )
-                .doOnError(e -> log.error("🔴 Error during registration for user [{}]: {}", request.username(), e.getMessage()))
+                .doOnError((e -> Mono.error(new RegistrationFailedException(e.getMessage()))))
                 .doOnSuccess(response -> log.info("🟢 User registered successfully: {}", request.username()))
                 .onErrorResume(e -> Mono.just(new AuthResponse(null, null, null, e.getMessage(), false)));
     }
@@ -160,7 +157,7 @@ public class AuthServiceImpl implements AuthService {
                             .then(generateRefreshResponse(user));
                 })
                 .doOnSuccess(response -> log.info("🟢 Token refreshed successfully"))
-                .doOnError(e -> log.error("🔴 Error during token refresh: {}", e.getMessage()));
+                .doOnError((e -> Mono.error(new RefreshTokenFailedException(e.getMessage()))));
     }
 
     @Override
@@ -177,7 +174,7 @@ public class AuthServiceImpl implements AuthService {
                         log.warn("🟡 Logout warning: Token not found in DB");
                     }
                 })
-                .doOnError(e -> log.error("🔴 Error during logout: {}", e.getMessage()));
+                .doOnError(e -> Mono.error(new LogoutFailedException(e.getMessage())));
     }
 
     @Override
@@ -205,7 +202,7 @@ public class AuthServiceImpl implements AuthService {
                             .flatMap(savedUser -> generateAuthResponse(savedUser, false));
                 })
                 .doOnSuccess(response -> log.info("🟢 Social login successful for: {}", input.email()))
-                .doOnError(e -> log.error("🔴 Error during social login for [{}]: {}", input.email(), e.getMessage()));
+                .doOnError(e -> Mono.error(new GoogleLoginFailedException(e.getMessage())));
     }
 
     @Override
@@ -236,7 +233,7 @@ public class AuthServiceImpl implements AuthService {
                 })
                 .flatMap(savedUser -> generateAuthResponse(savedUser, true))
                 .doOnSuccess(response -> log.info("🟢 Social registration successful for: {}", input.email()))
-                .doOnError(e -> log.error("🔴 Error during social registration for [{}]: {}", input.email(), e.getMessage()));
+                .doOnError(e -> Mono.error(new GoogleRegistrationFailedException(e.getMessage())));
     }
 
     private Mono<AuthResponse> generateAuthResponse(User user, boolean isNew) {

@@ -31,6 +31,11 @@ public class ExceptionMapper {
         MAPPER.put(AccessDeniedException.class, ErrorCode.FORBIDDEN);
         MAPPER.put(AuthenticationException.class, ErrorCode.UNAUTHORIZED);
         MAPPER.put(ClientNotFoundException.class, ErrorCode.CLIENT_NOT_FOUND);
+        MAPPER.put(RegistrationFailedException.class, ErrorCode.UNAUTHORIZED);
+        MAPPER.put(LogoutFailedException.class, ErrorCode.UNAUTHORIZED);
+        MAPPER.put(RefreshTokenFailedException.class, ErrorCode.INTERNAL_SERVER_ERROR);
+        MAPPER.put(GoogleLoginFailedException.class, ErrorCode.UNAUTHORIZED);
+        MAPPER.put(GoogleRegistrationFailedException.class, ErrorCode.INTERNAL_SERVER_ERROR);
     }
 
     public ErrorCode getCode(Throwable ex) {
