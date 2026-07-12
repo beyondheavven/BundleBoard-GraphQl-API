@@ -33,16 +33,15 @@ import java.util.List;
 public class CollectionController {
 
     private final CollectionService collectionService;
-
     private final AuthorService authorService;
-
     private final PreviewImageService imageService;
-
     private final MediaResourceService mediaResourceService;
-
     private final PurchaseService purchaseService;
-
     private final TagService tagService;
+
+    // =========================================================
+    // QUERIES
+    // =========================================================
 
     @PreAuthorize("permitAll()")
     @QueryMapping
@@ -58,15 +57,60 @@ public class CollectionController {
 
     @PreAuthorize("permitAll()")
     @QueryMapping
-    public Mono<GetCollectionBySlugResponse> getCollectionBySlug(@Argument String username, @Argument String slug){
+    public Mono<GetCollectionBySlugResponse> getCollectionBySlug(@Argument String username, @Argument String slug) {
         return collectionService.getCollectionBySlug(username, slug);
     }
 
     @PreAuthorize("permitAll()")
     @QueryMapping
-    public Mono<CollectionByTagResponse> getCollectionsByTag(@Argument @Valid CollectionFilterInput input){
+    public Mono<CollectionByTagResponse> getCollectionsByTag(@Argument @Valid CollectionFilterInput input) {
         return collectionService.getCollectionByTagName(input);
     }
+
+    @PreAuthorize("permitAll()")
+    @QueryMapping
+    public Flux<CollectionResponse> getTopLikedCollections(@Argument Integer limit) {
+        int actualLimit = (limit != null && limit > 0) ? limit : 10;
+        return collectionService.getTopLikedCollections(actualLimit);
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @QueryMapping
+    public Flux<CollectionResponse> getLikedCollections() {
+        return collectionService.getLikedCollections();
+    }
+
+    @PreAuthorize("permitAll()")
+    @QueryMapping
+    public Flux<CollectionResponse> getLatestCollections(@Argument Integer limit) {
+        int actualLimit = (limit != null && limit > 0) ? limit : 10;
+        return collectionService.getLatestCollections(actualLimit);
+    }
+
+    @PreAuthorize("permitAll()")
+    @QueryMapping
+    public Flux<CollectionResponse> getSortedCollections(@Argument int page, @Argument int size, @Argument String sortBy, @Argument List<String> mimeTypes) {
+        return collectionService.getSortedCollections(page, size, sortBy, mimeTypes);
+    }
+
+    @PreAuthorize("permitAll()")
+    @QueryMapping
+    public Flux<CollectionResponse> getRandomCollections(@Argument int limit) {
+        return collectionService.getRandomCollections(limit);
+    }
+
+    @PreAuthorize("permitAll()")
+    @QueryMapping
+    public Flux<CollectionResponse> searchCollections(@Argument String query, @Argument int size, @Argument int page) {
+        if (query == null || query.trim().length() < 2) {
+            return Flux.empty();
+        }
+        return collectionService.searchByName(query, page, size);
+    }
+
+    // =========================================================
+    // MUTATIONS
+    // =========================================================
 
     @PreAuthorize("hasAnyRole('ADMIN', 'AUTHOR')")
     @MutationMapping
@@ -88,74 +132,27 @@ public class CollectionController {
         return collectionService.deleteCollection(id, folderPath);
     }
 
-    @PreAuthorize("permitAll()")
-    @QueryMapping
-    public Flux<CollectionResponse> getTopLikedCollections(@Argument Integer limit) {
-        int actualLimit = (limit != null && limit > 0) ? limit : 10;
-        return collectionService.getTopLikedCollections(actualLimit);
-    }
-
-    @PreAuthorize("isAuthenticated()")
-    @QueryMapping
-    public Flux<CollectionResponse> getLikedCollections() {
-        return collectionService.getLikedCollections();
-    }
-
-    @PreAuthorize("permitAll()")
-    @QueryMapping
-    public Flux<CollectionResponse> getLatestCollections(@Argument Integer limit){
-        int actualLimit = (limit != null && limit > 0) ? limit : 10;
-        return collectionService.getLatestCollections(actualLimit);
-    }
-
-    @PreAuthorize("permitAll()")
-    @QueryMapping
-    public Flux<CollectionResponse> getSortedCollections(@Argument int page, @Argument int size, @Argument String sortBy, @Argument List<String> mimeTypes){
-        return collectionService.getSortedCollections(page, size, sortBy, mimeTypes);
-    }
-
-    @PreAuthorize("permitAll()")
-    @QueryMapping
-    public Flux<CollectionResponse> getRandomCollections(@Argument int limit){
-        return collectionService.getRandomCollections(limit);
-    }
-
-    @PreAuthorize("permitAll()")
-    @QueryMapping
-    public Flux<CollectionResponse> searchCollections(@Argument String query,
-                                                      @Argument int size,
-                                                      @Argument int page){
-        if (query == null || query.trim().length() < 2) {
-            return Flux.empty();
-        }
-        return collectionService.searchByName(query, page, size);
-    }
-
-    @SchemaMapping(typeName = "GetCollectionBySlugResponse", field = "author")
-    public Mono<AuthorResponse> getAuthorForSlug(GetCollectionBySlugResponse collection) {
-        return authorService.findFullAuthorById(collection.authorId());
-    }
-
-    @SchemaMapping(typeName = "GetCollectionBySlugResponse", field = "galleryImages")
-    public Flux<ImageShortResponse> getGalleryImagesForSlug(GetCollectionBySlugResponse collection) {
-        return imageService.findAllShortResponsesByCollectionId(collection.id());
-    }
-
-    @SchemaMapping(typeName = "GetCollectionBySlugResponse", field = "mediaResource")
-    public Mono<GetMediaResourceByIdResponse> getMediaResourceForSlug(GetCollectionBySlugResponse collection) {
-        if (collection.mediaResourceId() == null) {
-            return Mono.empty();
-        }
-        return mediaResourceService.findGetMediaResourceById(collection.mediaResourceId());
-    }
+    // =========================================================
+    // FIELD RESOLVERS — author
+    // =========================================================
 
     @SchemaMapping(typeName = "CollectionResponse", field = "author")
     public Mono<AuthorShortResponse> getAuthor(CollectionResponse collection) {
         return authorService.findShortResponseById(collection.authorId());
     }
 
+    @SchemaMapping(typeName = "AuthoredCollectionResponse", field = "author")
+    public Mono<AuthorShortResponse> getAuthorForAuthoredCollection(AuthoredCollectionResponse collection) {
+        return authorService.findShortResponseById(collection.authorId());
+    }
+
     @SchemaMapping(typeName = "GetCollectionByIdResponse", field = "author")
     public Mono<AuthorResponse> getFullAuthor(GetCollectionByIdResponse collection) {
+        return authorService.findFullAuthorById(collection.authorId());
+    }
+
+    @SchemaMapping(typeName = "GetCollectionBySlugResponse", field = "author")
+    public Mono<AuthorResponse> getAuthorForSlug(GetCollectionBySlugResponse collection) {
         return authorService.findFullAuthorById(collection.authorId());
     }
 
@@ -170,11 +167,9 @@ public class CollectionController {
                 .defaultIfEmpty(0L);
     }
 
-    @SchemaMapping(typeName = "AuthoredCollectionResponse", field = "downloadCount")
-    public Mono<Long> getCollectionDownloadCount(AuthoredCollectionResponse collection) {
-        return purchaseService.countByCollectionIdAndStatus(collection.id(), PurchaseStatus.succeeded)
-                .defaultIfEmpty(0L);
-    }
+    // =========================================================
+    // FIELD RESOLVERS — galleryImages
+    // =========================================================
 
     @SchemaMapping(typeName = "CollectionResponse", field = "galleryImages")
     public Flux<ImageShortResponse> getGalleryImages(CollectionResponse collection) {
@@ -183,6 +178,11 @@ public class CollectionController {
 
     @SchemaMapping(typeName = "GetCollectionByIdResponse", field = "galleryImages")
     public Flux<ImageShortResponse> getGalleryImagesForDetails(GetCollectionByIdResponse collection) {
+        return imageService.findAllShortResponsesByCollectionId(collection.id());
+    }
+
+    @SchemaMapping(typeName = "GetCollectionBySlugResponse", field = "galleryImages")
+    public Flux<ImageShortResponse> getGalleryImagesForSlug(GetCollectionBySlugResponse collection) {
         return imageService.findAllShortResponsesByCollectionId(collection.id());
     }
 
@@ -201,8 +201,20 @@ public class CollectionController {
         return imageService.findAllShortResponsesByCollectionId(collection.id());
     }
 
+    // =========================================================
+    // FIELD RESOLVERS — mediaResource
+    // =========================================================
+
     @SchemaMapping(typeName = "GetCollectionByIdResponse", field = "mediaResource")
-    public Mono<GetMediaResourceByIdResponse> getMediaResourceDetails(GetCollectionByIdResponse collection){
+    public Mono<GetMediaResourceByIdResponse> getMediaResourceDetails(GetCollectionByIdResponse collection) {
+        if (collection.mediaResourceId() == null) {
+            return Mono.empty();
+        }
+        return mediaResourceService.findGetMediaResourceById(collection.mediaResourceId());
+    }
+
+    @SchemaMapping(typeName = "GetCollectionBySlugResponse", field = "mediaResource")
+    public Mono<GetMediaResourceByIdResponse> getMediaResourceForSlug(GetCollectionBySlugResponse collection) {
         if (collection.mediaResourceId() == null) {
             return Mono.empty();
         }
@@ -217,13 +229,18 @@ public class CollectionController {
         return mediaResourceService.findGetMediaResourceById(collection.getMediaResourceId());
     }
 
+    // =========================================================
+    // FIELD RESOLVERS — misc (downloadCount, tags)
+    // =========================================================
+
+    @SchemaMapping(typeName = "AuthoredCollectionResponse", field = "downloadCount")
+    public Mono<Long> getCollectionDownloadCount(AuthoredCollectionResponse collection) {
+        return purchaseService.countByCollectionIdAndStatus(collection.id(), PurchaseStatus.succeeded)
+                .defaultIfEmpty(0L);
+    }
+
     @SchemaMapping(typeName = "AuthoredCollectionResponse", field = "tags")
     public Flux<Tag> getTagsForAuthoredCollection(AuthoredCollectionResponse collection) {
         return tagService.findAllTagsByCollectionId(collection.id());
-    }
-
-    @SchemaMapping(typeName = "AuthoredCollectionResponse", field = "author")
-    public Mono<AuthorShortResponse> getAuthorForAuthoredCollection(AuthoredCollectionResponse collection) {
-        return authorService.findShortResponseById(collection.authorId());
     }
 }
