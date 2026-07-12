@@ -1,5 +1,7 @@
 package com.source.bundleboard.comments.controller;
 
+import com.source.bundleboard.author.dto.AuthorShortResponse;
+import com.source.bundleboard.author.service.AuthorService;
 import com.source.bundleboard.collection.dto.CollectionCommentResponse;
 import com.source.bundleboard.collection.service.CollectionService;
 import com.source.bundleboard.comments.dto.AddCommentRequest;
@@ -30,6 +32,8 @@ public class CommentController {
     private final UserService userService;
 
     private final CollectionService collectionService;
+
+    private final AuthorService authorService;
 
 
     @QueryMapping
@@ -64,6 +68,11 @@ public class CommentController {
     @SchemaMapping(typeName = "Comment", field = "collection")
     public Mono<CollectionCommentResponse> getCollectionForComment(Comment comment) {
         return collectionService.getCollectionCommentResponseById(comment.getCollectionId());
+    }
+
+    @SchemaMapping(typeName = "CollectionCommentResponse", field = "author")
+    public Mono<AuthorShortResponse> getAuthorForCollectionComment(CollectionCommentResponse collectionCommentResponse){
+        return authorService.findShortResponseById(collectionCommentResponse.authorId());
     }
 
 }

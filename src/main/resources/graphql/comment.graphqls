@@ -17,8 +17,6 @@ type Comment {
     updatedAt: String!
 }
 
-
-
 type CommentResponse {
     comment: Comment
     success: Boolean!

@@ -17,6 +17,8 @@ public record CollectionResponse(
 
         String externalLink,
 
+        String slug,
+
         Long authorId,
 
         List<ImageShortResponse> galleryImages,

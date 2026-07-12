@@ -153,6 +153,7 @@ public class CollectionServiceTest {
                 "Desc",
                 new BigDecimal("10.00"),
                 null,
+                "java-bundle",
                 42L,
                 null,
                 0L,
@@ -380,12 +381,17 @@ public class CollectionServiceTest {
         when(dbRow.name()).thenReturn("Java Bundle");
         when(dbRow.price()).thenReturn(new BigDecimal("10.00"));
         when(dbRow.description()).thenReturn(validDescription);
+        when(dbRow.slug()).thenReturn("java-bundle");
+        when(dbRow.authorId()).thenReturn(42L);
         when(collectionRepository.findAllByAuthorId(42L)).thenReturn(Flux.just(dbRow));
+
         StepVerifier.create(collectionService.findAllByAuthorId(42L))
                 .assertNext(response -> {
                     assertEquals(1L, response.id());
                     assertEquals("Java Bundle", response.name());
                     assertEquals(new BigDecimal("10.00"), response.price());
+                    assertEquals("java-bundle", response.slug());
+                    assertEquals(42L, response.authorId());
                 })
                 .verifyComplete();
     }
@@ -397,7 +403,7 @@ public class CollectionServiceTest {
         org.springframework.security.core.context.SecurityContext ctx = mock(org.springframework.security.core.context.SecurityContext.class);
         when(ctx.getAuthentication()).thenReturn(auth);
 
-        CollectionResponse responseDto = new CollectionResponse(1L, "Bundle", "Desc", BigDecimal.ZERO, null, 42L, null, 0L, false);
+        CollectionResponse responseDto = new CollectionResponse(1L, "Bundle", "Desc", BigDecimal.ZERO, null, "bundle", 42L, null, 0L, false);
 
         when(userService.findByUsername("testuser")).thenReturn(Mono.just(sampleUser));
         when(collectionRepository.findLikedCollectionsByUserId(42L)).thenReturn(Flux.just(sampleCollection));
@@ -411,7 +417,7 @@ public class CollectionServiceTest {
 
     @Test
     void findLikedCollectionsByUserId_Success() {
-        CollectionResponse responseDto = new CollectionResponse(1L, "Bundle", "Desc", BigDecimal.ZERO, null, 42L, null, 0L, false);
+        CollectionResponse responseDto = new CollectionResponse(1L, "Bundle", "Desc", BigDecimal.ZERO, null, "bundle", 42L, null, 0L, false);
         when(collectionRepository.findLikedCollectionsByUserId(42L)).thenReturn(Flux.just(sampleCollection));
         when(collectionMapper.toDto(sampleCollection)).thenReturn(responseDto);
 
@@ -440,6 +446,7 @@ public class CollectionServiceTest {
                 "Desc",
                 BigDecimal.ZERO,
                 null,
+                "java-bundle",
                 42L,
                 null,
                 0L,
@@ -460,7 +467,7 @@ public class CollectionServiceTest {
 
     @Test
     void getTopLikedCollections_Success() {
-        CollectionResponse responseDto = new CollectionResponse(1L, "Bundle", "Desc", BigDecimal.ZERO, null, 42L, null, 0L, false);
+        CollectionResponse responseDto = new CollectionResponse(1L, "Bundle", "Desc", BigDecimal.ZERO, null, "bundle", 42L, null, 0L, false);
         when(collectionRepository.findTopLikedCollections(5)).thenReturn(Flux.just(sampleCollection));
         when(collectionMapper.toDto(sampleCollection)).thenReturn(responseDto);
 
@@ -490,7 +497,7 @@ public class CollectionServiceTest {
 
     @Test
     void getLatestCollections_Success() {
-        CollectionResponse responseDto = new CollectionResponse(1L, "Bundle", "Desc", BigDecimal.ZERO, null, 42L, null, 0L, false);
+        CollectionResponse responseDto = new CollectionResponse(1L, "Bundle", "Desc", BigDecimal.ZERO, null, "bundle", 42L, null, 0L, false);
         when(collectionRepository.findAllBy(any(Pageable.class))).thenReturn(Flux.just(sampleCollection));
         when(collectionMapper.toDto(sampleCollection)).thenReturn(responseDto);
 
@@ -501,7 +508,7 @@ public class CollectionServiceTest {
 
     @Test
     void getSortedCollections_WithFilters_Success() {
-        CollectionResponse responseDto = new CollectionResponse(1L, "Bundle", "Desc", BigDecimal.ZERO, null, 42L, null, 0L, false);
+        CollectionResponse responseDto = new CollectionResponse(1L, "Bundle", "Desc", BigDecimal.ZERO, null, "bundle", 42L, null, 0L, false);
 
         when(collectionRepository.findFilteredByMimeTypesSortedBySizeAsc(anyList(), eq(10), eq(0)))
                 .thenReturn(Flux.just(sampleCollection));
@@ -514,7 +521,7 @@ public class CollectionServiceTest {
 
     @Test
     void getSortedCollections_WithoutFilters_Success() {
-        CollectionResponse responseDto = new CollectionResponse(1L, "Bundle", "Desc", BigDecimal.ZERO, null, 42L, null, 0L, false);
+        CollectionResponse responseDto = new CollectionResponse(1L, "Bundle", "Desc", BigDecimal.ZERO, null, "bundle", 42L, null, 0L, false);
 
         when(collectionRepository.findAllSortedByAlphabetical(10, 0))
                 .thenReturn(Flux.just(sampleCollection));
@@ -527,7 +534,7 @@ public class CollectionServiceTest {
 
     @Test
     void getSortedCollections_DefaultSort_Success() {
-        CollectionResponse responseDto = new CollectionResponse(1L, "Bundle", "Desc", BigDecimal.ZERO, null, 42L, null, 0L, false);
+        CollectionResponse responseDto = new CollectionResponse(1L, "Bundle", "Desc", BigDecimal.ZERO, null, "bundle", 42L, null, 0L, false);
 
         when(collectionRepository.findAllSortedByLatest(10, 0))
                 .thenReturn(Flux.just(sampleCollection));
@@ -541,7 +548,7 @@ public class CollectionServiceTest {
     @Test
     void getCollectionByTagName_Success() {
         CollectionFilterInput input = new CollectionFilterInput("UI", 0, 10);
-        CollectionResponse responseDto = new CollectionResponse(1L, "Bundle", "Desc", BigDecimal.ZERO, null, 42L, null, 0L, false);
+        CollectionResponse responseDto = new CollectionResponse(1L, "Bundle", "Desc", BigDecimal.ZERO, null, "bundle", 42L, null, 0L, false);
 
         when(collectionRepository.findCollectionsByTagNamePaged("UI", 10, 0))
                 .thenReturn(Flux.just(sampleCollection));

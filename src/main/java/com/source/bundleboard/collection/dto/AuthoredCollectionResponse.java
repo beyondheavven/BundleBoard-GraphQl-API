@@ -10,6 +10,10 @@ public record AuthoredCollectionResponse(
 
         BigDecimal price,
 
-        String description
+        String description,
+
+        String slug,
+
+        Long authorId
 ) {
 }

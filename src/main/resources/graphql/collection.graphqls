@@ -92,6 +92,8 @@ type AuthoredCollectionResponse {
     likesCount: Int!
     isLiked: Boolean
     downloadCount: Int
+    slug: String
+    author: AuthorShortResponse!
     tags: [Tag!]
 }
 
@@ -104,6 +106,8 @@ type CreateCollectionResponse {
 type CollectionCommentResponse {
     id: ID!
     name: String!
+    slug: String
+    author: AuthorShortResponse!
 }
 
 input CollectionFilterInput {

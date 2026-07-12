@@ -6,8 +6,8 @@ public class ClientNotFoundException extends ApiException{
         super("Client not found.");
     }
 
-    public ClientNotFoundException(String details){
-        super("Client not found.", details);
+    public ClientNotFoundException(Long userId) {
+        super("Client not found for userId: " + userId);
     }
 
 }

@@ -289,9 +289,12 @@ public class CollectionServiceImpl implements CollectionService {
             return Mono.error(new CollectionNotFoundException());
         }
         return collectionRepository.findById(collectionId)
+                .switchIfEmpty(Mono.error(new CollectionNotFoundException()))
                 .map(collection -> new CollectionCommentResponse(
                         collection.getId(),
-                        collection.getName()
+                        collection.getName(),
+                        collection.getSlug(),
+                        collection.getAuthorId()
                 ));
     }
 
@@ -419,7 +422,9 @@ public class CollectionServiceImpl implements CollectionService {
                         row.id(),
                         row.name(),
                         row.price(),
-                        row.description()
+                        row.description(),
+                        row.slug(),
+                        row.authorId()
                 ));
     }
 

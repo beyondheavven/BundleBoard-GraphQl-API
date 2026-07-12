@@ -4,6 +4,10 @@ public record CollectionCommentResponse(
 
         Long id,
 
-        String name
+        String name,
+
+        String slug,
+
+        Long authorId
 ) {
 }
