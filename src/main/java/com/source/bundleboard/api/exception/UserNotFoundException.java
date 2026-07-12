@@ -5,4 +5,8 @@ public class UserNotFoundException extends ApiException{
     public UserNotFoundException(){
         super("User not found");
     }
+
+    public UserNotFoundException(String details){
+        super("User not found", details);
+    }
 }
