@@ -16,6 +16,7 @@ import com.source.bundleboard.tag.model.Tag;
 import com.source.bundleboard.tag.service.TagService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
@@ -28,15 +29,21 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
+@Slf4j
 @Controller
 @RequiredArgsConstructor
 public class CollectionController {
 
     private final CollectionService collectionService;
+
     private final AuthorService authorService;
+
     private final PreviewImageService imageService;
+
     private final MediaResourceService mediaResourceService;
+
     private final PurchaseService purchaseService;
+
     private final TagService tagService;
 
     // =========================================================
@@ -143,6 +150,7 @@ public class CollectionController {
 
     @SchemaMapping(typeName = "AuthoredCollectionResponse", field = "author")
     public Mono<AuthorShortResponse> getAuthorForAuthoredCollection(AuthoredCollectionResponse collection) {
+        log.info(">>> DEBUG authorId for collection {} = {}", collection.id(), collection.authorId());
         return authorService.findShortResponseById(collection.authorId());
     }
 
