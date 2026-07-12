@@ -19,7 +19,7 @@ public interface CollectionRepository extends R2dbcRepository<Collection, Long> 
     Mono<Collection> findCollectionById(Long id);
 
     @Query("""
-        SELECT id, name, price, description, slug, authors_id AS "authorId" FROM collections
+        SELECT id, name, price, description, slug, authors_id FROM collections
         WHERE authors_id = :authorId
     """)
     Flux<CollectionRow> findAllByAuthorId(Long authorId);
